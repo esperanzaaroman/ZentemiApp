@@ -9,7 +9,16 @@ val PurpleDark = Color(0xFF572BA3)       // rgb(0.34, 0.17, 0.64)
 val PurpleGradientStart = Color(0xFF7847C5) // rgb(0.47, 0.28, 0.78)
 val PurpleGradientEnd = Color(0xFF572BA3)   // rgb(0.34, 0.17, 0.64)
 
-val Turquoise = Color(0xFF29C7B3)        // rgb(0.16, 0.78, 0.70)
+// ── Splash / onboarding ──
+val SplashTop = Color(0xFF583C99)
+val SplashBottom = Color(0xFF8F72C9)
+val SplashGlow = Color(0xFFF4C46A)
+val SplashDotActive = Color(0xFFF6BC3C)
+
+val SuccessGreen = Color(0xFF4CC46A)
+val ErrorRed = Color(0xFFFF6B6B)
+
+val Turquoise =Color(0xFF29C7B3)        // rgb(0.16, 0.78, 0.70)
 
 val BackgroundLight = Color(0xFFF8F3FC)  // rgb(0.97, 0.95, 0.99)
 val BackgroundStore = Color(0xFFF9F8FC)  // rgb(0.975, 0.97, 0.99)

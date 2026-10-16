@@ -3,24 +3,29 @@ package com.zentemi.app.ui.onboarding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.zentemi.app.ui.components.*
 import com.zentemi.app.ui.theme.*
 import kotlinx.coroutines.delay
 
 @Composable
 fun RecoveryWordScreen(onContinue: () -> Unit) {
 
+    val recoveryWord = "AGUA"
+
     var secondsRemaining by remember { mutableIntStateOf(20) }
-    val canContinue = secondsRemaining <= 0
 
     LaunchedEffect(Unit) {
         while (secondsRemaining > 0) {
@@ -29,102 +34,94 @@ fun RecoveryWordScreen(onContinue: () -> Unit) {
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(PurpleGradientStart, PurpleGradientEnd)
-                )
-            )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .padding(horizontal = 30.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Spacer(modifier = Modifier.weight(0.2f))
+    ZentemiBackground {
+        AuthLayout {
 
-            Text(text = "🔑", fontSize = 60.sp)
+            HeaderIcon(icon = Icons.Filled.Key)
 
-            Spacer(modifier = Modifier.height(20.dp))
+            AuthTitle(text = "Guarda tu palabra clave", fontSize = 30)
 
-            Text(
-                text = "Tu palabra de recuperación",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = "Guárdala en un lugar seguro.\nLa necesitarás si olvidas tu PIN.",
-                fontSize = 15.sp,
-                color = Color.White.copy(alpha = 0.8f),
-                textAlign = TextAlign.Center,
-                lineHeight = 22.sp
-            )
-
-            Spacer(modifier = Modifier.height(30.dp))
-
-            // Recovery word card
-            Box(
+            // White card with the word and the countdown
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        Color.White.copy(alpha = 0.15f),
-                        RoundedCornerShape(20.dp)
-                    )
-                    .padding(vertical = 30.dp),
-                contentAlignment = Alignment.Center
+                    .padding(horizontal = 25.dp)
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(Color.White)
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "AGUA",
+                    text = "Tu palabra clave es:",
+                    fontFamily = Quicksand,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = SubText
+                )
+
+                Text(
+                    text = recoveryWord,
+                    fontFamily = Quicksand,
                     fontSize = 40.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    letterSpacing = 8.sp
+                    color = Purple,
+                    letterSpacing = 4.sp
                 )
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            if (!canContinue) {
                 Text(
-                    text = "Espera $secondsRemaining segundos",
-                    fontSize = 14.sp,
-                    color = Color.White.copy(alpha = 0.6f)
+                    text = "Anota esta palabra en tu libreta o pídele a un tutor que la guarde. La necesitarás si algún día olvidas tu PIN o tu nombre de usuario.",
+                    fontFamily = Quicksand,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = SubText,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 21.sp
                 )
+
+                HorizontalDivider(color = LockedNode)
+
+                if (secondsRemaining > 0) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "Podrás continuar en:",
+                            fontFamily = Quicksand,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = SubText
+                        )
+                        Text(
+                            text = "$secondsRemaining",
+                            fontFamily = Quicksand,
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Purple
+                        )
+                        Text(
+                            text = "segundos",
+                            fontFamily = Quicksand,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = SubText
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "¡Listo! Ya puedes continuar.",
+                        fontFamily = Quicksand,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = SuccessGreen
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.weight(0.3f))
-
-            Button(
-                onClick = onContinue,
-                enabled = canContinue,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    disabledContainerColor = Color.White.copy(alpha = 0.3f)
-                ),
-                shape = RoundedCornerShape(18.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-            ) {
-                Text(
-                    text = "Entendido",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = PurpleDark
-                )
+            // Space is reserved so the card doesn't jump when the button appears
+            Box(modifier = Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.Center) {
+                if (secondsRemaining == 0) {
+                    AuthPrimaryButton(text = "Entendido", onClick = onContinue)
+                }
             }
-
-            Spacer(modifier = Modifier.height(30.dp))
         }
     }
 }

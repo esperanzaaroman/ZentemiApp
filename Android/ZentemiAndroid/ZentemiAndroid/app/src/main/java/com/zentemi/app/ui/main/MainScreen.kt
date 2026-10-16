@@ -89,8 +89,8 @@ fun MainScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .shadow(8.dp)
-                .background(Color.White)
+                .shadow(12.dp, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp), ambientColor = Purple.copy(alpha = 0.25f), spotColor = Purple.copy(alpha = 0.25f))
+                .background(Color.White, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                 .navigationBarsPadding()
                 .padding(horizontal = 8.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
@@ -125,7 +125,8 @@ fun MainScreen(
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = tab.label,
-                        fontSize = 10.sp,
+                        fontFamily = Quicksand,
+                        fontSize = 11.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                         color = if (isSelected) Purple else Color.Gray.copy(alpha = 0.5f)
                     )

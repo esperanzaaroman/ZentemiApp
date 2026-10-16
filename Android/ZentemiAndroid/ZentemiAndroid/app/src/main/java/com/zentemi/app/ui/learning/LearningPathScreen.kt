@@ -23,12 +23,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zentemi.app.state.AppState
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.zentemi.app.ui.components.BackCircleButton
+import com.zentemi.app.ui.components.ChunkyButton
+import com.zentemi.app.ui.components.HeaderTitle
+import com.zentemi.app.ui.components.WaveHeader
 import com.zentemi.app.ui.theme.*
 
 private data class LessonInfo(
     val number: Int,
     val name: String,
-    val emoji: String,
+    val icon: ImageVector,
     val xOffset: Int
 )
 
@@ -39,13 +48,13 @@ fun LearningPathScreen(
     onLessonSelected: (Int) -> Unit
 ) {
     val lessons = listOf(
-        LessonInfo(1, "Saludos", "✅", -85),
-        LessonInfo(2, "Familia", "👨‍👩‍👧‍👦", 75),
-        LessonInfo(3, "Números", "#️⃣", -70),
-        LessonInfo(4, "Colores", "🎨", 80),
-        LessonInfo(5, "Animales", "🐾", -75),
-        LessonInfo(6, "Alimentos", "🍽️", 75),
-        LessonInfo(7, "Frases básicas", "💬", -65)
+        LessonInfo(1, "Saludos", Icons.Filled.WavingHand, -85),
+        LessonInfo(2, "Familia", Icons.Filled.FamilyRestroom, 75),
+        LessonInfo(3, "Números", Icons.Filled.Numbers, -70),
+        LessonInfo(4, "Colores", Icons.Filled.Palette, 80),
+        LessonInfo(5, "Animales", Icons.Filled.Pets, -75),
+        LessonInfo(6, "Alimentos", Icons.Filled.Restaurant, 75),
+        LessonInfo(7, "Frases básicas", Icons.Filled.Forum, -65)
     )
 
     var lockedLessonName by remember { mutableStateOf<String?>(null) }
@@ -59,6 +68,16 @@ fun LearningPathScreen(
             repeatMode = RepeatMode.Reverse
         ),
         label = "circleOffset"
+    )
+
+    val ringPulse by bgAnim.animateFloat(
+        initialValue = 0.94f,
+        targetValue = 1.04f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "ringPulse"
     )
 
     Box(
@@ -89,63 +108,41 @@ fun LearningPathScreen(
         )
 
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BackgroundLight.copy(alpha = 0.96f))
-                    .statusBarsPadding()
-                    .padding(horizontal = 22.dp)
-                    .padding(top = 16.dp, bottom = 12.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(Color.White)
-                            .shadow(5.dp, CircleShape)
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Regresar",
-                            tint = Purple,
-                            modifier = Modifier.size(17.dp)
+            // Header with waves
+            WaveHeader {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        BackCircleButton(onClick = onBack, lightBackground = false)
+                        Spacer(modifier = Modifier.width(14.dp))
+                        HeaderTitle(title = "Tu camino", subtitle = "Aprende Yuhmu paso a paso")
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            text = "${appState.pathLessonsCompleted} / 7",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = CoinGoldDark,
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(SplashDotActive)
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(
-                        text = "Tu camino",
-                        fontSize = 25.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = DarkText
-                    )
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    Text(
-                        text = "${appState.pathLessonsCompleted} / 7",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Turquoise
+                    // Progress bar
+                    LinearProgressIndicator(
+                        progress = { appState.pathLessonsCompleted / 7f },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(10.dp)
+                            .clip(RoundedCornerShape(5.dp)),
+                        color = SplashDotActive,
+                        trackColor = Color.White.copy(alpha = 0.25f),
+                        gapSize = 0.dp,
+                        drawStopIndicator = {}
                     )
                 }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Progress bar
-                LinearProgressIndicator(
-                    progress = { appState.pathLessonsCompleted / 7f },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp)),
-                    color = Turquoise,
-                    trackColor = Color.Gray.copy(alpha = 0.1f)
-                )
             }
 
             // Lesson nodes
@@ -153,7 +150,7 @@ fun LearningPathScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(top = 24.dp, bottom = 70.dp),
+                    .padding(top = 8.dp, bottom = 70.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 lessons.forEachIndexed { index, lesson ->
@@ -175,37 +172,53 @@ fun LearningPathScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            // Circle
+                            // Circle (3D: darker lip underneath)
+                            val isCurrent = isUnlocked && !isCompleted
+                            val face = when {
+                                isCompleted -> Turquoise
+                                isUnlocked -> Purple
+                                else -> LockedNode
+                            }
+                            val lip = when {
+                                isCompleted -> Color(0xFF1E9A8A)
+                                isUnlocked -> PurpleDark
+                                else -> Color(0xFFC9C2DE)
+                            }
                             Box(
                                 modifier = Modifier
-                                    .size(62.dp)
-                                    .shadow(
-                                        elevation = if (isUnlocked) 8.dp else 0.dp,
-                                        shape = CircleShape,
-                                        ambientColor = if (isCompleted) Turquoise.copy(alpha = 0.25f)
-                                        else Purple.copy(alpha = 0.25f)
-                                    )
-                                    .clip(CircleShape)
-                                    .background(
-                                        when {
-                                            isCompleted -> Turquoise
-                                            isUnlocked -> Purple
-                                            else -> LockedNode
-                                        }
+                                    .size(84.dp)
+                                    .then(
+                                        if (isCurrent) Modifier
+                                            .scale(ringPulse)
+                                            .border(4.dp, SplashDotActive, CircleShape)
+                                        else Modifier
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {
-                                if (isUnlocked) {
-                                    Text(
-                                        text = lesson.emoji,
-                                        fontSize = 20.sp
-                                    )
-                                } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(66.dp)
+                                        .offset(y = 3.dp)
+                                        .clip(CircleShape)
+                                        .background(lip)
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(66.dp)
+                                        .offset(y = (-2).dp)
+                                        .clip(CircleShape)
+                                        .background(Brush.verticalGradient(listOf(lerp(face, Color.White, 0.15f), face))),
+                                    contentAlignment = Alignment.Center
+                                ) {
                                     Icon(
-                                        Icons.Filled.Lock,
+                                        imageVector = when {
+                                            isCompleted -> Icons.Filled.Check
+                                            isUnlocked -> lesson.icon
+                                            else -> Icons.Filled.Lock
+                                        },
                                         contentDescription = null,
-                                        tint = Purple.copy(alpha = 0.28f),
-                                        modifier = Modifier.size(20.dp)
+                                        tint = if (isUnlocked) Color.White else Purple.copy(alpha = 0.3f),
+                                        modifier = Modifier.size(30.dp)
                                     )
                                 }
                             }
@@ -221,9 +234,9 @@ fun LearningPathScreen(
                             ) {
                                 Text(
                                     text = lesson.name,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = SubText,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isUnlocked) DarkText else SubText.copy(alpha = 0.6f),
                                     modifier = Modifier.padding(horizontal = 11.dp, vertical = 5.dp)
                                 )
                             }
@@ -269,9 +282,9 @@ private fun PathDots(goesRight: Boolean) {
                         x = (startX + (endX - startX) * progress).dp,
                         y = (index * 12 - 30).dp
                     )
-                    .size(7.dp)
+                    .size(9.dp)
                     .clip(CircleShape)
-                    .background(PathDot)
+                    .background(Purple.copy(alpha = 0.22f))
             )
         }
     }
@@ -334,17 +347,11 @@ private fun LockedOverlay(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Button(
+                ChunkyButton(
+                    text = "Entendido",
                     onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(containerColor = Purple),
-                    shape = RoundedCornerShape(11.dp)
-                ) {
-                    Text(
-                        text = "Entendido",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                    modifier = Modifier.width(160.dp)
+                )
             }
         }
     }

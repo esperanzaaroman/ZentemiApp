@@ -22,7 +22,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zentemi.app.state.AppState
+import androidx.compose.ui.graphics.Brush
+import com.zentemi.app.ui.components.ChunkyButton
 import com.zentemi.app.ui.components.PetView
+import com.zentemi.app.ui.components.WaveHeader
 import com.zentemi.app.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -151,62 +154,83 @@ fun LessonCompleteScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 22.dp),
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(45.dp))
+            // Celebration header with waves
+            WaveHeader(waveHeight = 30.dp) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    AnimatedVisibility(
+                        visible = showMascot,
+                        enter = scaleIn() + fadeIn()
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(
+                                modifier = Modifier.size(170.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Brush.radialGradient(listOf(SplashGlow.copy(alpha = 0.6f), Color.Transparent)))
+                                )
+                                PetView(appState = appState, size = 130.dp)
+                            }
 
-            // Mascot
-            AnimatedVisibility(
-                visible = showMascot,
-                enter = scaleIn() + fadeIn()
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    PetView(appState = appState, size = 105.dp)
+                            Text(
+                                text = "¡Excelente!",
+                                fontSize = 34.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "Completaste la lección",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.White.copy(alpha = 0.85f)
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    Text(
-                        text = "¡Excelente!",
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Purple
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            // Stars
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(18.dp),
-                modifier = Modifier.height(45.dp)
-            ) {
-                repeat(starsEarned) { index ->
-                    AnimatedVisibility(
-                        visible = index < visibleStars,
-                        enter = scaleIn(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMedium
-                            )
-                        ) + fadeIn()
+                    // Stars
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        modifier = Modifier.height(44.dp)
                     ) {
-                        Icon(
-                            Icons.Filled.Star,
-                            contentDescription = null,
-                            tint = Color(0xFFFFEB3B),
-                            modifier = Modifier.size(31.dp)
-                        )
+                        repeat(starsEarned) { index ->
+                            AnimatedVisibility(
+                                visible = index < visibleStars,
+                                enter = scaleIn(
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMedium
+                                    )
+                                ) + fadeIn()
+                            ) {
+                                Icon(
+                                    Icons.Filled.Star,
+                                    contentDescription = null,
+                                    tint = SplashDotActive,
+                                    modifier = Modifier.size(42.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Result cards
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.padding(horizontal = 22.dp)
+            ) {
                 ResultCard(
                     visible = showCorrectCard,
                     icon = Icons.Filled.Check,
@@ -240,10 +264,11 @@ fun LessonCompleteScreen(
             // XP card
             AnimatedVisibility(
                 visible = showXPCard,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn()
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                modifier = Modifier.padding(horizontal = 22.dp)
             ) {
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(20.dp),
                     color = Color.White,
                     shadowElevation = 4.dp,
                     modifier = Modifier.fillMaxWidth()
@@ -275,16 +300,16 @@ fun LessonCompleteScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(10.dp)
-                                .clip(RoundedCornerShape(5.dp))
-                                .background(Color.Gray.copy(alpha = 0.10f))
+                                .height(12.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Turquoise.copy(alpha = 0.15f))
                         ) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxHeight()
                                     .fillMaxWidth(xpBarProgress)
-                                    .clip(RoundedCornerShape(5.dp))
-                                    .background(Turquoise)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Brush.horizontalGradient(listOf(Turquoise, SuccessGreen)))
                             )
                         }
 
@@ -295,8 +320,8 @@ fun LessonCompleteScreen(
                                 "Nivel máximo alcanzado"
                             else
                                 "$displayedXPRemaining XP para el Nivel ${displayedLevel + 1}",
-                            fontSize = 11.sp,
-                            color = Color.Gray.copy(alpha = 0.65f)
+                            fontSize = 12.sp,
+                            color = SubText
                         )
                     }
                 }
@@ -313,20 +338,12 @@ fun LessonCompleteScreen(
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = 22.dp, vertical = 18.dp)
         ) {
-            Button(
+            ChunkyButton(
+                text = "Continuar",
                 onClick = onContinue,
-                colors = ButtonDefaults.buttonColors(containerColor = Purple),
-                shape = RoundedCornerShape(14.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp)
-            ) {
-                Text(
-                    text = "Continuar",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                height = 54.dp,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -352,35 +369,43 @@ private fun ResultCard(
         modifier = modifier
     ) {
         Surface(
-            shape = RoundedCornerShape(15.dp),
+            shape = RoundedCornerShape(20.dp),
             color = Color.White,
             shadowElevation = 3.dp,
-            modifier = Modifier.height(88.dp)
+            modifier = Modifier.height(100.dp)
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = color,
-                    modifier = Modifier.size(16.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(color.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = color,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(7.dp))
 
                 Text(
                     text = value,
-                    fontSize = 15.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = DarkText
                 )
 
                 Text(
                     text = title,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     color = SubText
                 )
             }

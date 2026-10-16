@@ -20,6 +20,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zentemi.app.state.AppState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.compositeOver
+import com.zentemi.app.ui.components.ChunkyButton
+import com.zentemi.app.ui.components.PetView
 import com.zentemi.app.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -63,19 +70,19 @@ fun GreetingExerciseScreen(
             ) {
                 // Close button
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
+                    shape = CircleShape,
                     color = Color.White,
-                    shadowElevation = 2.dp,
+                    shadowElevation = 3.dp,
                     modifier = Modifier
-                        .size(38.dp)
+                        .size(42.dp)
                         .clickable { onBack() }
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             Icons.Filled.Close,
                             contentDescription = "Cerrar",
-                            tint = Color.Gray.copy(alpha = 0.65f),
-                            modifier = Modifier.size(14.dp)
+                            tint = Purple,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }
@@ -86,16 +93,16 @@ fun GreetingExerciseScreen(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Color.Gray.copy(alpha = 0.10f))
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(7.dp))
+                        .background(Purple.copy(alpha = 0.10f))
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxHeight()
                             .fillMaxWidth(exerciseNumber.toFloat() / totalExercises.toFloat())
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Turquoise)
+                            .clip(RoundedCornerShape(7.dp))
+                            .background(Brush.horizontalGradient(listOf(Turquoise, SuccessGreen)))
                     )
                 }
 
@@ -118,12 +125,22 @@ fun GreetingExerciseScreen(
                     .padding(top = 18.dp, bottom = 120.dp)
             ) {
                 // Question
-                Text(
-                    text = "¿Cómo se dice «hola»?",
-                    fontSize = 23.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DarkText
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    PetView(appState = appState, size = 86.dp)
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "¿Cómo se dice «hola»?",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DarkText,
+                        lineHeight = 27.sp,
+                        modifier = Modifier
+                            .shadow(6.dp, RoundedCornerShape(18.dp), ambientColor = Purple.copy(alpha = 0.2f), spotColor = Purple.copy(alpha = 0.2f))
+                            .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 18.dp, bottomEnd = 18.dp, bottomStart = 18.dp))
+                            .background(Color.White)
+                            .padding(horizontal = 16.dp, vertical = 14.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(18.dp))
 
@@ -165,7 +182,7 @@ fun GreetingExerciseScreen(
                                 Icons.Filled.VolumeUp,
                                 contentDescription = "Audio",
                                 tint = Color.White,
-                                modifier = Modifier.size(15.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         }
 
@@ -173,8 +190,8 @@ fun GreetingExerciseScreen(
 
                         Text(
                             text = if (isAudioPlaying) "Reproduciendo..." else "Escuchar audio",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
                             color = if (isAudioPlaying) Color.White else Purple
                         )
                     }
@@ -190,18 +207,32 @@ fun GreetingExerciseScreen(
                     val isCorrect = number == correctAnswer
                     val isWrongSelection = wasVerified && isSelected && !isCorrect
 
+                    val accent = when {
+                        wasVerified && isCorrect -> SuccessGreen
+                        isWrongSelection -> ErrorRed
+                        isSelected -> Purple
+                        else -> LockedNode
+                    }
                     Surface(
-                        shape = RoundedCornerShape(13.dp),
-                        color = Color.White,
-                        shadowElevation = 2.dp,
-                        border = if (isWrongSelection) {
-                            BorderStroke(2.dp, Color.Red.copy(alpha = 0.70f))
-                        } else if (isSelected) {
-                            BorderStroke(2.dp, Purple)
-                        } else null,
+                        shape = RoundedCornerShape(16.dp),
+                        color = when {
+                            wasVerified && isCorrect -> SuccessGreen.copy(alpha = 0.08f).compositeOver(Color.White)
+                            isWrongSelection -> ErrorRed.copy(alpha = 0.08f).compositeOver(Color.White)
+                            isSelected -> Purple.copy(alpha = 0.06f).compositeOver(Color.White)
+                            else -> Color.White
+                        },
+                        border = BorderStroke(2.dp, accent),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(78.dp)
+                            .height(74.dp)
+                            // 3D lip under the card
+                            .drawBehind {
+                                drawRoundRect(
+                                    color = accent,
+                                    topLeft = androidx.compose.ui.geometry.Offset(0f, 4.dp.toPx()),
+                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx())
+                                )
+                            }
                             .clickable(enabled = verifiedAnswer == null) {
                                 selectedAnswer = number
                             }
@@ -215,10 +246,10 @@ fun GreetingExerciseScreen(
                             // Letter badge
                             Box(
                                 modifier = Modifier
-                                    .size(30.dp)
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .size(34.dp)
+                                    .clip(RoundedCornerShape(10.dp))
                                     .background(
-                                        if (isSelected) Purple
+                                        if (isSelected || (wasVerified && isCorrect)) accent
                                         else Color(0xFFF2F0F8)
                                     ),
                                 contentAlignment = Alignment.Center
@@ -227,9 +258,9 @@ fun GreetingExerciseScreen(
                                     text = when (number) {
                                         1 -> "A"; 2 -> "B"; 3 -> "C"; 4 -> "D"; else -> ""
                                     },
-                                    fontSize = 12.sp,
+                                    fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) Color.White
+                                    color = if (isSelected || (wasVerified && isCorrect)) Color.White
                                     else Color.Gray.copy(alpha = 0.55f)
                                 )
                             }
@@ -238,9 +269,9 @@ fun GreetingExerciseScreen(
 
                             Text(
                                 text = answer,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = if (isSelected) Purple else DarkText
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isSelected) accent else DarkText
                             )
 
                             Spacer(modifier = Modifier.weight(1f))
@@ -249,22 +280,22 @@ fun GreetingExerciseScreen(
                                 Icon(
                                     Icons.Filled.Check,
                                     contentDescription = null,
-                                    tint = Turquoise,
-                                    modifier = Modifier.size(15.dp)
+                                    tint = SuccessGreen,
+                                    modifier = Modifier.size(24.dp)
                                 )
                             } else if (isWrongSelection) {
                                 Icon(
                                     Icons.Filled.Close,
                                     contentDescription = null,
-                                    tint = Color.Red,
-                                    modifier = Modifier.size(14.dp)
+                                    tint = ErrorRed,
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
                         }
                     }
 
                     if (index < answers.size - 1) {
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
                     }
                 }
             }
@@ -277,9 +308,10 @@ fun GreetingExerciseScreen(
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = 20.dp, vertical = 18.dp)
         ) {
-            Button(
+            ChunkyButton(
+                text = if (verifiedAnswer == null) "Verificar" else "Continuar",
                 onClick = {
-                    val sel = selectedAnswer ?: return@Button
+                    val sel = selectedAnswer ?: return@ChunkyButton
 
                     if (verifiedAnswer == null) {
                         verifiedAnswer = sel
@@ -311,21 +343,20 @@ fun GreetingExerciseScreen(
                         }
                     }
                 },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (selectedAnswer == null) Purple.copy(alpha = 0.35f) else Purple
-                ),
-                shape = RoundedCornerShape(14.dp),
+                color = when {
+                    verifiedAnswer == null -> Purple
+                    verifiedAnswer == correctAnswer -> SuccessGreen
+                    else -> ErrorRed
+                },
+                lipColor = when {
+                    verifiedAnswer == null -> PurpleDark
+                    verifiedAnswer == correctAnswer -> Color(0xFF2E9E4D)
+                    else -> Color(0xFFD94848)
+                },
                 enabled = selectedAnswer != null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp)
-            ) {
-                Text(
-                    text = if (verifiedAnswer == null) "Verificar" else "Continuar",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                height = 54.dp,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
 
         // Confetti

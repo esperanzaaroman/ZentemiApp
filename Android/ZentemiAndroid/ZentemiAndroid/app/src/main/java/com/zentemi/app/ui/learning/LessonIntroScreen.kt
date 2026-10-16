@@ -23,7 +23,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zentemi.app.state.AppState
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import com.zentemi.app.ui.components.BackCircleButton
+import com.zentemi.app.ui.components.ChunkyButton
+import com.zentemi.app.ui.components.HeaderTitle
 import com.zentemi.app.ui.components.PetView
+import com.zentemi.app.ui.components.TagChip
+import com.zentemi.app.ui.components.WaveHeader
 import com.zentemi.app.ui.theme.*
 
 private enum class LessonInfoType {
@@ -124,41 +132,13 @@ fun LessonIntroScreen(
         )
 
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(horizontal = 20.dp)
-                    .padding(top = 15.dp, bottom = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(Color.White)
-                        .shadow(5.dp, CircleShape)
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Regresar",
-                        tint = Purple,
-                        modifier = Modifier.size(17.dp)
-                    )
+            // Header with waves
+            WaveHeader {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    BackCircleButton(onClick = onBack, lightBackground = false)
+                    Spacer(modifier = Modifier.width(14.dp))
+                    HeaderTitle(title = "Lección $lessonNumber", subtitle = "de 7 en tu camino")
                 }
-
-                Spacer(modifier = Modifier.width(10.dp))
-
-                Text(
-                    text = "Lección $lessonNumber de 7",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = SubText
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
             }
 
             // Content
@@ -167,7 +147,7 @@ fun LessonIntroScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp)
-                    .padding(top = 18.dp, bottom = 30.dp),
+                    .padding(top = 4.dp, bottom = 30.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Lesson card
@@ -175,7 +155,7 @@ fun LessonIntroScreen(
                     shape = RoundedCornerShape(20.dp),
                     color = Color.White,
                     shadowElevation = 4.dp,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().shadow(10.dp, RoundedCornerShape(20.dp), ambientColor = Purple.copy(alpha = 0.18f), spotColor = Purple.copy(alpha = 0.18f))
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
@@ -183,35 +163,34 @@ fun LessonIntroScreen(
                         Spacer(modifier = Modifier.height(18.dp))
 
                         // Badge
-                        Surface(
-                            shape = RoundedCornerShape(50),
-                            color = Purple.copy(alpha = 0.09f)
-                        ) {
-                            Text(
-                                text = "NUEVA SECCIÓN",
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Purple,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
-                            )
-                        }
+                        TagChip(text = "NUEVA SECCIÓN", color = Purple)
 
                         Spacer(modifier = Modifier.height(15.dp))
 
                         // Mascot
                         Box(
-                            modifier = Modifier.height(125.dp),
-                            contentAlignment = Alignment.BottomCenter
+                            modifier = Modifier.size(170.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            PetView(appState = appState, size = 125.dp)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Brush.radialGradient(listOf(SplashGlow.copy(alpha = 0.35f), Color.Transparent)))
+                            )
+                            PetView(
+                                appState = appState,
+                                size = 130.dp,
+                                modifier = Modifier.graphicsLayer {
+                                    scaleY = mascotScaleY
+                                    transformOrigin = TransformOrigin(0.5f, 1f)
+                                }
+                            )
                         }
-
-                        Spacer(modifier = Modifier.height(13.dp))
 
                         // Title
                         Text(
                             text = title,
-                            fontSize = 24.sp,
+                            fontSize = 26.sp,
                             fontWeight = FontWeight.Bold,
                             color = DarkText
                         )
@@ -221,10 +200,11 @@ fun LessonIntroScreen(
                         // Description
                         Text(
                             text = description,
-                            fontSize = 14.sp,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
                             color = SubText,
                             textAlign = TextAlign.Center,
-                            lineHeight = 20.sp,
+                            lineHeight = 21.sp,
                             modifier = Modifier.padding(horizontal = 25.dp)
                         )
 
@@ -264,21 +244,13 @@ fun LessonIntroScreen(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Start button
-                Button(
+                ChunkyButton(
+                    text = "Comenzar",
                     onClick = { if (exercises > 0) onStartExercise() },
-                    colors = ButtonDefaults.buttonColors(containerColor = Purple),
-                    shape = RoundedCornerShape(14.dp),
                     enabled = exercises > 0,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp)
-                ) {
-                    Text(
-                        text = "Comenzar",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                    height = 54.dp,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
 
@@ -310,8 +282,8 @@ private fun InfoRow(
     ) {
         Box(
             modifier = Modifier
-                .size(34.dp)
-                .clip(RoundedCornerShape(9.dp))
+                .size(38.dp)
+                .clip(RoundedCornerShape(11.dp))
                 .background(color.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center
         ) {
@@ -319,7 +291,7 @@ private fun InfoRow(
                 imageVector = icon,
                 contentDescription = null,
                 tint = color,
-                modifier = Modifier.size(14.dp)
+                modifier = Modifier.size(20.dp)
             )
         }
 
@@ -327,8 +299,8 @@ private fun InfoRow(
 
         Text(
             text = text,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
             color = DarkText
         )
 
@@ -338,7 +310,7 @@ private fun InfoRow(
             Icons.Filled.Info,
             contentDescription = null,
             tint = Color.Gray.copy(alpha = 0.45f),
-            modifier = Modifier.size(14.dp)
+            modifier = Modifier.size(18.dp)
         )
     }
 }
@@ -420,17 +392,11 @@ private fun LessonInfoOverlay(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Button(
+                ChunkyButton(
+                    text = "Entendido",
                     onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(containerColor = Purple),
-                    shape = RoundedCornerShape(11.dp)
-                ) {
-                    Text(
-                        text = "Entendido",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                    modifier = Modifier.width(160.dp)
+                )
             }
         }
     }

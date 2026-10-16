@@ -8,7 +8,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.foundation.Image
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.ui.res.painterResource
+import com.zentemi.app.R
+import com.zentemi.app.ui.components.BackCircleButton
+import com.zentemi.app.ui.components.ChunkyButton
+import com.zentemi.app.ui.components.HeaderTitle
+import com.zentemi.app.ui.components.WaveHeader
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -38,50 +45,14 @@ fun SettingsScreen(
             .fillMaxSize()
             .background(BackgroundLight)
     ) {
-        // Decorative circle
-        Box(
-            modifier = Modifier
-                .size(260.dp)
-                .offset(x = 150.dp, y = 260.dp)
-                .clip(CircleShape)
-                .background(Purple.copy(alpha = 0.025f))
-        )
-
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(horizontal = 20.dp)
-                    .padding(top = 14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .size(34.dp)
-                        .clip(CircleShape)
-                        .background(Color.White)
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Regresar",
-                        tint = Purple,
-                        modifier = Modifier.size(14.dp)
-                    )
+            // Header with waves
+            WaveHeader {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    BackCircleButton(onClick = onBack, lightBackground = false)
+                    Spacer(modifier = Modifier.width(14.dp))
+                    HeaderTitle(title = "Ajustes", subtitle = "Personaliza tu experiencia")
                 }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Text(
-                    text = "Ajustes",
-                    fontSize = 21.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DarkText
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
             }
 
             // Content
@@ -90,13 +61,13 @@ fun SettingsScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp)
-                    .padding(top = 18.dp)
+                    .padding(top = 4.dp)
             ) {
                 // Main settings card
                 Surface(
-                    shape = RoundedCornerShape(17.dp),
+                    shape = RoundedCornerShape(20.dp),
                     color = Color.White,
-                    shadowElevation = 1.dp
+                    shadowElevation = 3.dp
                 ) {
                     Column {
                         // Music volume
@@ -108,7 +79,7 @@ fun SettingsScreen(
                             onVolumeChange = { appState.musicVolume = it }
                         )
 
-                        HorizontalDivider(modifier = Modifier.padding(start = 55.dp))
+                        HorizontalDivider(modifier = Modifier.padding(start = 61.dp), color = LockedNode.copy(alpha = 0.6f))
 
                         // Sound volume
                         VolumeRow(
@@ -119,7 +90,7 @@ fun SettingsScreen(
                             onVolumeChange = { appState.soundVolume = it }
                         )
 
-                        HorizontalDivider(modifier = Modifier.padding(start = 55.dp))
+                        HorizontalDivider(modifier = Modifier.padding(start = 61.dp), color = LockedNode.copy(alpha = 0.6f))
 
                         // Notifications
                         ToggleRow(
@@ -131,7 +102,7 @@ fun SettingsScreen(
                             onToggle = { appState.notificationsEnabled = it }
                         )
 
-                        HorizontalDivider(modifier = Modifier.padding(start = 55.dp))
+                        HorizontalDivider(modifier = Modifier.padding(start = 61.dp), color = LockedNode.copy(alpha = 0.6f))
 
                         // Language
                         NavigationRow(
@@ -143,7 +114,7 @@ fun SettingsScreen(
                             onClick = { showLanguageSelector = true }
                         )
 
-                        HorizontalDivider(modifier = Modifier.padding(start = 55.dp))
+                        HorizontalDivider(modifier = Modifier.padding(start = 61.dp), color = LockedNode.copy(alpha = 0.6f))
 
                         // About
                         NavigationRow(
@@ -161,9 +132,9 @@ fun SettingsScreen(
 
                 // Yuhmu de Ixtenco card
                 Surface(
-                    shape = RoundedCornerShape(17.dp),
+                    shape = RoundedCornerShape(20.dp),
                     color = Color.White,
-                    shadowElevation = 1.dp
+                    shadowElevation = 3.dp
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
@@ -173,10 +144,14 @@ fun SettingsScreen(
                             modifier = Modifier
                                 .size(58.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color.Yellow.copy(alpha = 0.13f)),
+                                .background(SplashDotActive.copy(alpha = 0.16f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "🌽", fontSize = 32.sp)
+                            Image(
+                                painter = painterResource(id = R.drawable.mascota),
+                                contentDescription = null,
+                                modifier = Modifier.size(46.dp)
+                            )
                         }
 
                         Spacer(modifier = Modifier.width(15.dp))
@@ -210,25 +185,29 @@ fun SettingsScreen(
                     .padding(bottom = 22.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Button(
+                ChunkyButton(
+                    text = "Cerrar sesión",
                     onClick = { showLogoutConfirmation = true },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Red.copy(alpha = 0.65f)
-                    ),
-                    shape = RoundedCornerShape(50)
-                ) {
-                    Text(
-                        text = "Cerrar sesión",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+                    color = ErrorRed,
+                    lipColor = Color(0xFFD94848),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 60.dp),
+                    leading = {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                )
 
                 Spacer(modifier = Modifier.height(9.dp))
 
                 Text(
                     text = "Versión 1.0",
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     color = SubText.copy(alpha = 0.55f)
                 )
             }
@@ -326,8 +305,8 @@ private fun VolumeRow(
         ) {
             Box(
                 modifier = Modifier
-                    .size(30.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
                     .background(iconColor.copy(alpha = 0.10f)),
                 contentAlignment = Alignment.Center
             ) {
@@ -335,7 +314,7 @@ private fun VolumeRow(
                     imageVector = icon,
                     contentDescription = null,
                     tint = iconColor,
-                    modifier = Modifier.size(13.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
@@ -343,8 +322,8 @@ private fun VolumeRow(
 
             Text(
                 text = title,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
                 color = DarkText
             )
 
@@ -363,7 +342,7 @@ private fun VolumeRow(
         Slider(
             value = volume,
             onValueChange = onVolumeChange,
-            modifier = Modifier.padding(start = 42.dp),
+            modifier = Modifier.padding(start = 48.dp),
             colors = SliderDefaults.colors(
                 thumbColor = Purple,
                 activeTrackColor = Purple
@@ -390,8 +369,8 @@ private fun ToggleRow(
     ) {
         Box(
             modifier = Modifier
-                .size(30.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .size(36.dp)
+                .clip(RoundedCornerShape(10.dp))
                 .background(iconBackground),
             contentAlignment = Alignment.Center
         ) {
@@ -399,7 +378,7 @@ private fun ToggleRow(
                 imageVector = icon,
                 contentDescription = null,
                 tint = iconColor,
-                modifier = Modifier.size(13.dp)
+                modifier = Modifier.size(20.dp)
             )
         }
 
@@ -407,8 +386,8 @@ private fun ToggleRow(
 
         Text(
             text = title,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold,
             color = DarkText
         )
 
@@ -444,8 +423,8 @@ private fun NavigationRow(
     ) {
         Box(
             modifier = Modifier
-                .size(30.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .size(36.dp)
+                .clip(RoundedCornerShape(10.dp))
                 .background(iconBackground),
             contentAlignment = Alignment.Center
         ) {
@@ -453,7 +432,7 @@ private fun NavigationRow(
                 imageVector = icon,
                 contentDescription = null,
                 tint = iconColor,
-                modifier = Modifier.size(13.dp)
+                modifier = Modifier.size(20.dp)
             )
         }
 
@@ -461,8 +440,8 @@ private fun NavigationRow(
 
         Text(
             text = title,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold,
             color = DarkText
         )
 
@@ -481,7 +460,7 @@ private fun NavigationRow(
             Icons.Filled.ChevronRight,
             contentDescription = null,
             tint = SubText.copy(alpha = 0.45f),
-            modifier = Modifier.size(11.dp)
+            modifier = Modifier.size(20.dp)
         )
     }
 }
@@ -492,7 +471,11 @@ private fun AboutZentemiDialog(onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         title = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = "🌽", fontSize = 60.sp)
+                Image(
+                    painter = painterResource(id = R.drawable.mascota),
+                    contentDescription = null,
+                    modifier = Modifier.size(90.dp)
+                )
 
                 Spacer(modifier = Modifier.height(8.dp))
 

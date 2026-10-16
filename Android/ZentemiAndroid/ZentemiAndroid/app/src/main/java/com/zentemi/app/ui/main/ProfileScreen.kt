@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zentemi.app.state.AppState
 import com.zentemi.app.ui.components.PetView
+import com.zentemi.app.ui.components.WaveHeader
 import com.zentemi.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,11 +36,11 @@ fun ProfileScreen(
     var showLevelList by remember { mutableStateOf(false) }
 
     val achievements = listOf(
-        Triple("🎓", "Primera lección", appState.pathLessonsCompleted >= 1),
-        Triple("🔥", "Racha de 3 días", appState.streak >= 3),
-        Triple("💰", "Ahorrador: 500 monedas", appState.coins >= 500),
-        Triple("⭐", "Nivel 5", appState.currentLevel >= 5),
-        Triple("🏆", "Maestro Zentemi", appState.currentLevel >= 10),
+        Triple(Icons.Filled.School, "Primera lección", appState.pathLessonsCompleted >= 1),
+        Triple(Icons.Filled.LocalFireDepartment, "Racha de 3 días", appState.streak >= 3),
+        Triple(Icons.Filled.Savings, "Ahorrador: 500 monedas", appState.coins >= 500),
+        Triple(Icons.Filled.Star, "Nivel 5", appState.currentLevel >= 5),
+        Triple(Icons.Filled.EmojiEvents, "Maestro Zentemi", appState.currentLevel >= 10),
     )
 
     Column(
@@ -48,59 +49,33 @@ fun ProfileScreen(
             .background(BackgroundLight)
             .verticalScroll(rememberScrollState())
     ) {
-        // Profile header with gradient
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(220.dp)
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(PurpleGradientStart, PurpleGradientEnd)
-                    )
-                )
-        ) {
-            // Decorative circles
-            Box(
-                modifier = Modifier
-                    .size(140.dp)
-                    .offset(x = (-80).dp, y = (-60).dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.06f))
-            )
-            Box(
-                modifier = Modifier
-                    .size(180.dp)
-                    .offset(x = 200.dp, y = 100.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.04f))
-            )
-
+        // Profile header with waves
+        WaveHeader {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding()
-                    .padding(horizontal = 20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Settings button
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Spacer(modifier = Modifier.width(1.dp))
+                // Title + settings button
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Perfil",
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
                     IconButton(
                         onClick = onSettingsPressed,
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(42.dp)
                             .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.15f))
+                            .background(Color.White.copy(alpha = 0.18f))
                     ) {
                         Icon(
                             Icons.Filled.Settings,
                             contentDescription = "Ajustes",
                             tint = Color.White,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }
@@ -108,36 +83,47 @@ fun ProfileScreen(
                 // Avatar
                 Box(
                     modifier = Modifier
-                        .size(80.dp)
+                        .size(104.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.2f))
+                        .background(
+                            Brush.radialGradient(
+                                listOf(SplashGlow.copy(alpha = 0.55f), Color.White.copy(alpha = 0.18f))
+                            )
+                        )
+                        .border(3.dp, Color.White.copy(alpha = 0.7f), CircleShape)
                         .clickable { showEditor = true },
                     contentAlignment = Alignment.Center
                 ) {
-                    PetView(appState = appState, size = 65.dp)
+                    PetView(appState = appState, size = 80.dp)
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
                     text = appState.userName,
-                    fontSize = 22.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
 
+                Spacer(modifier = Modifier.height(6.dp))
+
                 // Level badge
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = LevelColors.getOrElse(appState.currentLevel - 1) { Purple },
-                    modifier = Modifier.clickable { showLevelList = !showLevelList }
+                Row(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(SplashDotActive)
+                        .clickable { showLevelList = !showLevelList }
+                        .padding(horizontal = 14.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Icon(Icons.Filled.Star, contentDescription = null, tint = CoinGoldDark, modifier = Modifier.size(15.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Nv. ${appState.currentLevel} — ${appState.levelName(appState.currentLevel)}",
-                        fontSize = 11.sp,
+                        text = "Nv. ${appState.currentLevel} · ${appState.levelName(appState.currentLevel)}",
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                        color = CoinGoldDark
                     )
                 }
             }
@@ -150,9 +136,9 @@ fun ProfileScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 18.dp)
                     .padding(top = 12.dp),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(20.dp),
                 color = Color.White,
-                shadowElevation = 2.dp
+                shadowElevation = 3.dp
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(
@@ -249,9 +235,9 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 18.dp),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(20.dp),
             color = Color.White,
-            shadowElevation = 1.dp
+            shadowElevation = 3.dp
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
@@ -289,7 +275,9 @@ fun ProfileScreen(
                         .height(10.dp)
                         .clip(RoundedCornerShape(5.dp)),
                     color = Purple,
-                    trackColor = Purple.copy(alpha = 0.1f)
+                    trackColor = Purple.copy(alpha = 0.1f),
+                    gapSize = 0.dp,
+                    drawStopIndicator = {}
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -319,24 +307,31 @@ fun ProfileScreen(
             contentPadding = PaddingValues(horizontal = 18.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            itemsIndexed(achievements) { _, (emoji, title, unlocked) ->
+            itemsIndexed(achievements) { _, (icon, title, unlocked) ->
                 Surface(
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(20.dp),
                     color = Color.White,
-                    shadowElevation = 1.dp,
+                    shadowElevation = 3.dp,
                     modifier = Modifier.width(120.dp)
                 ) {
                     Column(
                         modifier = Modifier.padding(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            text = emoji,
-                            fontSize = 30.sp,
-                            modifier = Modifier.then(
-                                if (!unlocked) Modifier else Modifier
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(if (unlocked) SplashDotActive.copy(alpha = 0.2f) else LockedNode.copy(alpha = 0.6f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                tint = if (unlocked) CoinGold else SubText.copy(alpha = 0.4f),
+                                modifier = Modifier.size(26.dp)
                             )
-                        )
+                        }
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = title,
@@ -389,9 +384,9 @@ private fun StatCard(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(20.dp),
         color = Color.White,
-        shadowElevation = 1.dp,
+        shadowElevation = 3.dp,
         modifier = modifier
     ) {
         Column(

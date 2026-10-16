@@ -1,36 +1,27 @@
 package com.zentemi.app.ui.components
 
-import androidx.compose.foundation.background
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.material3.Text
+import com.zentemi.app.R
 import com.zentemi.app.state.AppState
+import kotlin.math.cos
+import kotlin.math.sin
 
 /**
- * Composable mascot with layered accessories.
+ * The mascot with its equipped accessories layered on top.
  *
- * Since the actual image assets (mascota.png, lentes.png, etc.) need to be
- * added to res/drawable, this renders a placeholder emoji mascot.
- * When the real PNGs are added, replace the Text("🌽") with Image() composables
- * using painterResource(R.drawable.mascota), and overlay each accessory
- * using the offset/size ratios from the iOS version.
- *
- * iOS reference offsets (base size 115):
- *   traje1k:      width=115, x=0,  y=-1
- *   cabello:      width=70,  x=0,  y=-31
- *   cabellorosa:  width=70,  x=0,  y=-31
- *   lentes:       width=50,  x=0,  y=-4
- *   lentesdesol:  width=52,  x=0,  y=-4
- *   bufanda:      width=55,  x=-1, y=21
- *   espada:       width=45,  x=37, y=3
+ * Accessory width and offsets are given for a base size of 115 (same values as
+ * the iOS PetView) and scaled to [size].
  */
 @Composable
 fun PetView(
@@ -40,111 +31,65 @@ fun PetView(
 ) {
     val scale = size / 115.dp
 
+    val hueFilter = remember(appState.mascotHue) {
+        if (appState.mascotHue == 0f) null
+        else ColorFilter.colorMatrix(hueRotationMatrix(appState.mascotHue * 360f))
+    }
+
     Box(
         modifier = modifier.size(size),
         contentAlignment = Alignment.Center
     ) {
-        // Base mascot placeholder
-        Box(
-            modifier = Modifier
-                .size(size)
-                .clip(CircleShape)
-                .background(Color(0xFFE8D5F5).copy(alpha = 0.5f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "🌽",
-                fontSize = (size.value * 0.55f).sp
-            )
-        }
+        Image(
+            painter = painterResource(id = R.drawable.mascota),
+            contentDescription = appState.petName,
+            colorFilter = hueFilter,
+            modifier = Modifier.size(size)
+        )
 
-        // Accessory indicators (small colored dots showing equipped items)
-        // These will be replaced with actual Image overlays when assets are added
-
-        if (appState.suitEquipped) {
-            AccessoryDot(
-                color = Color(0xFF4A148C),
-                label = "T",
-                offset = Pair(0f, (size.value * 0.35f)),
-                scale = scale
-            )
-        }
-
-        if (appState.hairEquipped) {
-            AccessoryDot(
-                color = Color(0xFF5D4037),
-                label = "C",
-                offset = Pair(0f, -(size.value * 0.35f)),
-                scale = scale
-            )
-        }
-
-        if (appState.pinkHairEquipped) {
-            AccessoryDot(
-                color = Color(0xFFE91E63),
-                label = "C",
-                offset = Pair(0f, -(size.value * 0.35f)),
-                scale = scale
-            )
-        }
-
-        if (appState.glassesEquipped) {
-            AccessoryDot(
-                color = Color(0xFF212121),
-                label = "L",
-                offset = Pair(0f, -(size.value * 0.05f)),
-                scale = scale
-            )
-        }
-
-        if (appState.sunglassesEquipped) {
-            AccessoryDot(
-                color = Color(0xFF1B5E20),
-                label = "L",
-                offset = Pair(0f, -(size.value * 0.05f)),
-                scale = scale
-            )
-        }
-
-        if (appState.scarfEquipped) {
-            AccessoryDot(
-                color = Color(0xFFC62828),
-                label = "B",
-                offset = Pair(-(size.value * 0.01f), (size.value * 0.18f)),
-                scale = scale
-            )
-        }
-
-        if (appState.swordEquipped) {
-            AccessoryDot(
-                color = Color(0xFF757575),
-                label = "E",
-                offset = Pair((size.value * 0.32f), (size.value * 0.03f)),
-                scale = scale
-            )
-        }
+        if (appState.suitEquipped) Accessory(R.drawable.traje1k, 135f, 1f, 1f, scale)
+        if (appState.hairEquipped) Accessory(R.drawable.cabello, 100f, 0f, -30f, scale)
+        if (appState.pinkHairEquipped) Accessory(R.drawable.cabellorosa, 105f, 0f, -25f, scale)
+        if (appState.glassesEquipped) Accessory(R.drawable.lentes, 70f, 1f, 0f, scale)
+        if (appState.sunglassesEquipped) Accessory(R.drawable.lentesdesol, 70f, 0f, 0f, scale)
+        if (appState.scarfEquipped) Accessory(R.drawable.bufanda, 110f, -2f, 40f, scale)
+        if (appState.swordEquipped) Accessory(R.drawable.espada, 70f, 45f, 9f, scale)
     }
 }
 
 @Composable
-private fun AccessoryDot(
-    color: Color,
-    label: String,
-    offset: Pair<Float, Float>,
+private fun Accessory(
+    @DrawableRes image: Int,
+    width: Float,
+    x: Float,
+    y: Float,
     scale: Float
 ) {
-    Box(
+    val painter = painterResource(id = image)
+    val intrinsic = painter.intrinsicSize
+    val w = (width * scale).dp
+    val h = w * (intrinsic.height / intrinsic.width)
+
+    Image(
+        painter = painter,
+        contentDescription = null,
         modifier = Modifier
-            .offset(x = offset.first.dp, y = offset.second.dp)
-            .size((18 * scale).dp)
-            .clip(CircleShape)
-            .background(color),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            fontSize = (9 * scale).sp,
-            color = Color.White
+            .offset(x = (x * scale).dp, y = (y * scale).dp)
+            .requiredSize(w, h) // may be larger than the mascot (e.g. the suit)
+    )
+}
+
+/** Hue rotation matrix (same math as CSS hue-rotate / SwiftUI hueRotation). */
+private fun hueRotationMatrix(degrees: Float): ColorMatrix {
+    val rad = Math.toRadians(degrees.toDouble())
+    val c = cos(rad).toFloat()
+    val s = sin(rad).toFloat()
+    return ColorMatrix(
+        floatArrayOf(
+            0.213f + c * 0.787f - s * 0.213f, 0.715f - c * 0.715f - s * 0.715f, 0.072f - c * 0.072f + s * 0.928f, 0f, 0f,
+            0.213f - c * 0.213f + s * 0.143f, 0.715f + c * 0.285f + s * 0.140f, 0.072f - c * 0.072f - s * 0.283f, 0f, 0f,
+            0.213f - c * 0.213f - s * 0.787f, 0.715f - c * 0.715f + s * 0.715f, 0.072f + c * 0.928f + s * 0.072f, 0f, 0f,
+            0f, 0f, 0f, 1f, 0f
         )
-    }
+    )
 }
