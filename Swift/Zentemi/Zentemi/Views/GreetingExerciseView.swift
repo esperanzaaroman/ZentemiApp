@@ -1,3 +1,4 @@
+
 import SwiftUI
 import AVFoundation
 
@@ -17,7 +18,8 @@ struct GreetingExerciseView: View {
     @State private var isAudioPlaying = false
     @State private var showConfetti = false
     @State private var errorShake: CGFloat = 0
-    @State private var showLessonComplete = false
+    @State private var showSecondFlow = false
+    @State private var secondSceneCompleted = false
     @State private var exerciseStartDate = Date()
 
     private let correctAnswer = 2
@@ -42,7 +44,7 @@ struct GreetingExerciseView: View {
 
     private let answers = [
         "Nzengwa",
-        "Hä nzengwa",
+        "Té xki hats’i",
         "Ra hyadi",
         "Nänä"
     ]
@@ -71,7 +73,7 @@ struct GreetingExerciseView: View {
 
                         // MARK: - PREGUNTA
 
-                        Text("¿Cómo se dice «hola»?")
+                        Text("¿Cómo se dice «buenos días»?")
                             .font(
                                 .system(
                                     size: 23,
@@ -205,31 +207,34 @@ struct GreetingExerciseView: View {
         }
         .offset(x: errorShake)
         .fullScreenCover(
-            isPresented: $showLessonComplete
+            isPresented: $showSecondFlow
         ) {
 
-            LessonCompleteView(
-                correctAnswers:
-                    verifiedAnswer == correctAnswer
-                    ? 1
-                    : 0,
-                totalAnswers: 1,
-                elapsedSeconds:
-                    max(
-                        1,
-                        Int(
-                            Date()
-                                .timeIntervalSince(
-                                    exerciseStartDate
-                                )
-                        )
-                    )
-            ) {
-                onLessonCompleted()
+            Group {
+
+                if secondSceneCompleted {
+
+                    SecondPhraseExerciseView(
+                        exerciseNumber: 2,
+                        totalExercises: totalExercises,
+                        previousCorrectAnswers:
+                            verifiedAnswer == correctAnswer ? 1 : 0,
+                        lessonStartDate: exerciseStartDate
+                    ) {
+                        onLessonCompleted()
+                    }
+                    .environmentObject(appState)
+
+                } else {
+
+                    SecondPhraseSceneView {
+                        secondSceneCompleted = true
+                    }
+                    .environmentObject(appState)
+                }
             }
-            .environmentObject(appState)
         }
-        }
+    }
 
     // MARK: - ENCABEZADO
 
@@ -337,6 +342,7 @@ struct GreetingExerciseView: View {
             guard verifiedAnswer == nil else {
                 return
             }
+
             SoundManager.shared.play(
                 "audioSeleccion",
                 volume: Float(appState.soundVolume)
@@ -550,9 +556,11 @@ struct GreetingExerciseView: View {
 
             } else {
 
-                if exerciseNumber >= totalExercises {
-                    showLessonComplete = true
-                }
+                // MARK: - IR A LA ESCENA 2
+
+                audioPlayer?.stop()
+                secondSceneCompleted = false
+                showSecondFlow = true
             }
 
         } label: {
@@ -627,8 +635,8 @@ struct GreetingExerciseView: View {
     private func playGreetingAudio() {
 
         guard let url = Bundle.main.url(
-            forResource: "audiovoz00",
-            withExtension: "mp3"
+            forResource: "buenosDias",
+            withExtension: "m4a"
         ) else {
             print("No se encontró el audio.")
             return
@@ -761,7 +769,7 @@ private struct ConfettiView: View {
 
     GreetingExerciseView(
         exerciseNumber: 1,
-        totalExercises: 1
+        totalExercises: 2
     ) {
         print("Lección terminada")
     }

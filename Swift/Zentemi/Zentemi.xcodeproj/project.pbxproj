@@ -16,10 +16,9 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		46C41B4C3058940400398940 /* Exceptions for "Zentemi" folder in "Zentemi" target */ = {
+		B03B3286308F2963003F4A22 /* Exceptions for "Zentemi" folder in "Zentemi" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				"Views/Untitled 2.swift",
 				Views/Untitled.swift,
 			);
 			target = 46C41B0A305863D700398940 /* Zentemi */;
@@ -30,7 +29,7 @@
 		46C41B0D305863D700398940 /* Zentemi */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				46C41B4C3058940400398940 /* Exceptions for "Zentemi" folder in "Zentemi" target */,
+				B03B3286308F2963003F4A22 /* Exceptions for "Zentemi" folder in "Zentemi" target */,
 			);
 			path = Zentemi;
 			sourceTree = "<group>";
@@ -285,9 +284,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = A4X4727HVW;
+				DEVELOPMENT_TEAM = 33XB53F2BC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -317,9 +318,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = A4X4727HVW;
+				DEVELOPMENT_TEAM = 33XB53F2BC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

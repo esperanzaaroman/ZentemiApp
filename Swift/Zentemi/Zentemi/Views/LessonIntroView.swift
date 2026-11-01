@@ -1,3 +1,4 @@
+
 import SwiftUI
 
 struct LessonIntroView: View {
@@ -35,7 +36,6 @@ struct LessonIntroView: View {
         green: 0.95,
         blue: 0.99
     )
-
 
     var body: some View {
 
@@ -130,7 +130,7 @@ struct LessonIntroView: View {
                     mascotScaleY = 1.06
                 }
             }
-            
+
             withAnimation(
                 .easeInOut(duration: 7)
                     .repeatForever(
@@ -152,19 +152,16 @@ struct LessonIntroView: View {
                 )
             }
         }
+
         .fullScreenCover(
             isPresented: $showGreetingExercise
         ) {
-            GreetingExerciseView(
-                exerciseNumber: 1,
-                totalExercises: appState.greetingsExerciseCount
-            ) {
+            FirstPhraseSceneView {
                 onLessonCompleted()
             }
             .environmentObject(appState)
         }
     }
-
 
     // MARK: - ENCABEZADO
 
@@ -219,7 +216,6 @@ struct LessonIntroView: View {
         .padding(.bottom, 10)
     }
 
-
     // MARK: - TARJETA DE LECCIÓN
 
     private var lessonCard: some View {
@@ -250,7 +246,6 @@ struct LessonIntroView: View {
                 .clipShape(Capsule())
                 .padding(.top, 18)
 
-
             // MARK: Mascota
 
             PetView(size: 125)
@@ -260,7 +255,6 @@ struct LessonIntroView: View {
                     anchor: .bottom
                 )
                 .padding(.top, 15)
-
 
             // MARK: Título
 
@@ -280,7 +274,6 @@ struct LessonIntroView: View {
                 )
                 .padding(.top, 13)
 
-
             // MARK: Descripción
 
             Text(description)
@@ -297,10 +290,8 @@ struct LessonIntroView: View {
                 .padding(.top, 8)
                 .padding(.bottom, 20)
 
-
             Divider()
                 .opacity(0.6)
-
 
             // MARK: Información
 
@@ -352,7 +343,6 @@ struct LessonIntroView: View {
             y: 4
         )
     }
-
 
     // MARK: - FILA INFORMATIVA
 
@@ -428,7 +418,6 @@ struct LessonIntroView: View {
         }
         .buttonStyle(.plain)
     }
-
 
     // MARK: - CUADRO INFORMATIVO
 
@@ -528,7 +517,6 @@ struct LessonIntroView: View {
         }
     }
 
-
     // MARK: - FONDO
 
     private var background: some View {
@@ -598,7 +586,6 @@ struct LessonIntroView: View {
     }
 }
 
-
 // MARK: - INFORMACIÓN
 
 private enum LessonInfo {
@@ -622,7 +609,6 @@ private enum LessonInfo {
         }
     }
 
-
     var icon: String {
 
         switch self {
@@ -637,7 +623,6 @@ private enum LessonInfo {
             return "dollarsign.circle.fill"
         }
     }
-
 
     func color(
         purple: Color,
@@ -656,7 +641,6 @@ private enum LessonInfo {
             return .yellow
         }
     }
-
 
     func message(
         exercises: Int,
@@ -684,23 +668,22 @@ private enum LessonInfo {
     }
 }
 
-
 // MARK: - PREVIEW
 
 #Preview {
 
     LessonIntroView(
         lessonNumber: 1,
-        title: "Saludos básicos",
+        title: "Primeras frases",
         description:
             "Aprende a saludar y despedirte en Yuhmu como lo hacen en San Juan Ixtenco.",
         exercises: 1,
         estimatedMinutes: 3,
         reward: 700
-        ) {
-            print("Lección terminada")
-        }
-        .environmentObject(
-            AppState()
-        )
+    ) {
+        print("Lección terminada")
+    }
+    .environmentObject(
+        AppState()
+    )
 }

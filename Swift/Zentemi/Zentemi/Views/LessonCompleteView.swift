@@ -1,3 +1,4 @@
+
 import SwiftUI
 
 struct LessonCompleteView: View {
@@ -45,29 +46,10 @@ struct LessonCompleteView: View {
         blue: 0.99
     )
 
+    // MARK: - ESTRELLAS
+
     private var starsEarned: Int {
-
-        guard totalAnswers > 0 else {
-            return 1
-        }
-
-        let percentage =
-            Double(correctAnswers)
-            / Double(totalAnswers)
-
-        if percentage >= 1.0 {
-            return 4
-        }
-
-        if percentage >= 0.75 {
-            return 3
-        }
-
-        if percentage >= 0.50 {
-            return 2
-        }
-
-        return 1
+        min(max(correctAnswers, 0), 3)
     }
 
     private var formattedTime: String {
@@ -131,7 +113,7 @@ struct LessonCompleteView: View {
                     HStack(spacing: 18) {
 
                         ForEach(
-                            0..<starsEarned,
+                            0..<3,
                             id: \.self
                         ) { index in
 
@@ -141,7 +123,11 @@ struct LessonCompleteView: View {
                             .font(
                                 .system(size: 31)
                             )
-                            .foregroundStyle(.yellow)
+                            .foregroundStyle(
+                                index < starsEarned
+                                ? Color.yellow
+                                : Color.gray.opacity(0.30)
+                            )
                             .scaleEffect(
                                 index < visibleStars
                                 ? 1
@@ -420,7 +406,9 @@ struct LessonCompleteView: View {
             showMascot = true
         }
 
-        for index in 1...starsEarned {
+        // Mostrar las 3 estrellas, incluidas las grises.
+
+        for index in 1...3 {
 
             DispatchQueue.main.asyncAfter(
                 deadline:
@@ -639,14 +627,13 @@ struct LessonCompleteView: View {
     }
 }
 
-
 // MARK: - PREVIEW
 
 #Preview {
 
     LessonCompleteView(
-        correctAnswers: 4,
-        totalAnswers: 4,
+        correctAnswers: 2,
+        totalAnswers: 3,
         elapsedSeconds: 150
     ) {
         print("Continuar")

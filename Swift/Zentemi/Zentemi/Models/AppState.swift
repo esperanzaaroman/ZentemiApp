@@ -175,7 +175,7 @@ class AppState: ObservableObject {
     @Published var pathLessonsCompleted = 0
     @Published var unlockedPathLesson = 1
     
-    let greetingsExerciseCount = 1
+    let greetingsExerciseCount = 3
     let familyExerciseCount = 0
     
     // Evita entregar dos veces la recompensa de Saludos
