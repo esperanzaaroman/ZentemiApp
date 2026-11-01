@@ -1,3 +1,4 @@
+
 import SwiftUI
 
 struct HomeView: View {
@@ -9,6 +10,8 @@ struct HomeView: View {
     @State private var mascotScaleY: CGFloat = 1.0
     @State private var animateBackground = false
     @State private var showLearningPath = false
+    
+    @State private var showFeedingScreen = false
 
     var body: some View {
 
@@ -113,7 +116,7 @@ struct HomeView: View {
 
                         Button {
 
-                            print("Alimentar a \(appState.petName)")
+                            showFeedingScreen = true
 
                         } label: {
 
@@ -266,6 +269,12 @@ struct HomeView: View {
             isPresented: $showLearningPath
         ) {
             LearningPathView()
+                .environmentObject(appState)
+        }
+        .fullScreenCover(
+            isPresented: $showFeedingScreen
+        ) {
+            FeedMaicitoView()
                 .environmentObject(appState)
         }
     }

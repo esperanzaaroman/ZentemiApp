@@ -22,7 +22,11 @@ struct ThirdPhraseExerciseView: View {
     @State private var verifiedAnswer: Bool? = nil
 
     @State private var showSkipConfirmation = false
-    @State private var showLessonComplete = false
+    @State private var showFourthFlow = false
+    @State private var fourthSceneCompleted = false
+    @State private var fourthExerciseCompleted = false
+    @State private var finalCorrectAnswers = 0
+
     @State private var showConfetti = false
     @State private var errorShake: CGFloat = 0
 
@@ -325,7 +329,9 @@ struct ThirdPhraseExerciseView: View {
                 role: .destructive
             ) {
                 stopRecordingIfNeeded()
-                showLessonComplete = true
+                fourthSceneCompleted = false
+                fourthExerciseCompleted = false
+                showFourthFlow = true
             }
 
             Button(
@@ -340,26 +346,53 @@ struct ThirdPhraseExerciseView: View {
             )
         }
         .fullScreenCover(
-            isPresented: $showLessonComplete
+            isPresented: $showFourthFlow
         ) {
 
-            LessonCompleteView(
-                correctAnswers:
-                    previousCorrectAnswers
-                    + (verifiedAnswer == true ? 1 : 0),
-                totalAnswers: totalExercises,
-                elapsedSeconds: max(
-                    1,
-                    Int(
-                        Date().timeIntervalSince(
-                            lessonStartDate
+            Group {
+
+                if fourthExerciseCompleted {
+
+                    LessonCompleteView(
+                        correctAnswers: finalCorrectAnswers,
+                        totalAnswers: totalExercises,
+                        elapsedSeconds: max(
+                            1,
+                            Int(
+                                Date().timeIntervalSince(
+                                    lessonStartDate
+                                )
+                            )
                         )
-                    )
-                )
-            ) {
-                onLessonCompleted()
+                    ) {
+                        onLessonCompleted()
+                    }
+                    .environmentObject(appState)
+
+                } else if fourthSceneCompleted {
+
+                    FourthPhraseExerciseView(
+                        exerciseNumber: 4,
+                        totalExercises: totalExercises,
+                        previousCorrectAnswers:
+                            previousCorrectAnswers
+                            + (verifiedAnswer == true ? 1 : 0),
+                        lessonStartDate: lessonStartDate
+                    ) { correctAnswers in
+
+                        finalCorrectAnswers = correctAnswers
+                        fourthExerciseCompleted = true
+                    }
+                    .environmentObject(appState)
+
+                } else {
+
+                    FourthPhraseSceneView {
+                        fourthSceneCompleted = true
+                    }
+                    .environmentObject(appState)
+                }
             }
-            .environmentObject(appState)
         }
         .onDisappear {
             audioPlayer?.stop()
@@ -437,7 +470,9 @@ struct ThirdPhraseExerciseView: View {
     private func verifyOrContinue() {
 
         if verifiedAnswer == true {
-            showLessonComplete = true
+            fourthSceneCompleted = false
+            fourthExerciseCompleted = false
+            showFourthFlow = true
             return
         }
 

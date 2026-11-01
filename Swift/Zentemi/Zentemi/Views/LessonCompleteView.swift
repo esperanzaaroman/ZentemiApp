@@ -49,7 +49,23 @@ struct LessonCompleteView: View {
     // MARK: - ESTRELLAS
 
     private var starsEarned: Int {
-        min(max(correctAnswers, 0), 3)
+
+        guard totalAnswers > 0 else {
+            return 0
+        }
+
+        let percentage =
+            Double(correctAnswers) / Double(totalAnswers)
+
+        if percentage >= 0.8 {
+            return 3
+        } else if percentage >= 0.5 {
+            return 2
+        } else if correctAnswers > 0 {
+            return 1
+        } else {
+            return 0
+        }
     }
 
     private var formattedTime: String {
@@ -125,18 +141,18 @@ struct LessonCompleteView: View {
                             )
                             .foregroundStyle(
                                 index < starsEarned
-                                ? Color.yellow
-                                : Color.gray.opacity(0.30)
+                                    ? Color.yellow
+                                    : Color.gray.opacity(0.30)
                             )
                             .scaleEffect(
                                 index < visibleStars
-                                ? 1
-                                : 0
+                                    ? 1
+                                    : 0
                             )
                             .opacity(
                                 index < visibleStars
-                                ? 1
-                                : 0
+                                    ? 1
+                                    : 0
                             )
                         }
                     }
@@ -632,8 +648,8 @@ struct LessonCompleteView: View {
 #Preview {
 
     LessonCompleteView(
-        correctAnswers: 2,
-        totalAnswers: 3,
+        correctAnswers: 5,
+        totalAnswers: 5,
         elapsedSeconds: 150
     ) {
         print("Continuar")
