@@ -31,7 +31,7 @@ struct LearningPathView: View {
     )
 
     private let lessons = [
-        "Saludos",
+        "Primeras frases",
         "Familia",
         "Números",
         "Colores",
@@ -63,7 +63,7 @@ struct LearningPathView: View {
 
                         lessonNode(
                             number: 1,
-                            name: "Saludos",
+                            name: "Primeras frases",
                             icon: "checkmark",
                             xOffset: -85
                         )
@@ -188,7 +188,7 @@ struct LearningPathView: View {
 
                 LessonIntroView(
                     lessonNumber: 1,
-                    title: "Saludos básicos",
+                    title: "Primeras frases",
                     description:
                         "Aprende a saludar y despedirte en Yuhmu como lo hacen en San Juan Ixtenco.",
                     exercises: appState.greetingsExerciseCount,
