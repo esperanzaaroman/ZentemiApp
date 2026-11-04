@@ -15,6 +15,10 @@ val SplashBottom = Color(0xFF8F72C9)
 val SplashGlow = Color(0xFFF4C46A)
 val SplashDotActive = Color(0xFFF6BC3C)
 
+// ── Screen headers (wave) ──
+val HeaderTop = Color(0xFF5A3E98)
+val HeaderBottom = Color(0xFF7458B0)
+
 val SuccessGreen = Color(0xFF4CC46A)
 val ErrorRed = Color(0xFFFF6B6B)
 

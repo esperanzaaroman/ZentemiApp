@@ -158,7 +158,7 @@ fun LessonCompleteScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Celebration header with waves
-            WaveHeader(waveHeight = 30.dp) {
+            WaveHeader(waveHeight = 18.dp) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
