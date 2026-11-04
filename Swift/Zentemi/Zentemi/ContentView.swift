@@ -8,8 +8,8 @@ struct ContentView: View {
 
         NavigationStack {
 
-            //OnboardingView()
-            MainTabView()
+            OnboardingView()
+            //MainTabView()
 
         }
 
