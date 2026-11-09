@@ -757,7 +757,11 @@ struct FeedMaicitoView: View {
     // MARK: - HISTORIAL DE COMIDAS
 
     private func loadFeedingHistory() {
-        mealDates = []
+        mealDates = UserDefaults.standard.array(
+            forKey: "zentemi.mealDates"
+        ) as? [Date] ?? []
+
+        refreshFeedingHistory()
     }
 
     private func refreshFeedingHistory() {
@@ -765,18 +769,24 @@ struct FeedMaicitoView: View {
         currentDate = Date()
 
         mealDates = mealDates.filter {
+            let elapsed = currentDate.timeIntervalSince($0)
 
-            currentDate.timeIntervalSince($0)
-                < feedingInterval
+            return elapsed >= 0
+                && elapsed < feedingInterval
         }
 
         saveFeedingHistory()
     }
 
     private func saveFeedingHistory() {
-        // Temporalmente no guardamos las comidas.
+        UserDefaults.standard.set(
+            mealDates,
+            forKey: "zentemi.mealDates"
+        )
     }
 }
+
+// MARK: - ANIMACIÓN DE CORAZONES
 
 // MARK: - ANIMACIÓN DE CORAZONES
 
