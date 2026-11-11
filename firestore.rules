@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // MARK: - Reglas de Seguridad de Zentemi (Etapa 2 + Auditoría Avanzada)
+    // Modelo de Mínimo Privilegio: Cada tutor legal solo puede leer y escribir
+    // su propio documento y las subcolecciones de los menores a su cargo.
+
+    match /users/{userId} {
+      // Solo el adulto autenticado puede acceder a su propio perfil de tutor
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Subcolección de perfiles infantiles
+      match /children/{childId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+
+        // Subcolección de progreso académico y lecciones
+        match /progress/{lessonId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+
+        // Subcolección de inventario de Maicito y accesorios
+        match /inventory/{itemId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+      }
+
+      // Subcolección de Auditoría de Seguridad (Inmutable: Crear y Leer, Prohibido Actualizar o Borrar)
+      match /audit_logs/{logId} {
+        allow read, create: if request.auth != null && request.auth.uid == userId;
+        allow update, delete: if false; // Logs inmutables
+      }
+    }
+
+    // Denegar por defecto cualquier otra ruta no autorizada
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
