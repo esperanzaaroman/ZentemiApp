@@ -42,9 +42,15 @@ private val StreakRed = Color(0xFFF0483E)
 @Composable
 fun HomeScreen(
     appState: AppState,
-    onPlayPressed: () -> Unit
+    onPlayPressed: () -> Unit,
+    onFeedPressed: () -> Unit
 ) {
     var showCoinsInfo by remember { mutableStateOf(false) }
+    // Celebración de racha: una vez al día (igual que iOS).
+    var showStreakCelebration by remember { mutableStateOf(appState.shouldCelebrateStreak) }
+    LaunchedEffect(appState.streak) {
+        if (appState.shouldCelebrateStreak) showStreakCelebration = true
+    }
     var showStreakInfo by remember { mutableStateOf(false) }
 
     // Mascot "breathing" (stretches up from its feet)
@@ -188,7 +194,7 @@ fun HomeScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     PetActionButton(
                         text = "Alimentar a ${appState.petName}",
-                        onClick = { /* TODO: alimentar a la mascota */ },
+                        onClick = onFeedPressed,
                         modifier = Modifier.weight(1f)
                     )
                     PetActionButton(
@@ -240,6 +246,15 @@ fun HomeScreen(
             text = "Tu racha representa los días consecutivos que has practicado Yuhmu.\n\nCompleta actividades cada día para aumentarla y mantenerla.",
             color = StreakRed,
             onClose = { showStreakInfo = false }
+        )
+
+        StreakCelebration(
+            visible = showStreakCelebration,
+            appState = appState,
+            onContinue = {
+                appState.markStreakCelebrated()
+                showStreakCelebration = false
+            }
         )
     }
 }

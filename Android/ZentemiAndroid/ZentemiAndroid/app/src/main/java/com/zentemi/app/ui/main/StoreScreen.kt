@@ -26,6 +26,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zentemi.app.R
+import com.zentemi.app.audio.SoundManager
+import androidx.compose.ui.platform.LocalContext
 import com.zentemi.app.state.AppState
 import com.zentemi.app.ui.components.*
 import com.zentemi.app.ui.theme.*
@@ -63,6 +65,8 @@ fun StoreScreen(appState: AppState) {
     // Items still for sale first, purchased ones at the end
     val sortedItems = storeItems.sortedBy { isPurchased(it) }
 
+    val context = LocalContext.current
+
     fun purchase(item: StoreItem) {
         if (appState.coins < item.price) {
             confirmingItemId = null
@@ -76,6 +80,7 @@ fun StoreScreen(appState: AppState) {
             "sword" -> appState.swordPurchased = true
             "suit" -> appState.suitPurchased = true
         }
+        SoundManager.play(context, R.raw.audiocomprado, appState.soundVolume)
         appState.purchasedItemAnimation = item.id
         confirmingItemId = null
     }

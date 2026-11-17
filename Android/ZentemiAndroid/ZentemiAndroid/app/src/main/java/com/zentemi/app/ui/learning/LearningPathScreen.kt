@@ -48,7 +48,7 @@ fun LearningPathScreen(
     onLessonSelected: (Int) -> Unit
 ) {
     val lessons = listOf(
-        LessonInfo(1, "Saludos", Icons.Filled.WavingHand, -85),
+        LessonInfo(1, "Primeras frases", Icons.Filled.WavingHand, -85),
         LessonInfo(2, "Familia", Icons.Filled.FamilyRestroom, 75),
         LessonInfo(3, "Números", Icons.Filled.Numbers, -70),
         LessonInfo(4, "Colores", Icons.Filled.Palette, 80),

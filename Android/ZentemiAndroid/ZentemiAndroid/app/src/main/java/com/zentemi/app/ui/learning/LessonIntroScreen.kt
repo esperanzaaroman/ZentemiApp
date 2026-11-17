@@ -46,7 +46,7 @@ fun LessonIntroScreen(
     onStartExercise: () -> Unit
 ) {
     val title = when (lessonNumber) {
-        1 -> "Saludos básicos"
+        1 -> "Primeras frases"
         2 -> "Mi familia"
         else -> "Lección $lessonNumber"
     }

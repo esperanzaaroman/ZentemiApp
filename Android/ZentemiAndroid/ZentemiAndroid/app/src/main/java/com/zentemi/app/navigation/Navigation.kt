@@ -1,15 +1,23 @@
 package com.zentemi.app.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.zentemi.app.audio.MusicManager
+import com.zentemi.app.audio.MusicTrack
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.zentemi.app.state.AppState
-import com.zentemi.app.ui.learning.GreetingExerciseScreen
+import com.zentemi.app.ui.learning.primerasfrases.PrimerasFrasesFlow
 import com.zentemi.app.ui.learning.LearningPathScreen
 import com.zentemi.app.ui.learning.LessonCompleteScreen
 import com.zentemi.app.ui.learning.LessonIntroScreen
+import com.zentemi.app.ui.main.FeedMaicitoScreen
 import com.zentemi.app.ui.main.MainScreen
 import com.zentemi.app.ui.onboarding.CreatePINScreen
 import com.zentemi.app.ui.onboarding.LoginScreen
@@ -36,6 +44,7 @@ object Routes {
     const val GREETING_EXERCISE = "greeting_exercise"
     const val LESSON_COMPLETE = "lesson_complete/{correct}/{total}/{elapsed}"
     const val SETTINGS = "settings"
+    const val FEED_MAICITO = "feed_maicito"
 
     fun lessonIntro(lessonNumber: Int) = "lesson_intro/$lessonNumber"
     fun lessonComplete(correct: Int, total: Int, elapsed: Int) =
@@ -46,6 +55,20 @@ object Routes {
 fun ZentemiNavigation(appState: AppState = viewModel()) {
 
     val navController = rememberNavController()
+
+    // Música según la pantalla, igual que iOS: inicio en onboarding/login,
+    // lobby en las pantallas principales, camino en el camino y la intro,
+    // y silencio durante la lección y sus resultados.
+    val currentEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentEntry?.destination?.route
+    LaunchedEffect(currentRoute) {
+        if (currentRoute != null) MusicManager.play(musicFor(currentRoute))
+    }
+
+    // Al volver a la app se revisa la racha diaria.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        appState.updateDailyStreak()
+    }
 
     NavHost(
         navController = navController,
@@ -146,6 +169,9 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
                 onPlayPressed = {
                     navController.navigate(Routes.LEARNING_PATH)
                 },
+                onFeedPressed = {
+                    navController.navigate(Routes.FEED_MAICITO)
+                },
                 onSettingsPressed = {
                     navController.navigate(Routes.SETTINGS)
                 },
@@ -182,11 +208,9 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
         }
 
         composable(Routes.GREETING_EXERCISE) {
-            GreetingExerciseScreen(
+            PrimerasFrasesFlow(
                 appState = appState,
-                exerciseNumber = 1,
-                totalExercises = 1,
-                onBack = { navController.popBackStack() },
+                onExit = { navController.popBackStack() },
                 onLessonCompleted = { correct, total, elapsed ->
                     navController.navigate(Routes.lessonComplete(correct, total, elapsed)) {
                         popUpTo(Routes.LEARNING_PATH)
@@ -217,6 +241,13 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
             )
         }
 
+        composable(Routes.FEED_MAICITO) {
+            FeedMaicitoScreen(
+                appState = appState,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
         composable(Routes.SETTINGS) {
             SettingsScreen(
                 appState = appState,
@@ -229,4 +260,11 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
             )
         }
     }
+}
+
+private fun musicFor(route: String): MusicTrack? = when {
+    route == Routes.MAIN || route == Routes.SETTINGS || route == Routes.FEED_MAICITO -> MusicTrack.LOBBY
+    route == Routes.LEARNING_PATH || route == Routes.LESSON_INTRO -> MusicTrack.CAMINO
+    route == Routes.GREETING_EXERCISE || route == Routes.LESSON_COMPLETE -> null
+    else -> MusicTrack.INICIO
 }

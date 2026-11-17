@@ -32,6 +32,7 @@ data class TabItem(
 fun MainScreen(
     appState: AppState,
     onPlayPressed: () -> Unit,
+    onFeedPressed: () -> Unit,
     onSettingsPressed: () -> Unit,
     onLogout: () -> Unit
 ) {
@@ -75,7 +76,8 @@ fun MainScreen(
             1 -> BackpackScreen(appState = appState)
             2 -> HomeScreen(
                 appState = appState,
-                onPlayPressed = onPlayPressed
+                onPlayPressed = onPlayPressed,
+                onFeedPressed = onFeedPressed
             )
             3 -> ProfileScreen(
                 appState = appState,
