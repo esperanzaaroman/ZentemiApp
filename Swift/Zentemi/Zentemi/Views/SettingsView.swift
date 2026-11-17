@@ -16,6 +16,10 @@ struct SettingsView: View {
     @State private var showLogoutConfirmation = false
     @State private var goToLogin = false
     
+    #if DEBUG
+    @State private var showResetConfirmation = false
+    #endif
+    
     
     // MARK: - Colores
     
@@ -343,6 +347,20 @@ struct SettingsView: View {
                             .clipShape(Capsule())
                     }
                     
+                    #if DEBUG
+                    Button {
+                        showResetConfirmation = true
+                    } label: {
+                        Text("Reiniciar progreso")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 22)
+                            .padding(.vertical, 11)
+                            .background(Color.red)
+                            .clipShape(Capsule())
+                    }
+                    #endif
+                    
                     
                     Text("Versión 1.0")
                         .font(
@@ -431,6 +449,23 @@ struct SettingsView: View {
                 "Tendrás que ingresar nuevamente tu nombre de usuario y PIN para entrar a tu cuenta."
             )
         }
+        
+        #if DEBUG
+        .alert(
+            "¿Reiniciar todo el progreso?",
+            isPresented: $showResetConfirmation
+        ) {
+            Button("Cancelar", role: .cancel) { }
+
+            Button("Reiniciar", role: .destructive) {
+                appState.resetDevelopmentProgress()
+            }
+        } message: {
+            Text(
+                "Se eliminarán las monedas, niveles, compras, accesorios, lecciones y demás datos guardados de Zentemi. Esta acción no se puede deshacer."
+            )
+        }
+        #endif
         
         
         // MARK: - Regresar al login

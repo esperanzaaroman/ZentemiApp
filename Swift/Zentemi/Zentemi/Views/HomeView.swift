@@ -10,8 +10,14 @@ struct HomeView: View {
     @State private var mascotScaleY: CGFloat = 1.0
     @State private var animateBackground = false
     @State private var showLearningPath = false
-    
+
     @State private var showFeedingScreen = false
+
+    // NUEVO: Celebración de racha
+    @State private var showStreakCelebration = false
+
+    @AppStorage("zentemi.lastCelebratedStreakDate")
+    private var lastCelebratedStreakDate: Double = 0
 
     var body: some View {
 
@@ -248,6 +254,17 @@ struct HomeView: View {
                     showStreakInfo = false
                 }
             }
+
+            // NUEVO: Ventana de celebración
+            if showStreakCelebration {
+                streakCelebrationOverlay
+                    .zIndex(100)
+                    .transition(
+                        .opacity.combined(
+                            with: .scale(scale: 0.85)
+                        )
+                    )
+            }
         }
         .onAppear {
 
@@ -264,6 +281,12 @@ struct HomeView: View {
             ) {
                 animateBackground = true
             }
+
+            // NUEVO
+            checkStreakCelebration()
+        }
+        .onChange(of: appState.streak) { _, _ in
+            checkStreakCelebration()
         }
         .fullScreenCover(
             isPresented: $showLearningPath
@@ -276,6 +299,159 @@ struct HomeView: View {
         ) {
             FeedMaicitoView()
                 .environmentObject(appState)
+        }
+    }
+
+    // MARK: - CELEBRACIÓN DE RACHA
+
+    private func checkStreakCelebration() {
+        guard appState.streak > 0 else { return }
+
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(
+            identifier: "America/Mexico_City"
+        )!
+
+        let today = calendar.startOfDay(for: Date())
+
+        let lastDate = Date(
+            timeIntervalSince1970: lastCelebratedStreakDate
+        )
+
+        guard !calendar.isDate(
+            lastDate,
+            inSameDayAs: today
+        ) else {
+            return
+        }
+
+        withAnimation(
+            .spring(
+                response: 0.5,
+                dampingFraction: 0.75
+            )
+        ) {
+            showStreakCelebration = true
+        }
+    }
+
+    private var streakCelebrationOverlay: some View {
+        ZStack {
+
+            Color.black.opacity(0.65)
+                .ignoresSafeArea()
+
+            VStack(spacing: 18) {
+
+                Image(systemName: "flame.fill")
+                    .font(.system(size: 55))
+                    .foregroundStyle(.orange)
+                    .symbolEffect(
+                        .bounce,
+                        options: .repeating
+                    )
+
+                Text("¡Felicidades!")
+                    .font(
+                        .system(
+                            size: 30,
+                            weight: .heavy
+                        )
+                    )
+                    .foregroundStyle(.purple)
+
+                Text("¡Llevas \(appState.streak) días de racha!")
+                    .font(
+                        .system(
+                            size: 21,
+                            weight: .bold
+                        )
+                    )
+                    .multilineTextAlignment(.center)
+
+                ZStack {
+
+                    ForEach(0..<12, id: \.self) { index in
+                        Image(systemName: "sparkle")
+                            .foregroundStyle(
+                                index.isMultiple(of: 2)
+                                    ? .yellow
+                                    : .orange
+                            )
+                            .offset(
+                                x: CGFloat(
+                                    (index % 4) * 65 - 95
+                                ),
+                                y: CGFloat(
+                                    (index / 4) * 70 - 70
+                                )
+                            )
+                    }
+
+                    PetView(size: 175)
+                        .environmentObject(appState)
+                }
+                .frame(height: 210)
+
+                Text(
+                    "¡Sigue así! \(appState.petName) está orgulloso de ti."
+                )
+                .font(
+                    .system(
+                        size: 16,
+                        weight: .medium
+                    )
+                )
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+
+                Button {
+
+                    var calendar = Calendar(
+                        identifier: .gregorian
+                    )
+                    calendar.timeZone = TimeZone(
+                        identifier: "America/Mexico_City"
+                    )!
+
+                    lastCelebratedStreakDate = calendar
+                        .startOfDay(for: Date())
+                        .timeIntervalSince1970
+
+                    withAnimation(
+                        .easeOut(duration: 0.25)
+                    ) {
+                        showStreakCelebration = false
+                    }
+
+                } label: {
+
+                    Text("¡Continuar!")
+                        .font(
+                            .system(
+                                size: 17,
+                                weight: .bold
+                            )
+                        )
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 15)
+                        .background(.purple)
+                        .clipShape(
+                            RoundedRectangle(
+                                cornerRadius: 15
+                            )
+                        )
+                }
+            }
+            .padding(25)
+            .frame(maxWidth: 340)
+            .background(.white)
+            .clipShape(
+                RoundedRectangle(cornerRadius: 25)
+            )
+            .shadow(radius: 20)
+            .padding(.horizontal, 20)
         }
     }
 
