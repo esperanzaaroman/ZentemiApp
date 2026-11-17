@@ -99,7 +99,11 @@ fun LessonCompleteScreen(
         if (!rewardApplied) {
             rewardApplied = true
             val wasAlreadyClaimed = appState.greetingsRewardClaimed
-            appState.completeGreetingsLesson()
+            appState.completeGreetingsLesson(
+                correctAnswers = correctAnswers,
+                totalAnswers = totalAnswers,
+                elapsedSeconds = elapsedSeconds
+            )
 
             if (!wasAlreadyClaimed) {
                 // Animate XP counting up

@@ -76,6 +76,7 @@ fun StoreScreen(appState: AppState) {
             "sword" -> appState.swordPurchased = true
             "suit" -> appState.suitPurchased = true
         }
+        appState.recordInventoryItem(itemId = item.id, purchased = true, equipped = false)
         appState.purchasedItemAnimation = item.id
         confirmingItemId = null
     }
