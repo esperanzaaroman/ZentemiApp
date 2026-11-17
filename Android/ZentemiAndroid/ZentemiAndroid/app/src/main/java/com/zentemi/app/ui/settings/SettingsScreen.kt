@@ -1,5 +1,7 @@
 package com.zentemi.app.ui.settings
 
+import android.content.pm.ApplicationInfo
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -39,6 +41,13 @@ fun SettingsScreen(
     var showLanguageSelector by remember { mutableStateOf(false) }
     var showAboutZentemi by remember { mutableStateOf(false) }
     var showLogoutConfirmation by remember { mutableStateOf(false) }
+    var showResetConfirmation by remember { mutableStateOf(false) }
+
+    // "Reiniciar progreso" solo aparece en compilaciones de prueba (como #if DEBUG en iOS).
+    val context = LocalContext.current
+    val isDebugBuild = remember {
+        (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    }
 
     Box(
         modifier = Modifier
@@ -210,6 +219,21 @@ fun SettingsScreen(
                     fontSize = 12.sp,
                     color = SubText.copy(alpha = 0.55f)
                 )
+
+                if (isDebugBuild) {
+                    Spacer(modifier = Modifier.height(9.dp))
+                    Text(
+                        text = "Reiniciar progreso",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(Color.Red)
+                            .clickable { showResetConfirmation = true }
+                            .padding(horizontal = 22.dp, vertical = 11.dp)
+                    )
+                }
             }
         }
     }
@@ -279,6 +303,32 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutConfirmation = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    // Reiniciar progreso (solo pruebas)
+    if (showResetConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showResetConfirmation = false },
+            title = { Text("¿Reiniciar todo el progreso?", fontWeight = FontWeight.Bold) },
+            text = {
+                Text("Se eliminarán las monedas, niveles, compras, accesorios, lecciones y demás datos guardados de Zentemi. Esta acción no se puede deshacer.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showResetConfirmation = false
+                        appState.resetDevelopmentProgress()
+                    }
+                ) {
+                    Text("Reiniciar", color = Color.Red, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetConfirmation = false }) {
                     Text("Cancelar")
                 }
             }

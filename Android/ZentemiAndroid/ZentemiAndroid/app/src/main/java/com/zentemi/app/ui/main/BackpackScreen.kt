@@ -24,6 +24,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zentemi.app.R
+import com.zentemi.app.audio.SoundManager
+import androidx.compose.ui.platform.LocalContext
 import com.zentemi.app.state.AppState
 import com.zentemi.app.ui.components.*
 import com.zentemi.app.ui.theme.*
@@ -41,24 +43,36 @@ private val TurquoiseDark = Color(0xFF1E9A8A)
 @Composable
 fun BackpackScreen(appState: AppState) {
 
+    val context = LocalContext.current
+
+    // Sonidos de iOS: "quitar" al desequipar y "equipar" (a la mitad de volumen) al ponerlo.
+    fun toggleWithSound(isEquipped: Boolean, toggle: () -> Unit) {
+        if (isEquipped) {
+            SoundManager.play(context, R.raw.audioquitaritem, appState.soundVolume)
+        } else {
+            SoundManager.play(context, R.raw.audioequipar, minOf(appState.soundVolume * 0.5f, 1f))
+        }
+        toggle()
+    }
+
     val items = buildList {
         // Default items (always owned)
-        add(BackpackItem("glasses", R.drawable.lentes, "Lentes", appState.glassesEquipped) { appState.toggleGlasses() })
-        add(BackpackItem("hair", R.drawable.cabello, "Cabello", appState.hairEquipped) { appState.toggleHair() })
-        add(BackpackItem("scarf", R.drawable.bufanda, "Bufanda", appState.scarfEquipped) { appState.toggleScarf() })
+        add(BackpackItem("glasses", R.drawable.lentes, "Lentes", appState.glassesEquipped) { toggleWithSound(appState.glassesEquipped) { appState.toggleGlasses() } })
+        add(BackpackItem("hair", R.drawable.cabello, "Cabello", appState.hairEquipped) { toggleWithSound(appState.hairEquipped) { appState.toggleHair() } })
+        add(BackpackItem("scarf", R.drawable.bufanda, "Bufanda", appState.scarfEquipped) { toggleWithSound(appState.scarfEquipped) { appState.toggleScarf() } })
 
         // Purchased items
         if (appState.sunglassesPurchased) {
-            add(BackpackItem("sunglasses", R.drawable.lentesdesol, "Lentes de sol", appState.sunglassesEquipped) { appState.toggleSunglasses() })
+            add(BackpackItem("sunglasses", R.drawable.lentesdesol, "Lentes de sol", appState.sunglassesEquipped) { toggleWithSound(appState.sunglassesEquipped) { appState.toggleSunglasses() } })
         }
         if (appState.pinkHairPurchased) {
-            add(BackpackItem("pinkHair", R.drawable.cabellorosa, "Cabello rosa", appState.pinkHairEquipped) { appState.togglePinkHair() })
+            add(BackpackItem("pinkHair", R.drawable.cabellorosa, "Cabello rosa", appState.pinkHairEquipped) { toggleWithSound(appState.pinkHairEquipped) { appState.togglePinkHair() } })
         }
         if (appState.swordPurchased) {
-            add(BackpackItem("sword", R.drawable.espada, "Espada real", appState.swordEquipped) { appState.toggleSword() })
+            add(BackpackItem("sword", R.drawable.espada, "Espada real", appState.swordEquipped) { toggleWithSound(appState.swordEquipped) { appState.toggleSword() } })
         }
         if (appState.suitPurchased) {
-            add(BackpackItem("suit", R.drawable.traje1k, "Traje elegante", appState.suitEquipped) { appState.toggleSuit() })
+            add(BackpackItem("suit", R.drawable.traje1k, "Traje elegante", appState.suitEquipped) { toggleWithSound(appState.suitEquipped) { appState.toggleSuit() } })
         }
     }
 
