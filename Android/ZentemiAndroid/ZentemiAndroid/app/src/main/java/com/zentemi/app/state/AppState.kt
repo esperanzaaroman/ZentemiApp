@@ -62,7 +62,7 @@ class AppState : ViewModel() {
     var pathLessonsCompleted by mutableIntStateOf(0)
     var unlockedPathLesson by mutableIntStateOf(1)
     var greetingsRewardClaimed by mutableStateOf(false)
-    var greetingsExerciseCount by mutableIntStateOf(4)
+    var greetingsExerciseCount by mutableIntStateOf(5)
     var familyExerciseCount by mutableIntStateOf(6)
 
     // ── Audio ──

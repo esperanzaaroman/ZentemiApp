@@ -6,7 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.zentemi.app.state.AppState
-import com.zentemi.app.ui.learning.GreetingExerciseScreen
+import com.zentemi.app.ui.learning.primerasfrases.PrimerasFrasesFlow
 import com.zentemi.app.ui.learning.LearningPathScreen
 import com.zentemi.app.ui.learning.LessonCompleteScreen
 import com.zentemi.app.ui.learning.LessonIntroScreen
@@ -182,11 +182,9 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
         }
 
         composable(Routes.GREETING_EXERCISE) {
-            GreetingExerciseScreen(
+            PrimerasFrasesFlow(
                 appState = appState,
-                exerciseNumber = 1,
-                totalExercises = 1,
-                onBack = { navController.popBackStack() },
+                onExit = { navController.popBackStack() },
                 onLessonCompleted = { correct, total, elapsed ->
                     navController.navigate(Routes.lessonComplete(correct, total, elapsed)) {
                         popUpTo(Routes.LEARNING_PATH)

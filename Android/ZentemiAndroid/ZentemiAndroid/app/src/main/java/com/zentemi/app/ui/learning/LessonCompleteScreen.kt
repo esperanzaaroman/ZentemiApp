@@ -41,12 +41,14 @@ fun LessonCompleteScreen(
     val rewardCoins = 700
     val rewardXP = 140
 
+    // Igual que iOS: siempre 3 estrellas; las no ganadas se muestran grises.
+    val maxStars = 3
     val starsEarned = when {
-        totalAnswers == 0 -> 1
-        correctAnswers.toFloat() / totalAnswers >= 1.0f -> 4
-        correctAnswers.toFloat() / totalAnswers >= 0.75f -> 3
-        correctAnswers.toFloat() / totalAnswers >= 0.50f -> 2
-        else -> 1
+        totalAnswers == 0 -> 0
+        correctAnswers.toFloat() / totalAnswers >= 0.8f -> 3
+        correctAnswers.toFloat() / totalAnswers >= 0.5f -> 2
+        correctAnswers > 0 -> 1
+        else -> 0
     }
 
     val formattedTime = "${elapsedSeconds / 60}:${String.format("%02d", elapsedSeconds % 60)}"
@@ -77,7 +79,7 @@ fun LessonCompleteScreen(
 
         // Show stars one by one
         delay(450)
-        for (i in 1..starsEarned) {
+        for (i in 1..maxStars) {
             delay(180)
             visibleStars = i
         }
@@ -202,7 +204,7 @@ fun LessonCompleteScreen(
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                         modifier = Modifier.height(44.dp)
                     ) {
-                        repeat(starsEarned) { index ->
+                        repeat(maxStars) { index ->
                             AnimatedVisibility(
                                 visible = index < visibleStars,
                                 enter = scaleIn(
@@ -215,7 +217,8 @@ fun LessonCompleteScreen(
                                 Icon(
                                     Icons.Filled.Star,
                                     contentDescription = null,
-                                    tint = SplashDotActive,
+                                    tint = if (index < starsEarned) SplashDotActive
+                                    else Color.Gray.copy(alpha = 0.30f),
                                     modifier = Modifier.size(42.dp)
                                 )
                             }

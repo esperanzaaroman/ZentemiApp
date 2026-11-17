@@ -19,6 +19,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import com.zentemi.app.R
+import com.zentemi.app.audio.SoundManager
+import com.zentemi.app.audio.rememberPhrasePlayer
 import com.zentemi.app.state.AppState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.drawBehind
@@ -32,24 +36,29 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
+/**
+ * Ejercicio 1 de "Primeras frases": opción múltiple «buenos días».
+ * Al continuar avisa si se acertó al primer intento.
+ */
 @Composable
 fun GreetingExerciseScreen(
     appState: AppState,
     exerciseNumber: Int,
     totalExercises: Int,
     onBack: () -> Unit,
-    onLessonCompleted: (correctAnswers: Int, totalAnswers: Int, elapsedSeconds: Int) -> Unit
+    onContinue: (answeredCorrectly: Boolean) -> Unit
 ) {
-    val correctAnswer = 2 // "Hä nzengwa" is correct (index 1, but we use 1-based)
-    val answers = listOf("Nzengwa", "Hä nzengwa", "Ra hyadi", "Nänä")
+    val correctAnswer = 2 // 1-based: "Té xki hats’i"
+    val answers = listOf("Nzengwa", "Té xki hats’i", "Ra hyadi", "Nänä")
 
     var selectedAnswer by remember { mutableStateOf<Int?>(null) }
     var verifiedAnswer by remember { mutableStateOf<Int?>(null) }
-    var isAudioPlaying by remember { mutableStateOf(false) }
     var showConfetti by remember { mutableStateOf(false) }
     var errorShakeOffset by remember { mutableStateOf(0f) }
 
-    val exerciseStartTime = remember { System.currentTimeMillis() }
+    val context = LocalContext.current
+    val phrasePlayer = rememberPhrasePlayer()
+    val isAudioPlaying = phrasePlayer.isPlaying
     val scope = rememberCoroutineScope()
 
     Box(
@@ -75,7 +84,10 @@ fun GreetingExerciseScreen(
                     shadowElevation = 3.dp,
                     modifier = Modifier
                         .size(42.dp)
-                        .clickable { onBack() }
+                        .clickable {
+                            phrasePlayer.stop()
+                            onBack()
+                        }
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -129,7 +141,7 @@ fun GreetingExerciseScreen(
                     PetView(appState = appState, size = 86.dp)
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = "¿Cómo se dice «hola»?",
+                        text = "¿Cómo se dice «buenos días»?",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = DarkText,
@@ -150,13 +162,7 @@ fun GreetingExerciseScreen(
                     color = if (isAudioPlaying) Purple else Color.White,
                     shadowElevation = 3.dp,
                     modifier = Modifier.clickable {
-                        if (!isAudioPlaying) {
-                            isAudioPlaying = true
-                            scope.launch {
-                                delay(2000)
-                                isAudioPlaying = false
-                            }
-                        }
+                        phrasePlayer.play(R.raw.buenosdias, appState.soundVolume)
                     }
                 ) {
                     Row(
@@ -234,6 +240,7 @@ fun GreetingExerciseScreen(
                                 )
                             }
                             .clickable(enabled = verifiedAnswer == null) {
+                                SoundManager.play(context, R.raw.audioseleccion, appState.soundVolume)
                                 selectedAnswer = number
                             }
                     ) {
@@ -317,12 +324,14 @@ fun GreetingExerciseScreen(
                         verifiedAnswer = sel
 
                         if (sel == correctAnswer) {
+                            SoundManager.play(context, R.raw.audiobien, appState.soundVolume)
                             showConfetti = true
                             scope.launch {
                                 delay(1600)
                                 showConfetti = false
                             }
                         } else {
+                            SoundManager.play(context, R.raw.audiomalaseleccion, appState.soundVolume)
                             // Error shake animation
                             scope.launch {
                                 errorShakeOffset = -7f; delay(60)
@@ -333,14 +342,8 @@ fun GreetingExerciseScreen(
                             }
                         }
                     } else {
-                        if (exerciseNumber >= totalExercises) {
-                            val elapsed = maxOf(
-                                1,
-                                ((System.currentTimeMillis() - exerciseStartTime) / 1000).toInt()
-                            )
-                            val correct = if (verifiedAnswer == correctAnswer) 1 else 0
-                            onLessonCompleted(correct, 1, elapsed)
-                        }
+                        phrasePlayer.stop()
+                        onContinue(verifiedAnswer == correctAnswer)
                     }
                 },
                 color = when {
