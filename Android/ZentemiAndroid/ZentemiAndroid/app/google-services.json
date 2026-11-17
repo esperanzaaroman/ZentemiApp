@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "417581398954",
+    "firebase_url": "https://zentemi-equipo4-default-rtdb.firebaseio.com",
+    "project_id": "zentemi-equipo4",
+    "storage_bucket": "zentemi-equipo4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:417581398954:android:ff05a5fd51fec2504249d3",
+        "android_client_info": {
+          "package_name": "com.zentemi.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBARxPks44zahZ0Gcv2322DSRvwwAsctts"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
