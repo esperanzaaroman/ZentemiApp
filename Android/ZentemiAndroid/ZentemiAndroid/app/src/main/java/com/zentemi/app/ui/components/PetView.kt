@@ -47,13 +47,14 @@ fun PetView(
             modifier = Modifier.size(size)
         )
 
-        if (appState.suitEquipped) Accessory(R.drawable.traje1k, 135f, 1f, 1f, scale)
-        if (appState.hairEquipped) Accessory(R.drawable.cabello, 100f, 0f, -30f, scale)
-        if (appState.pinkHairEquipped) Accessory(R.drawable.cabellorosa, 105f, 0f, -25f, scale)
-        if (appState.glassesEquipped) Accessory(R.drawable.lentes, 70f, 1f, 0f, scale)
-        if (appState.sunglassesEquipped) Accessory(R.drawable.lentesdesol, 70f, 0f, 0f, scale)
-        if (appState.scarfEquipped) Accessory(R.drawable.bufanda, 110f, -2f, 40f, scale)
-        if (appState.swordEquipped) Accessory(R.drawable.espada, 70f, 45f, 9f, scale)
+        // Accesorios puestos, en orden de zona (ver ShopCatalog / ItemSlot).
+        appState.equippedAccessories.forEach { item ->
+            val image = item.image
+            val layout = item.layout
+            if (image != null && layout != null) {
+                Accessory(image, layout.width, layout.x, layout.y, scale)
+            }
+        }
     }
 }
 

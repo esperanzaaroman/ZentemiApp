@@ -1,6 +1,5 @@
 package com.zentemi.app.ui.main
 
-import androidx.annotation.DrawableRes
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,57 +27,41 @@ import androidx.compose.ui.unit.sp
 import com.zentemi.app.R
 import com.zentemi.app.audio.SoundManager
 import androidx.compose.ui.platform.LocalContext
+import com.zentemi.app.data.ShopCatalog
+import com.zentemi.app.data.ShopItem
 import com.zentemi.app.state.AppState
+import androidx.compose.foundation.clickable
 import com.zentemi.app.ui.components.*
 import com.zentemi.app.ui.theme.*
 
-private data class StoreItem(
-    val id: String,
-    @DrawableRes val image: Int,
-    val name: String,
-    val price: Int,
-    val rarity: String,
-    val rarityColor: Color
-)
-
-private val storeItems = listOf(
-    StoreItem("sunglasses", R.drawable.lentesdesol, "Lentes de sol", 120, "NUEVO", RarityNew),
-    StoreItem("pinkHair", R.drawable.cabellorosa, "Cabello rosa", 250, "RARO", SplashDotActive),
-    StoreItem("sword", R.drawable.espada, "Espada real", 500, "ÉPICO", RarityEpic),
-    StoreItem("suit", R.drawable.traje1k, "Traje elegante", 1000, "LEGENDARIO", RarityLegendary)
-)
+/** Filtros de la tienda. */
+private enum class StoreFilter(val label: String) { ALL("Todo"), ACCESSORIES("Accesorios"), BACKGROUNDS("Fondos") }
 
 @Composable
 fun StoreScreen(appState: AppState) {
 
     var confirmingItemId by remember { mutableStateOf<String?>(null) }
     var showInsufficientCoins by remember { mutableStateOf(false) }
+    var filter by remember { mutableStateOf(StoreFilter.ALL) }
 
-    fun isPurchased(item: StoreItem) = when (item.id) {
-        "sunglasses" -> appState.sunglassesPurchased
-        "pinkHair" -> appState.pinkHairPurchased
-        "sword" -> appState.swordPurchased
-        "suit" -> appState.suitPurchased
-        else -> false
-    }
-
-    // Items still for sale first, purchased ones at the end
-    val sortedItems = storeItems.sortedBy { isPurchased(it) }
+    // Primero lo que sigue a la venta (de más barato a más caro), al final lo comprado
+    val sortedItems = ShopCatalog.forSale
+        .filter {
+            when (filter) {
+                StoreFilter.ALL -> true
+                StoreFilter.ACCESSORIES -> it.isAccessory
+                StoreFilter.BACKGROUNDS -> !it.isAccessory
+            }
+        }
+        .sortedWith(compareBy({ appState.isOwned(it) }, { it.price }))
 
     val context = LocalContext.current
 
-    fun purchase(item: StoreItem) {
-        if (appState.coins < item.price) {
+    fun purchase(item: ShopItem) {
+        if (!appState.purchase(item)) {
             confirmingItemId = null
             showInsufficientCoins = true
             return
-        }
-        appState.coins -= item.price
-        when (item.id) {
-            "sunglasses" -> appState.sunglassesPurchased = true
-            "pinkHair" -> appState.pinkHairPurchased = true
-            "sword" -> appState.swordPurchased = true
-            "suit" -> appState.suitPurchased = true
         }
         SoundManager.play(context, R.raw.audiocomprado, appState.soundVolume)
         appState.purchasedItemAnimation = item.id
@@ -98,6 +81,29 @@ fun StoreScreen(appState: AppState) {
             }
         }
 
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            StoreFilter.entries.forEach { option ->
+                val selected = option == filter
+                Text(
+                    text = option.label,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (selected) Color.White else Purple,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(if (selected) Purple else Purple.copy(alpha = 0.10f))
+                        .clickable {
+                            filter = option
+                            confirmingItemId = null
+                        }
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
+        }
+
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 110.dp),
@@ -107,7 +113,7 @@ fun StoreScreen(appState: AppState) {
             items(sortedItems, key = { it.id }) { item ->
                 StoreCard(
                     item = item,
-                    purchased = isPurchased(item),
+                    purchased = appState.isOwned(item),
                     isConfirming = confirmingItemId == item.id,
                     coins = appState.coins,
                     onBuy = { confirmingItemId = item.id },
@@ -135,7 +141,7 @@ fun StoreScreen(appState: AppState) {
 
 @Composable
 private fun StoreCard(
-    item: StoreItem,
+    item: ShopItem,
     purchased: Boolean,
     isConfirming: Boolean,
     coins: Int,
@@ -154,10 +160,10 @@ private fun StoreCard(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
             Row(modifier = Modifier.fillMaxWidth().height(20.dp)) {
-                TagChip(text = item.rarity, color = item.rarityColor)
+                TagChip(text = item.rarity.label, color = item.rarity.color)
             }
 
-            ItemImage(image = item.image, faded = purchased)
+            ItemPreview(item = item, faded = purchased)
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -231,9 +237,9 @@ private fun StoreCard(
     }
 }
 
-/** Item picture on a soft lavender tile. */
+/** Dibujo del artículo (o muestra del fondo) sobre un recuadro lila. */
 @Composable
-fun ItemImage(@DrawableRes image: Int, faded: Boolean = false) {
+fun ItemPreview(item: ShopItem, faded: Boolean = false) {
     Box(
         modifier = Modifier
             .padding(top = 4.dp)
@@ -242,12 +248,23 @@ fun ItemImage(@DrawableRes image: Int, faded: Boolean = false) {
             .background(BackgroundLight),
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = painterResource(id = image),
-            contentDescription = null,
-            modifier = Modifier
-                .size(66.dp)
-                .alpha(if (faded) 0.55f else 1f)
-        )
+        val image = item.image
+        val backdrop = item.backdrop
+        when {
+            backdrop != null -> MaicitoBackdrop(
+                backdrop = backdrop,
+                modifier = Modifier
+                    .size(70.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .alpha(if (faded) 0.55f else 1f)
+            )
+            image != null -> Image(
+                painter = painterResource(id = image),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(66.dp)
+                    .alpha(if (faded) 0.55f else 1f)
+            )
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.zentemi.app.ui.main
 
+import com.zentemi.app.ui.components.MaicitoBackdrop
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
@@ -43,7 +44,8 @@ private val StreakRed = Color(0xFFF0483E)
 fun HomeScreen(
     appState: AppState,
     onPlayPressed: () -> Unit,
-    onFeedPressed: () -> Unit
+    onFeedPressed: () -> Unit,
+    onPlayWithPressed: () -> Unit
 ) {
     var showCoinsInfo by remember { mutableStateOf(false) }
     // Celebración de racha: una vez al día (igual que iOS).
@@ -138,6 +140,16 @@ fun HomeScreen(
                             )
                         )
                 )
+                // Fondo comprado en la tienda (si hay uno puesto)
+                appState.equippedBackdrop?.backdrop?.let { backdrop ->
+                    MaicitoBackdrop(
+                        backdrop = backdrop,
+                        modifier = Modifier
+                            .size(215.dp)
+                            .clip(CircleShape)
+                            .border(4.dp, Color.White, CircleShape)
+                    )
+                }
                 PetView(
                     appState = appState,
                     size = 190.dp,
@@ -199,7 +211,7 @@ fun HomeScreen(
                     )
                     PetActionButton(
                         text = "Jugar con ${appState.petName}",
-                        onClick = { /* TODO: jugar con la mascota */ },
+                        onClick = onPlayWithPressed,
                         modifier = Modifier.weight(1f)
                     )
                 }

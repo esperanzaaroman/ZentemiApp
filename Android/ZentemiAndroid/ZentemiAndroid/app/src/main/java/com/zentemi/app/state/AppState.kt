@@ -10,6 +10,9 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import com.zentemi.app.audio.MusicManager
+import com.zentemi.app.data.ItemSlot
+import com.zentemi.app.data.ShopCatalog
+import com.zentemi.app.data.ShopItem
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -145,6 +148,119 @@ class AppState(application: Application) : AndroidViewModel(application) {
     fun registerMeal() {
         mealTimesRaw = (recentMealTimes + System.currentTimeMillis()).joinToString(",")
     }
+
+    // ── Artículos de la tienda (catálogo en data/ShopCatalog.kt) ──
+    // Los 7 artículos originales siguen usando sus propios valores de arriba
+    // (compatibles con iOS y Firebase); los nuevos se guardan en estas listas.
+    private var ownedItemsRaw by saved(prefs.persistedString("ownedItems", ""))
+    private var equippedItemsRaw by saved(prefs.persistedString("equippedItems", ""))
+
+    private fun parseIds(raw: String): Set<String> =
+        raw.split(",").filter { it.isNotBlank() }.toSet()
+
+    fun isOwned(item: ShopItem): Boolean = when (item.id) {
+        "glasses", "hair", "scarf" -> true
+        "sunglasses" -> sunglassesPurchased
+        "pinkHair" -> pinkHairPurchased
+        "sword" -> swordPurchased
+        "suit" -> suitPurchased
+        else -> item.price == 0 || item.id in parseIds(ownedItemsRaw)
+    }
+
+    fun isEquipped(item: ShopItem): Boolean = when (item.id) {
+        "glasses" -> glassesEquipped
+        "hair" -> hairEquipped
+        "scarf" -> scarfEquipped
+        "sunglasses" -> sunglassesEquipped
+        "pinkHair" -> pinkHairEquipped
+        "sword" -> swordEquipped
+        "suit" -> suitEquipped
+        else -> item.id in parseIds(equippedItemsRaw)
+    }
+
+    private fun setEquipped(item: ShopItem, value: Boolean) {
+        when (item.id) {
+            "glasses" -> glassesEquipped = value
+            "hair" -> hairEquipped = value
+            "scarf" -> scarfEquipped = value
+            "sunglasses" -> sunglassesEquipped = value
+            "pinkHair" -> pinkHairEquipped = value
+            "sword" -> swordEquipped = value
+            "suit" -> suitEquipped = value
+            else -> {
+                val ids = parseIds(equippedItemsRaw)
+                equippedItemsRaw = (if (value) ids + item.id else ids - item.id).joinToString(",")
+            }
+        }
+    }
+
+    /** Compra un artículo. Devuelve false si no alcanzan las monedas. */
+    fun purchase(item: ShopItem): Boolean {
+        if (isOwned(item)) return true
+        if (coins < item.price) return false
+        coins -= item.price
+        when (item.id) {
+            "sunglasses" -> sunglassesPurchased = true
+            "pinkHair" -> pinkHairPurchased = true
+            "sword" -> swordPurchased = true
+            "suit" -> suitPurchased = true
+            else -> ownedItemsRaw = (parseIds(ownedItemsRaw) + item.id).joinToString(",")
+        }
+        return true
+    }
+
+    /** Pone o quita un artículo; al ponerlo se quita lo que había en su zona. */
+    fun toggleEquip(item: ShopItem) {
+        if (!isOwned(item)) return
+        if (isEquipped(item)) {
+            setEquipped(item, false)
+            return
+        }
+        ShopCatalog.items
+            .filter { it.slot == item.slot && it.id != item.id && isEquipped(it) }
+            .forEach { setEquipped(it, false) }
+        setEquipped(item, true)
+    }
+
+    /** Accesorios puestos, en el orden en que se dibujan sobre Maicito. */
+    val equippedAccessories: List<ShopItem>
+        get() = ShopCatalog.items
+            .filter { it.isAccessory && isEquipped(it) }
+            .sortedBy { it.slot.ordinal }
+
+    /** Fondo puesto detrás de Maicito, si hay. */
+    val equippedBackdrop: ShopItem?
+        get() = ShopCatalog.items.firstOrNull { it.slot == ItemSlot.BACKGROUND && isEquipped(it) }
+
+    // ── Juegos con Maicito: recompensa en las primeras 3 partidas del día ──
+    val maxGameRewardsPerDay = 3
+    private var gameRewardDay by saved(prefs.persistedLong("gameRewardDay", null))
+    private var gameRewardsToday by saved(prefs.persistedInt("gameRewardsToday", 0))
+
+    val gameRewardsLeft: Int
+        get() = if (gameRewardDay != todayEpochDay) maxGameRewardsPerDay
+        else maxOf(0, maxGameRewardsPerDay - gameRewardsToday)
+
+    /**
+     * Da monedas y felicidad por terminar un juego, si quedan recompensas hoy.
+     * Devuelve false si ya se usaron las del día (se puede seguir jugando).
+     */
+    fun claimGameReward(coinsEarned: Int, happinessEarned: Int): Boolean {
+        val today = todayEpochDay
+        if (gameRewardDay != today) {
+            gameRewardDay = today
+            gameRewardsToday = 0
+        }
+        if (gameRewardsToday >= maxGameRewardsPerDay) return false
+        gameRewardsToday += 1
+        coins += coinsEarned
+        happiness = minOf(100, happiness + happinessEarned)
+        return true
+    }
+
+    /** Los juegos repasan lo aprendido, así que se abren al terminar la lección 1. */
+    val gamesUnlocked: Boolean
+        get() = greetingsRewardClaimed
 
     init {
         MusicManager.init(application, musicVolume)

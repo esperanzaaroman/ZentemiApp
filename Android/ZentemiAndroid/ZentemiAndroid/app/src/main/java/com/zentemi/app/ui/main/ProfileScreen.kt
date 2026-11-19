@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zentemi.app.state.AppState
+import com.zentemi.app.ui.components.MaicitoBackdrop
 import com.zentemi.app.ui.components.PetView
 import com.zentemi.app.ui.components.WaveHeader
 import com.zentemi.app.ui.theme.*
@@ -94,6 +95,9 @@ fun ProfileScreen(
                         .clickable { showEditor = true },
                     contentAlignment = Alignment.Center
                 ) {
+                    appState.equippedBackdrop?.backdrop?.let { backdrop ->
+                        MaicitoBackdrop(backdrop = backdrop, modifier = Modifier.fillMaxSize())
+                    }
                     PetView(appState = appState, size = 80.dp)
                 }
 

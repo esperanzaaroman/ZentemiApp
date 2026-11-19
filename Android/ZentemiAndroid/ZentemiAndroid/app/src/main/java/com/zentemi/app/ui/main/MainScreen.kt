@@ -33,6 +33,7 @@ fun MainScreen(
     appState: AppState,
     onPlayPressed: () -> Unit,
     onFeedPressed: () -> Unit,
+    onPlayWithPressed: () -> Unit,
     onSettingsPressed: () -> Unit,
     onLogout: () -> Unit
 ) {
@@ -77,7 +78,8 @@ fun MainScreen(
             2 -> HomeScreen(
                 appState = appState,
                 onPlayPressed = onPlayPressed,
-                onFeedPressed = onFeedPressed
+                onFeedPressed = onFeedPressed,
+                onPlayWithPressed = onPlayWithPressed
             )
             3 -> ProfileScreen(
                 appState = appState,

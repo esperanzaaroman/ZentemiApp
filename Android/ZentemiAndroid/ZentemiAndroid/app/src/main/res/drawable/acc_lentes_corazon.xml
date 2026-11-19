@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lentes de corazón -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="220dp" android:height="100dp"
+    android:viewportWidth="220" android:viewportHeight="100">
+    <!-- patitas -->
+    <path android:fillColor="#00000000" android:strokeColor="#3B2A20" android:strokeWidth="6" android:strokeLineCap="round"
+        android:pathData="M18,40 L6,34 M202,40 L214,34"/>
+    <!-- puente -->
+    <path android:fillColor="#00000000" android:strokeColor="#D81B60" android:strokeWidth="7" android:strokeLineCap="round"
+        android:pathData="M94,44 Q110,32 126,44"/>
+    <path android:fillColor="#FF4F98" android:fillAlpha="0.9" android:strokeColor="#D81B60" android:strokeWidth="7" android:strokeLineJoin="round"
+        android:pathData="M58,82 C10,48 26,12 58,36 C90,12 106,48 58,82 Z"/>
+    <path android:fillColor="#FF4F98" android:fillAlpha="0.9" android:strokeColor="#D81B60" android:strokeWidth="7" android:strokeLineJoin="round"
+        android:pathData="M162,82 C114,48 130,12 162,36 C194,12 210,48 162,82 Z"/>
+    <path android:fillColor="#00000000" android:strokeColor="#3B2A20" android:strokeWidth="3" android:strokeLineJoin="round"
+        android:pathData="M58,82 C10,48 26,12 58,36 C90,12 106,48 58,82 Z M162,82 C114,48 130,12 162,36 C194,12 210,48 162,82 Z"/>
+    <!-- brillos -->
+    <path android:fillColor="#FFFFFF" android:fillAlpha="0.75"
+        android:pathData="M36,44 a6,9 0 1,0 12,0 a6,9 0 1,0 -12,0 M140,44 a6,9 0 1,0 12,0 a6,9 0 1,0 -12,0"/>
+</vector>

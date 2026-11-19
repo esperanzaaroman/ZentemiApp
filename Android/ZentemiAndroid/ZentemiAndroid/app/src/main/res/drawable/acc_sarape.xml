@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sarape -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="220dp" android:height="140dp"
+    android:viewportWidth="220" android:viewportHeight="140">
+    <!-- punta que cuelga -->
+    <path android:fillColor="#FFC93C" android:pathData="M150,78 L159,74 L162,128 L153,128 Z"/>
+    <path android:fillColor="#2A9D8F" android:pathData="M159,74 L168,74 L171,128 L162,128 Z"/>
+    <path android:fillColor="#7B4ACA" android:pathData="M168,74 L177,74 L180,128 L171,128 Z"/>
+    <path android:fillColor="#E63946" android:pathData="M177,74 L186,74 L189,128 L180,128 Z"/>
+    <path android:fillColor="#00000000" android:strokeColor="#3B2A20" android:strokeWidth="5" android:strokeLineJoin="round"
+        android:pathData="M150,76 L186,72 L189,128 L153,128 Z"/>
+    <!-- flecos -->
+    <path android:fillColor="#00000000" android:strokeColor="#3B2A20" android:strokeWidth="3" android:strokeLineCap="round"
+        android:pathData="M157,128 L157,137 M165,128 L165,137 M173,128 L173,137 M181,128 L181,137"/>
+    <!-- vuelta al cuello -->
+    <path android:fillColor="#E63946" android:pathData="M8,34 C60,68 160,68 212,34 L212,42 C160,76 60,76 8,42 Z"/>
+    <path android:fillColor="#FFC93C" android:pathData="M8,42 C60,76 160,76 212,42 L212,50 C160,84 60,84 8,50 Z"/>
+    <path android:fillColor="#2A9D8F" android:pathData="M8,50 C60,84 160,84 212,50 L212,58 C160,92 60,92 8,58 Z"/>
+    <path android:fillColor="#7B4ACA" android:pathData="M8,58 C60,92 160,92 212,58 L212,66 C160,100 60,100 8,66 Z"/>
+    <path android:fillColor="#00000000" android:strokeColor="#3B2A20" android:strokeWidth="6" android:strokeLineJoin="round"
+        android:pathData="M8,34 C60,68 160,68 212,34 L212,66 C160,100 60,100 8,66 Z"/>
+    <!-- grecas blancas -->
+    <path android:fillColor="#00000000" android:strokeColor="#FFF6E5" android:strokeWidth="2.5" android:strokeLineJoin="round"
+        android:pathData="M40,58 l6,6 l6,-6 l6,6 l6,-6 M100,66 l6,6 l6,-6 l6,6 l6,-6 M160,58 l6,6 l6,-6 l6,6 l6,-6"/>
+</vector>

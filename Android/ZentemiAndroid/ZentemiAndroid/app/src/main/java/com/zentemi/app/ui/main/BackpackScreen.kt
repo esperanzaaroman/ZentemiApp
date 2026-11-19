@@ -1,6 +1,5 @@
 package com.zentemi.app.ui.main
 
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -26,17 +25,11 @@ import androidx.compose.ui.unit.sp
 import com.zentemi.app.R
 import com.zentemi.app.audio.SoundManager
 import androidx.compose.ui.platform.LocalContext
+import com.zentemi.app.data.ShopCatalog
+import com.zentemi.app.data.ShopItem
 import com.zentemi.app.state.AppState
 import com.zentemi.app.ui.components.*
 import com.zentemi.app.ui.theme.*
-
-private data class BackpackItem(
-    val id: String,
-    @DrawableRes val image: Int,
-    val name: String,
-    val isEquipped: Boolean,
-    val onToggle: () -> Unit
-)
 
 private val TurquoiseDark = Color(0xFF1E9A8A)
 
@@ -55,28 +48,12 @@ fun BackpackScreen(appState: AppState) {
         toggle()
     }
 
-    val items = buildList {
-        // Default items (always owned)
-        add(BackpackItem("glasses", R.drawable.lentes, "Lentes", appState.glassesEquipped) { toggleWithSound(appState.glassesEquipped) { appState.toggleGlasses() } })
-        add(BackpackItem("hair", R.drawable.cabello, "Cabello", appState.hairEquipped) { toggleWithSound(appState.hairEquipped) { appState.toggleHair() } })
-        add(BackpackItem("scarf", R.drawable.bufanda, "Bufanda", appState.scarfEquipped) { toggleWithSound(appState.scarfEquipped) { appState.toggleScarf() } })
+    // Todo lo que tiene Maicito: primero accesorios, luego fondos
+    val items = ShopCatalog.items
+        .filter { appState.isOwned(it) }
+        .sortedBy { if (it.isAccessory) 0 else 1 }
 
-        // Purchased items
-        if (appState.sunglassesPurchased) {
-            add(BackpackItem("sunglasses", R.drawable.lentesdesol, "Lentes de sol", appState.sunglassesEquipped) { toggleWithSound(appState.sunglassesEquipped) { appState.toggleSunglasses() } })
-        }
-        if (appState.pinkHairPurchased) {
-            add(BackpackItem("pinkHair", R.drawable.cabellorosa, "Cabello rosa", appState.pinkHairEquipped) { toggleWithSound(appState.pinkHairEquipped) { appState.togglePinkHair() } })
-        }
-        if (appState.swordPurchased) {
-            add(BackpackItem("sword", R.drawable.espada, "Espada real", appState.swordEquipped) { toggleWithSound(appState.swordEquipped) { appState.toggleSword() } })
-        }
-        if (appState.suitPurchased) {
-            add(BackpackItem("suit", R.drawable.traje1k, "Traje elegante", appState.suitEquipped) { toggleWithSound(appState.suitEquipped) { appState.toggleSuit() } })
-        }
-    }
-
-    val equipped = items.filter { it.isEquipped }
+    val equipped = items.filter { appState.isEquipped(it) }
 
     Column(
         modifier = Modifier
@@ -113,7 +90,11 @@ fun BackpackScreen(appState: AppState) {
             }
 
             items(items, key = { it.id }) { item ->
-                BackpackCard(item = item)
+                BackpackCard(
+                    item = item,
+                    isEquipped = appState.isEquipped(item),
+                    onToggle = { toggleWithSound(appState.isEquipped(item)) { appState.toggleEquip(item) } }
+                )
             }
         }
     }
@@ -127,7 +108,18 @@ private fun OutfitPreviewCard(appState: AppState, equippedNames: List<String>) {
         TagChip(text = "Preview", color = Turquoise)
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            PetView(appState = appState, size = 96.dp)
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(CircleShape)
+                    .background(BackgroundLight),
+                contentAlignment = Alignment.Center
+            ) {
+                appState.equippedBackdrop?.backdrop?.let { backdrop ->
+                    MaicitoBackdrop(backdrop = backdrop, modifier = Modifier.fillMaxSize())
+                }
+                PetView(appState = appState, size = 80.dp, modifier = Modifier.offset(y = 6.dp))
+            }
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -182,20 +174,28 @@ private fun OutfitPreviewCard(appState: AppState, equippedNames: List<String>) {
 }
 
 @Composable
-private fun BackpackCard(item: BackpackItem) {
+private fun BackpackCard(item: ShopItem, isEquipped: Boolean, onToggle: () -> Unit) {
     // Extra top space so the "Equipado" tag can sit on the card's border
     Box(modifier = Modifier.padding(top = 10.dp)) {
         ZentemiCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .then(
-                    if (item.isEquipped) Modifier.border(1.5.dp, Turquoise, RoundedCornerShape(20.dp))
+                    if (isEquipped) Modifier.border(1.5.dp, Turquoise, RoundedCornerShape(20.dp))
                     else Modifier
                 ),
             padding = 12.dp
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                ItemImage(image = item.image)
+                ItemPreview(item = item)
+
+                Text(
+                    text = item.slot.label,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = SubText.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(top = 4.dp)
+                )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -210,21 +210,21 @@ private fun BackpackCard(item: BackpackItem) {
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                if (item.isEquipped) {
+                if (isEquipped) {
                     ChunkyButton(
                         text = "Quitar",
-                        onClick = item.onToggle,
+                        onClick = onToggle,
                         color = Turquoise,
                         lipColor = TurquoiseDark,
                         modifier = Modifier.fillMaxWidth()
                     )
                 } else {
-                    ChunkyButton(text = "Equipar", onClick = item.onToggle, modifier = Modifier.fillMaxWidth())
+                    ChunkyButton(text = "Equipar", onClick = onToggle, modifier = Modifier.fillMaxWidth())
                 }
             }
         }
 
-        if (item.isEquipped) {
+        if (isEquipped) {
             Text(
                 text = "Equipado",
                 fontSize = 11.sp,

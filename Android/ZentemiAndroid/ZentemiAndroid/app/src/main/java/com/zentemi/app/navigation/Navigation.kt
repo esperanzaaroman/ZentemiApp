@@ -17,6 +17,11 @@ import com.zentemi.app.ui.learning.primerasfrases.PrimerasFrasesFlow
 import com.zentemi.app.ui.learning.LearningPathScreen
 import com.zentemi.app.ui.learning.LessonCompleteScreen
 import com.zentemi.app.ui.learning.LessonIntroScreen
+import com.zentemi.app.ui.games.GamesHubScreen
+import com.zentemi.app.ui.games.MaicitoGame
+import com.zentemi.app.ui.games.MaicitoPideGame
+import com.zentemi.app.ui.games.MemoramaGame
+import com.zentemi.app.ui.games.MercadoGame
 import com.zentemi.app.ui.main.FeedMaicitoScreen
 import com.zentemi.app.ui.main.MainScreen
 import com.zentemi.app.ui.onboarding.CreatePINScreen
@@ -45,6 +50,10 @@ object Routes {
     const val LESSON_COMPLETE = "lesson_complete/{correct}/{total}/{elapsed}"
     const val SETTINGS = "settings"
     const val FEED_MAICITO = "feed_maicito"
+    const val GAMES = "games"
+    const val GAME_MAICITO_PIDE = "game_maicito_pide"
+    const val GAME_MEMORAMA = "game_memorama"
+    const val GAME_MERCADO = "game_mercado"
 
     fun lessonIntro(lessonNumber: Int) = "lesson_intro/$lessonNumber"
     fun lessonComplete(correct: Int, total: Int, elapsed: Int) =
@@ -172,6 +181,9 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
                 onFeedPressed = {
                     navController.navigate(Routes.FEED_MAICITO)
                 },
+                onPlayWithPressed = {
+                    navController.navigate(Routes.GAMES)
+                },
                 onSettingsPressed = {
                     navController.navigate(Routes.SETTINGS)
                 },
@@ -248,6 +260,34 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
             )
         }
 
+        composable(Routes.GAMES) {
+            GamesHubScreen(
+                appState = appState,
+                onBack = { navController.popBackStack() },
+                onGameSelected = { game ->
+                    navController.navigate(
+                        when (game) {
+                            MaicitoGame.MAICITO_PIDE -> Routes.GAME_MAICITO_PIDE
+                            MaicitoGame.MEMORAMA -> Routes.GAME_MEMORAMA
+                            MaicitoGame.MERCADO -> Routes.GAME_MERCADO
+                        }
+                    )
+                }
+            )
+        }
+
+        composable(Routes.GAME_MAICITO_PIDE) {
+            MaicitoPideGame(appState = appState, onExit = { navController.popBackStack() })
+        }
+
+        composable(Routes.GAME_MEMORAMA) {
+            MemoramaGame(appState = appState, onExit = { navController.popBackStack() })
+        }
+
+        composable(Routes.GAME_MERCADO) {
+            MercadoGame(appState = appState, onExit = { navController.popBackStack() })
+        }
+
         composable(Routes.SETTINGS) {
             SettingsScreen(
                 appState = appState,
@@ -263,7 +303,11 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
 }
 
 private fun musicFor(route: String): MusicTrack? = when {
-    route == Routes.MAIN || route == Routes.SETTINGS || route == Routes.FEED_MAICITO -> MusicTrack.LOBBY
+    route == Routes.MAIN || route == Routes.SETTINGS || route == Routes.FEED_MAICITO ||
+        route == Routes.GAMES -> MusicTrack.LOBBY
+    // En los juegos se escuchan frases en Yuhmu, así que la música se pausa.
+    route == Routes.GAME_MAICITO_PIDE || route == Routes.GAME_MEMORAMA ||
+        route == Routes.GAME_MERCADO -> null
     route == Routes.LEARNING_PATH || route == Routes.LESSON_INTRO -> MusicTrack.CAMINO
     route == Routes.GREETING_EXERCISE || route == Routes.LESSON_COMPLETE -> null
     else -> MusicTrack.INICIO
