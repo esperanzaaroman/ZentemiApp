@@ -12,7 +12,9 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import com.zentemi.app.data.Backdrop
+import kotlin.math.cos
 import kotlin.math.min
+import kotlin.math.sin
 
 /**
  * Fondo decorativo detrás de Maicito (artículos de la zona "Fondo").
@@ -26,6 +28,12 @@ fun MaicitoBackdrop(backdrop: Backdrop, modifier: Modifier = Modifier) {
             Backdrop.STARRY_NIGHT -> drawStarryNight()
             Backdrop.PAPEL_PICADO -> drawPapelPicado()
             Backdrop.TALAVERA -> drawTalavera()
+            Backdrop.MILPA -> drawMilpa()
+            Backdrop.PLAYA -> drawPlaya()
+            Backdrop.BOSQUE -> drawBosque()
+            Backdrop.PIRAMIDE -> drawPiramide()
+            Backdrop.ARCOIRIS -> drawArcoiris()
+            Backdrop.DIA_DE_MUERTOS -> drawDiaDeMuertos()
         }
     }
 }

@@ -59,9 +59,9 @@ class AppState(application: Application) : AndroidViewModel(application) {
         get() = xpRequiredPerLevel - currentLevelXP
 
     // ── Avatar customization ──
-    var avatarBackgroundHue by saved(prefs.persistedFloat("avatarBackgroundHue", 0f))
+    var avatarBackgroundHue by saved(prefs.persistedFloat("avatarBackgroundHue", 0.72f))
     var mascotHue by saved(prefs.persistedFloat("mascotHue", 0f))
-    var profileBackgroundHue by saved(prefs.persistedFloat("profileBackgroundHue", 0f))
+    var profileBackgroundHue by saved(prefs.persistedFloat("profileBackgroundHue", 0.73f))
 
     // ── Accessories equipped ──
     var glassesEquipped by saved(prefs.persistedBoolean("glassesEquipped", false))
@@ -220,6 +220,13 @@ class AppState(application: Application) : AndroidViewModel(application) {
             .filter { it.slot == item.slot && it.id != item.id && isEquipped(it) }
             .forEach { setEquipped(it, false) }
         setEquipped(item, true)
+    }
+
+    /** Quita todo lo que Maicito trae puesto en esas zonas (botón "quitar" de la tienda). */
+    fun unequipSlots(slots: Set<ItemSlot>) {
+        ShopCatalog.items
+            .filter { it.slot in slots && isEquipped(it) }
+            .forEach { setEquipped(it, false) }
     }
 
     /** Accesorios puestos, en el orden en que se dibujan sobre Maicito. */

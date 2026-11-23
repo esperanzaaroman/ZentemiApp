@@ -1,5 +1,7 @@
 package com.zentemi.app.ui.components
 
+import com.zentemi.app.R
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -48,20 +50,23 @@ class WaveBottomShape(private val waveHeight: Dp = 14.dp) : Shape {
 }
 
 /**
- * Purple gradient header with a soft wavy bottom edge and one decorative
- * circle. Content is laid out inside the status bar padding.
+ * Encabezado morado con degradado y un círculo decorativo. El borde de abajo
+ * es recto (antes era ondulado; [waveHeight] se conserva solo para no romper
+ * a quien lo pasa, y ya no se usa). El contenido va debajo de la barra de estado.
  */
 @Composable
 fun WaveHeader(
     modifier: Modifier = Modifier,
-    waveHeight: Dp = 14.dp,
+    @Suppress("UNUSED_PARAMETER") waveHeight: Dp = 14.dp,
+    /** Colores del degradado (el perfil usa el color que eligió el usuario). */
+    colors: List<Color> = listOf(HeaderTop, HeaderBottom),
     content: @Composable BoxScope.() -> Unit
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(WaveBottomShape(waveHeight))
-            .background(Brush.linearGradient(listOf(HeaderTop, HeaderBottom)))
+            .clipToBounds()
+            .background(Brush.linearGradient(colors))
     ) {
         // Decorative circle (top-right)
         Box(
@@ -77,7 +82,7 @@ fun WaveHeader(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 12.dp + waveHeight),
+                .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 14.dp),
             content = content
         )
     }
@@ -95,7 +100,7 @@ fun CoinPill(coins: Int, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Icon(Icons.Filled.MonetizationOn, contentDescription = "Monedas", tint = CoinGoldDark, modifier = Modifier.size(18.dp))
+        ZentemiIcon(R.drawable.ic_moneda, size = 22.dp, contentDescription = "Monedas")
         Text(
             text = "%,d".format(coins),
             fontSize = 15.sp,
@@ -211,3 +216,15 @@ fun TagChip(text: String, color: Color) {
 }
 
 private fun Color.darkenForText() = lerp(this, Color.Black, 0.25f)
+
+// ── Colores personalizables del perfil (mismas fórmulas que ProfileView.swift) ──
+
+/** Degradado del encabezado del perfil para un tono de 0 a 1. */
+fun profileHeaderColors(hue: Float): List<Color> = listOf(
+    Color.hsv(hue.coerceIn(0f, 1f) * 360f, 0.72f, 0.72f),
+    Color.hsv(hue.coerceIn(0f, 1f) * 360f, 0.64f, 0.84f)
+)
+
+/** Fondo pastel detrás de Maicito en el avatar, para un tono de 0 a 1. */
+fun avatarBackgroundColor(hue: Float): Color =
+    Color.hsv(hue.coerceIn(0f, 1f) * 360f, 0.22f, 1f)

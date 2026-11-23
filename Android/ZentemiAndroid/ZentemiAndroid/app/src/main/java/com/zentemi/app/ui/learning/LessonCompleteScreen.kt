@@ -1,5 +1,8 @@
 package com.zentemi.app.ui.learning
 
+import androidx.annotation.DrawableRes
+import com.zentemi.app.ui.components.ZentemiIcon
+import com.zentemi.app.R
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
@@ -214,12 +217,10 @@ fun LessonCompleteScreen(
                                     )
                                 ) + fadeIn()
                             ) {
-                                Icon(
-                                    Icons.Filled.Star,
-                                    contentDescription = null,
-                                    tint = if (index < starsEarned) SplashDotActive
-                                    else Color.Gray.copy(alpha = 0.30f),
-                                    modifier = Modifier.size(42.dp)
+                                ZentemiIcon(
+                                    R.drawable.ic_estrella,
+                                    size = 46.dp,
+                                    muted = index >= starsEarned
                                 )
                             }
                         }
@@ -236,7 +237,7 @@ fun LessonCompleteScreen(
             ) {
                 ResultCard(
                     visible = showCorrectCard,
-                    icon = Icons.Filled.Check,
+                    icon = R.drawable.ic_leccion_completa,
                     value = "$correctAnswers/$totalAnswers",
                     title = "Aciertos",
                     color = Turquoise,
@@ -245,7 +246,7 @@ fun LessonCompleteScreen(
 
                 ResultCard(
                     visible = showTimeCard,
-                    icon = Icons.Filled.Schedule,
+                    icon = R.drawable.ic_tiempo,
                     value = formattedTime,
                     title = "Tiempo",
                     color = Purple,
@@ -254,7 +255,7 @@ fun LessonCompleteScreen(
 
                 ResultCard(
                     visible = showCoinsCard,
-                    icon = Icons.Filled.MonetizationOn,
+                    icon = R.drawable.ic_moneda,
                     value = "+$rewardCoins",
                     title = "Monedas",
                     color = Color(0xFFFF9800),
@@ -354,7 +355,7 @@ fun LessonCompleteScreen(
 @Composable
 private fun ResultCard(
     visible: Boolean,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    @DrawableRes icon: Int,
     value: String,
     title: String,
     color: Color,
@@ -389,12 +390,7 @@ private fun ResultCard(
                         .background(color.copy(alpha = 0.14f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = color,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    ZentemiIcon(icon, size = 30.dp)
                 }
 
                 Spacer(modifier = Modifier.height(7.dp))

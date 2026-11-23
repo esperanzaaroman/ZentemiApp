@@ -1,5 +1,8 @@
 package com.zentemi.app.ui.learning
 
+import androidx.annotation.DrawableRes
+import com.zentemi.app.ui.components.ZentemiIcon
+import com.zentemi.app.R
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,7 +40,7 @@ import com.zentemi.app.ui.theme.*
 private data class LessonInfo(
     val number: Int,
     val name: String,
-    val icon: ImageVector,
+    @DrawableRes val icon: Int,
     val xOffset: Int
 )
 
@@ -48,13 +51,13 @@ fun LearningPathScreen(
     onLessonSelected: (Int) -> Unit
 ) {
     val lessons = listOf(
-        LessonInfo(1, "Primeras frases", Icons.Filled.WavingHand, -85),
-        LessonInfo(2, "Familia", Icons.Filled.FamilyRestroom, 75),
-        LessonInfo(3, "Números", Icons.Filled.Numbers, -70),
-        LessonInfo(4, "Colores", Icons.Filled.Palette, 80),
-        LessonInfo(5, "Animales", Icons.Filled.Pets, -75),
-        LessonInfo(6, "Alimentos", Icons.Filled.Restaurant, 75),
-        LessonInfo(7, "Frases básicas", Icons.Filled.Forum, -65)
+        LessonInfo(1, "Primeras frases", R.drawable.ic_primeras_frases, -85),
+        LessonInfo(2, "Familia", R.drawable.ic_familia, 75),
+        LessonInfo(3, "Números", R.drawable.ic_numeros, -70),
+        LessonInfo(4, "Colores", R.drawable.ic_colores, 80),
+        LessonInfo(5, "Animales", R.drawable.ic_animales, -75),
+        LessonInfo(6, "Alimentos", R.drawable.ic_alimentos, 75),
+        LessonInfo(7, "Frases básicas", R.drawable.ic_frases_basicas, -65)
     )
 
     var lockedLessonName by remember { mutableStateOf<String?>(null) }
@@ -210,15 +213,20 @@ fun LearningPathScreen(
                                         .background(Brush.verticalGradient(listOf(lerp(face, Color.White, 0.15f), face))),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(
-                                        imageVector = when {
-                                            isCompleted -> Icons.Filled.Check
-                                            isUnlocked -> lesson.icon
-                                            else -> Icons.Filled.Lock
-                                        },
-                                        contentDescription = null,
-                                        tint = if (isUnlocked) Color.White else Purple.copy(alpha = 0.3f),
-                                        modifier = Modifier.size(30.dp)
+                                    // Bloqueada: candado; disponible o terminada: el dibujo de la lección
+                                    ZentemiIcon(
+                                        if (isUnlocked) lesson.icon else R.drawable.ic_leccion_bloqueada,
+                                        size = if (isUnlocked) 46.dp else 36.dp
+                                    )
+                                }
+                                // Palomita de "terminada" en la esquina
+                                if (isCompleted) {
+                                    ZentemiIcon(
+                                        R.drawable.ic_leccion_completa,
+                                        size = 28.dp,
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .offset(x = (-2).dp, y = 2.dp)
                                     )
                                 }
                             }
@@ -320,12 +328,7 @@ private fun LockedOverlay(
                 modifier = Modifier.padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(
-                    Icons.Filled.Lock,
-                    contentDescription = null,
-                    tint = Purple,
-                    modifier = Modifier.size(27.dp)
-                )
+                ZentemiIcon(R.drawable.ic_leccion_bloqueada, size = 44.dp)
 
                 Spacer(modifier = Modifier.height(13.dp))
 

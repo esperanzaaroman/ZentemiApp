@@ -1,5 +1,6 @@
 package com.zentemi.app.ui.learning.primerasfrases
 
+import androidx.annotation.RawRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,8 +32,9 @@ import com.zentemi.app.ui.components.ChunkyButton
 import com.zentemi.app.ui.theme.*
 
 /**
- * Ejercicio 4: escuchar «Ayúdame por favor» y elegir su significado.
- * Como en iOS, se puede reintentar hasta acertar.
+ * Escuchar una frase en Yuhmu y elegir su significado. Se puede reintentar
+ * hasta acertar. Por defecto es el ejercicio 4 («Ayúdame por favor»).
+ * No usa micrófono: no hay un modelo que reconozca el Yuhmu hablado.
  */
 @Composable
 fun MeaningChoiceExerciseScreen(
@@ -40,15 +42,17 @@ fun MeaningChoiceExerciseScreen(
     exerciseNumber: Int,
     totalExercises: Int,
     onClose: () -> Unit,
-    onContinue: (answeredCorrectly: Boolean) -> Unit
-) {
-    val answers = listOf(
+    onContinue: (answeredCorrectly: Boolean) -> Unit,
+    @RawRes audio: Int = R.raw.ayudameporfavor,
+    answers: List<String> = listOf(
         "Buenos días",
         "¿Cómo te llamas?",
         "Ayúdame por favor",
         "¿Cuántos años tienes?"
-    )
-    val correctAnswerIndex = 2
+    ),
+    correctAnswerIndex: Int = 2,
+    successText: String = "¡Correcto! Has aprendido a pedir ayuda."
+) {
 
     var selectedAnswer by remember { mutableStateOf<Int?>(null) }
     var verifiedAnswer by remember { mutableStateOf<Boolean?>(null) }
@@ -136,7 +140,7 @@ fun MeaningChoiceExerciseScreen(
                     )
                     ListenButton(
                         isPlaying = phrasePlayer.isPlaying,
-                        onClick = { phrasePlayer.play(R.raw.ayudameporfavor, appState.soundVolume) }
+                        onClick = { phrasePlayer.play(audio, appState.soundVolume) }
                     )
                 }
 
@@ -198,7 +202,7 @@ fun MeaningChoiceExerciseScreen(
                 verifiedAnswer?.let { correct ->
                     ResultLabel(
                         success = correct,
-                        text = if (correct) "¡Correcto! Has aprendido a pedir ayuda."
+                        text = if (correct) successText
                         else "Respuesta incorrecta. Inténtalo de nuevo."
                     )
                 }

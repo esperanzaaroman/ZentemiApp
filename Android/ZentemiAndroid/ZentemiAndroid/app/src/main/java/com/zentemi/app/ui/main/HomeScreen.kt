@@ -1,5 +1,9 @@
 package com.zentemi.app.ui.main
 
+import androidx.annotation.DrawableRes
+import com.zentemi.app.ui.components.ZentemiIcon
+import com.zentemi.app.R
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import com.zentemi.app.ui.components.MaicitoBackdrop
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
@@ -22,6 +26,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -35,6 +40,8 @@ import androidx.compose.ui.unit.sp
 import com.zentemi.app.state.AppState
 import com.zentemi.app.ui.components.LightAuthBackground
 import com.zentemi.app.ui.components.PetView
+import com.zentemi.app.ui.components.HomeScene
+import androidx.compose.ui.text.style.TextOverflow
 import com.zentemi.app.ui.theme.*
 
 private val CoinYellow = Color(0xFFF2B705)
@@ -86,39 +93,60 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // Top indicators: coins (left) and streak (right)
+            // Arriba: saludo (izquierda), monedas y racha (derecha)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 22.dp, vertical = 12.dp),
+                    .padding(start = 22.dp, end = 18.dp, top = 12.dp, bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "¡Hola, ${appState.userName}!",
+                        fontFamily = Quicksand,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = PurpleDark,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = "Qué gusto verte hoy",
+                        fontFamily = Quicksand,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = SubText.copy(alpha = 0.8f)
+                    )
+                }
                 StatBadge(
-                    icon = Icons.Filled.MonetizationOn,
+                    icon = R.drawable.ic_moneda,
                     value = "${appState.coins}",
-                    color = CoinYellow,
+                    tint = Color(0xFFFFF1C7),
+                    textColor = CoinGoldDark,
                     onClick = { showCoinsInfo = true }
                 )
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.width(8.dp))
                 StatBadge(
-                    icon = Icons.Filled.LocalFireDepartment,
+                    icon = R.drawable.ic_racha,
                     value = "${appState.streak}",
-                    color = StreakRed,
+                    tint = Color(0xFFFFE2DD),
+                    textColor = Color(0xFFC2362C),
                     onClick = { showStreakInfo = true }
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            // Paisaje con Maicito y su nombre
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                HomeScene(modifier = Modifier.matchParentSize())
 
-            // Pet name + mascot
-            Text(
-                text = appState.petName,
-                fontFamily = Quicksand,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                color = PurpleDark
-            )
-
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    NameBubble(name = appState.petName)
+                    Spacer(modifier = Modifier.height(4.dp))
             Box(
                 modifier = Modifier.size(250.dp),
                 contentAlignment = Alignment.Center
@@ -150,6 +178,13 @@ fun HomeScreen(
                             .border(4.dp, Color.White, CircleShape)
                     )
                 }
+                // Sombrita bajo los pies de Maicito
+                Box(
+                    modifier = Modifier
+                        .offset(y = 92.dp)
+                        .size(width = 120.dp, height = 16.dp)
+                        .drawBehind { drawOval(Purple.copy(alpha = 0.13f)) }
+                )
                 PetView(
                     appState = appState,
                     size = 190.dp,
@@ -159,8 +194,10 @@ fun HomeScreen(
                     }
                 )
             }
+                }
+            }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Happiness card
             Column(
@@ -219,7 +256,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // Play
+            // Ir a las lecciones (el camino de aprendizaje)
             Button(
                 onClick = onPlayPressed,
                 colors = ButtonDefaults.buttonColors(containerColor = Purple),
@@ -230,8 +267,10 @@ fun HomeScreen(
                     .shadow(8.dp, RoundedCornerShape(28.dp), ambientColor = Purple.copy(alpha = 0.35f), spotColor = Purple.copy(alpha = 0.35f))
                     .height(56.dp)
             ) {
+                ZentemiIcon(R.drawable.ic_comenzar_leccion, size = 30.dp)
+                Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = "Jugar",
+                    text = "Comenzar lección",
                     fontFamily = Quicksand,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
@@ -239,14 +278,14 @@ fun HomeScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
         // Info windows
         InfoOverlay(
             visible = showCoinsInfo,
             title = "Monedas",
-            icon = Icons.Filled.MonetizationOn,
+            icon = R.drawable.ic_moneda,
             text = "Consigue monedas completando lecciones, retos y actividades.\n\nPuedes utilizarlas para obtener objetos y recompensas dentro de Zentemi.",
             color = CoinYellow,
             onClose = { showCoinsInfo = false }
@@ -254,7 +293,7 @@ fun HomeScreen(
         InfoOverlay(
             visible = showStreakInfo,
             title = "Racha",
-            icon = Icons.Filled.LocalFireDepartment,
+            icon = R.drawable.ic_racha,
             text = "Tu racha representa los días consecutivos que has practicado Yuhmu.\n\nCompleta actividades cada día para aumentarla y mantenerla.",
             color = StreakRed,
             onClose = { showStreakInfo = false }
@@ -271,30 +310,62 @@ fun HomeScreen(
     }
 }
 
+/** Monedas o racha: fondo de color suave, sin contorno, con el ícono grande. */
 @Composable
 private fun StatBadge(
-    icon: ImageVector,
+    @DrawableRes icon: Int,
     value: String,
-    color: Color,
+    tint: Color,
+    textColor: Color,
     onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
-            .clip(CircleShape)
-            .background(Color.White.copy(alpha = 0.9f))
-            .border(1.dp, color.copy(alpha = 0.35f), CircleShape)
+            .shadow(3.dp, RoundedCornerShape(16.dp), ambientColor = textColor.copy(alpha = 0.25f), spotColor = textColor.copy(alpha = 0.25f))
+            .clip(RoundedCornerShape(16.dp))
+            .background(tint)
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(start = 8.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+        horizontalArrangement = Arrangement.spacedBy(5.dp)
     ) {
-        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
+        ZentemiIcon(icon, size = 28.dp)
         Text(
             text = value,
             fontFamily = Quicksand,
-            fontSize = 15.sp,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = textColor
+        )
+    }
+}
+
+/** Nombre de Maicito en una burbuja de diálogo, para que resalte. */
+@Composable
+private fun NameBubble(name: String) {
+    val border = Purple.copy(alpha = 0.30f)
+    Box(contentAlignment = Alignment.BottomCenter) {
+        // Piquito de la burbuja (queda medio escondido detrás)
+        Box(
+            modifier = Modifier
+                .offset(y = 6.dp)
+                .size(14.dp)
+                .graphicsLayer { rotationZ = 45f }
+                .background(Color.White)
+                .border(2.dp, border)
+        )
+        Text(
+            text = name,
+            fontFamily = Quicksand,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = DarkText
+            color = PurpleDark,
+            modifier = Modifier
+                .shadow(6.dp, CircleShape, ambientColor = Purple.copy(alpha = 0.2f), spotColor = Purple.copy(alpha = 0.2f))
+                .clip(CircleShape)
+                .background(Color.White)
+                .border(2.dp, border, CircleShape)
+                .padding(horizontal = 26.dp, vertical = 6.dp)
         )
     }
 }
@@ -329,7 +400,7 @@ private fun PetActionButton(
 private fun InfoOverlay(
     visible: Boolean,
     title: String,
-    icon: ImageVector,
+    @DrawableRes icon: Int,
     text: String,
     color: Color,
     onClose: () -> Unit
@@ -348,8 +419,9 @@ private fun InfoOverlay(
         ) {
             Column(
                 modifier = Modifier
-                    .widthIn(max = 300.dp)
-                    .padding(horizontal = 24.dp)
+                    .fillMaxWidth()
+                    .widthIn(max = 460.dp)
+                    .padding(horizontal = 20.dp)
                     .animateEnterExit(enter = scaleIn(initialScale = 0.9f))
                     .shadow(15.dp, RoundedCornerShape(22.dp))
                     .clip(RoundedCornerShape(22.dp))
@@ -367,7 +439,7 @@ private fun InfoOverlay(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(26.dp))
+                    ZentemiIcon(icon, size = 34.dp)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = title,

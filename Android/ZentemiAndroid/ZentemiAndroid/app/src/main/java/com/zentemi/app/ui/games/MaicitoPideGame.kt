@@ -1,8 +1,13 @@
 package com.zentemi.app.ui.games
 
+import androidx.annotation.DrawableRes
+import com.zentemi.app.ui.components.ZentemiIcon
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -132,26 +137,37 @@ fun MaicitoPideGame(
         label = "breathScale"
     )
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundLight)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Escena del pueblo, como en la lección y el mercado
+        Image(
+            painter = painterResource(R.drawable.fondopf_04),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .offset(x = shake.offset.dp)
-                .navigationBarsPadding(),
+                .offset(x = shake.offset.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             GameTopBar(
                 title = "Maicito pide",
                 progress = "${roundIndex + 1}/${rounds.size}",
-                onClose = onExit
+                onClose = onExit,
+                titleIcon = MaicitoGame.MAICITO_PIDE.icon
             )
 
-            Spacer(modifier = Modifier.weight(0.4f))
-
+            // Maicito y su globo; Maicito queda parado en el piso de la plaza
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(bottom = 18.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom
+            ) {
             // Globo de Maicito
             Column(
                 modifier = Modifier
@@ -176,34 +192,49 @@ fun MaicitoPideGame(
                 )
             }
 
-            PetView(
-                appState = appState,
-                size = 170.dp,
-                modifier = Modifier
-                    .padding(top = 10.dp)
-                    .graphicsLayer {
+            // Espacio para que el globo quede más arriba sin mover a Maicito
+            Spacer(modifier = Modifier.height(56.dp))
+
+            // Maicito parado sobre el suelo, con su sombra
+            Box(
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                Box(
+                    modifier = Modifier
+                        .offset(y = 6.dp)
+                        .size(120.dp, 22.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.18f))
+                )
+                PetView(
+                    appState = appState,
+                    size = 190.dp,
+                    modifier = Modifier.graphicsLayer {
                         translationY = jump.value
                         rotationZ = wobble.value
                         scaleY = breath
                         transformOrigin = TransformOrigin(0.5f, 1f)
                     }
-            )
+                )
+            }
+            }
 
-            Spacer(modifier = Modifier.weight(0.6f))
-
-            // Opciones
+            // Opciones en un panel inferior (igual que el mercado)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clip(RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp))
+                    .background(BackgroundLight)
+                    .navigationBarsPadding()
                     .padding(horizontal = 20.dp)
-                    .padding(bottom = 22.dp),
+                    .padding(top = 18.dp, bottom = 22.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
                     "Elige lo que significa",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.Gray
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
                 )
                 round.options.forEach { option ->
                     val isWrong = option.id in wrongPicks
@@ -238,7 +269,7 @@ fun MaicitoPideGame(
                                     .background(Purple.copy(alpha = 0.10f)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(option.icon, contentDescription = null, tint = Purple, modifier = Modifier.size(22.dp))
+                                ZentemiIcon(option.icon, size = 32.dp)
                             }
                             Spacer(modifier = Modifier.width(13.dp))
                             Text(

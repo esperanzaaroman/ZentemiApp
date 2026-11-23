@@ -1,5 +1,7 @@
 package com.zentemi.app.ui.games
 
+import androidx.annotation.DrawableRes
+import com.zentemi.app.ui.components.ZentemiIcon
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.*
@@ -224,15 +226,11 @@ fun MercadoGame(
                             modifier = Modifier
                                 .size(44.dp)
                                 .clip(CircleShape)
-                                .background(Purple)
+                                .background(Purple.copy(alpha = 0.10f))
                                 .clickable { phrasePlayer.play(current.answer.audio, appState.soundVolume) },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.VolumeUp,
-                                contentDescription = "Escuchar al vendedor",
-                                tint = Color.White
-                            )
+                            ZentemiIcon(R.drawable.ic_escuchar_audio, size = 34.dp, contentDescription = "Escuchar al vendedor")
                         }
                     }
                 }
@@ -325,14 +323,9 @@ fun MercadoGame(
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (step.speakWithAudio) {
-                                    Icon(
-                                        Icons.AutoMirrored.Filled.VolumeUp,
-                                        contentDescription = null,
-                                        tint = Purple,
-                                        modifier = Modifier.size(18.dp)
-                                    )
+                                    ZentemiIcon(R.drawable.ic_escuchar_audio, size = 26.dp)
                                 } else {
-                                    Icon(option.icon, contentDescription = null, tint = Purple, modifier = Modifier.size(18.dp))
+                                    ZentemiIcon(option.icon, size = 26.dp)
                                 }
                             }
                             Spacer(modifier = Modifier.width(12.dp))

@@ -1,5 +1,11 @@
 package com.zentemi.app.ui.games
 
+import androidx.annotation.DrawableRes
+import com.zentemi.app.ui.components.ZentemiIcon
+import com.zentemi.app.R
+import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.ui.graphics.Path
+import androidx.compose.foundation.Canvas
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,33 +40,36 @@ import com.zentemi.app.ui.components.TagChip
 import com.zentemi.app.ui.components.WaveHeader
 import com.zentemi.app.ui.theme.*
 
+/** Lila del globo de diálogo de Maicito. */
+private val BubbleColor = Color(0xFFEDE4FA)
+
 /** Juegos disponibles en "Jugar con Maicito". */
 enum class MaicitoGame(
     val title: String,
     val description: String,
     val tag: String,
-    val icon: ImageVector,
+    @param:DrawableRes val icon: Int,
     val color: Color
 ) {
     MAICITO_PIDE(
         "Maicito pide",
         "Escucha lo que dice Maicito en Yuhmu y elige qué significa.",
         "Escuchar",
-        Icons.Filled.VolunteerActivism,
+        R.drawable.ic_maicito_pide,
         Purple
     ),
     MEMORAMA(
         "Memorama",
         "Voltea las cartas y junta cada audio en Yuhmu con su significado.",
         "Memoria",
-        Icons.Filled.Style,
+        R.drawable.ic_memorama,
         Turquoise
     ),
     MERCADO(
         "El mercado de Ixtenco",
         "Visita el tianguis con Maicito y platica con el vendedor en Yuhmu.",
         "Historia",
-        Icons.Filled.Storefront,
+        R.drawable.ic_mercado,
         Color(0xFFFF9500)
     )
 }
@@ -93,37 +102,73 @@ fun GamesHubScreen(
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
                 .padding(horizontal = 20.dp)
-                .padding(top = 4.dp, bottom = 24.dp),
+                .padding(top = 16.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Maicito y recompensas del día
+            // Maicito "platicando": globo de diálogo, no es una tarjeta tocable
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(3.dp, RoundedCornerShape(20.dp))
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color.White)
-                    .padding(16.dp),
+                    .padding(bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                PetView(appState = appState, size = 70.dp)
-                Spacer(modifier = Modifier.width(14.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                PetView(appState = appState, size = 78.dp)
+
+                // Colita del globo apuntando a Maicito
+                Canvas(modifier = Modifier.size(10.dp, 18.dp)) {
+                    val tail = Path().apply {
+                        moveTo(size.width, 0f)
+                        lineTo(0f, size.height / 2)
+                        lineTo(size.width, size.height)
+                        close()
+                    }
+                    drawPath(tail, BubbleColor)
+                }
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(BubbleColor)
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text(
                         if (appState.gamesUnlocked) "¡Juguemos y practiquemos!"
                         else "¡Primero aprendamos juntos!",
-                        fontSize = 16.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = DarkText
+                        color = PurpleDark
                     )
-                    Text(
-                        if (appState.gamesUnlocked)
-                            "Recompensas de hoy: ${appState.gameRewardsLeft}/${appState.maxGameRewardsPerDay}. Cada partida sube la felicidad de ${appState.petName}."
-                        else
+                    if (appState.gamesUnlocked) {
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(50))
+                                .background(Color.White)
+                                .padding(horizontal = 10.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ZentemiIcon(R.drawable.ic_regalo, size = 20.dp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                "Recompensas de hoy: ${appState.gameRewardsLeft}/${appState.maxGameRewardsPerDay}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DarkText
+                            )
+                        }
+                        Text(
+                            "Cada partida sube la felicidad de ${appState.petName}.",
+                            fontSize = 12.sp,
+                            color = SubText
+                        )
+                    } else {
+                        Text(
                             "Termina la lección «Primeras frases» para desbloquear los juegos.",
-                        fontSize = 13.sp,
-                        color = SubText
-                    )
+                            fontSize = 13.sp,
+                            color = SubText
+                        )
+                    }
                 }
             }
 
@@ -157,11 +202,9 @@ private fun GameCard(game: MaicitoGame, unlocked: Boolean, onClick: () -> Unit) 
                 .background(if (unlocked) game.color.copy(alpha = 0.14f) else LockedNode),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                if (unlocked) game.icon else Icons.Filled.Lock,
-                contentDescription = null,
-                tint = if (unlocked) game.color else Purple.copy(alpha = 0.45f),
-                modifier = Modifier.size(30.dp)
+            ZentemiIcon(
+                if (unlocked) game.icon else R.drawable.ic_leccion_bloqueada,
+                size = 44.dp
             )
         }
 

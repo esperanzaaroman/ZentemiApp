@@ -1,5 +1,6 @@
 package com.zentemi.app.ui.main
 
+import com.zentemi.app.ui.components.ZentemiIcon
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
@@ -13,11 +14,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.TouchApp
@@ -64,8 +67,16 @@ private data class Food(
 
 private val foods = listOf(
     Food("manzana", R.drawable.manzana, "Manzana", price = 20, happiness = 5),
+    Food("platano", R.drawable.food_platano, "Plátano", price = 25, happiness = 6),
+    Food("uvas", R.drawable.food_uvas, "Uvas", price = 30, happiness = 7),
     Food("tortillas", R.drawable.tortillas, "Tortillas", price = 30, happiness = 8),
-    Food("tamal", R.drawable.tamal, "Tamal", price = 50, happiness = 15)
+    Food("sandia", R.drawable.food_sandia, "Sandía", price = 35, happiness = 9),
+    Food("concha", R.drawable.food_concha, "Concha", price = 40, happiness = 10),
+    Food("chocolate", R.drawable.acc_taza_chocolate, "Chocolate", price = 40, happiness = 11),
+    Food("quesadilla", R.drawable.food_quesadilla, "Quesadilla", price = 45, happiness = 12),
+    Food("tamal", R.drawable.tamal, "Tamal", price = 50, happiness = 15),
+    Food("taco", R.drawable.food_taco, "Taco", price = 55, happiness = 16),
+    Food("nieve", R.drawable.food_nieve, "Nieve", price = 60, happiness = 18)
 )
 
 private val CoinOrange = Color(0xFFFF9500)
@@ -96,6 +107,9 @@ fun FeedMaicitoScreen(
     var tutorialShownThisSession by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var messageJob by remember { mutableStateOf<Job?>(null) }
+    // "−50" que sube junto a las monedas cuando se paga una comida
+    var spent by remember { mutableStateOf<Int?>(null) }
+    val spentRise = remember { Animatable(0f) }
 
     val happiness = appState.happiness.coerceIn(0, 100)
     val availableMeals = appState.availableMeals
@@ -145,6 +159,12 @@ fun FeedMaicitoScreen(
         }
         isFeeding = true
         appState.coins -= food.price
+        spent = food.price
+        scope.launch {
+            spentRise.snapTo(0f)
+            spentRise.animateTo(1f, tween(1200, easing = LinearOutSlowInEasing))
+            spent = null
+        }
         appState.happiness = minOf(100, appState.happiness + food.happiness)
         appState.registerMeal()
 
@@ -373,59 +393,106 @@ fun FeedMaicitoScreen(
                 }
             }
 
-            // ── Carrusel de comida ──
+            // ── Alimentos ──
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(Color.White.copy(alpha = 0.96f))
-                    .padding(horizontal = 18.dp, vertical = 12.dp),
+                    .padding(start = 18.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Alimentos", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Purple)
-                Spacer(modifier = Modifier.weight(1f))
-                CoinLabel(appState.coins, 14)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Alimentos", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Purple)
+                    Text(
+                        text = selectedFood?.let { "Comprando: ${it.name} · ${it.price} monedas" }
+                            ?: "Elige uno y arrástralo a ${appState.petName}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (selectedFood != null) CoinOrange else Color.Gray,
+                        maxLines = 1
+                    )
+                }
+                Box(contentAlignment = Alignment.Center) {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(Color(0xFFFFF1C7))
+                            .padding(start = 8.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ZentemiIcon(R.drawable.ic_moneda, size = 30.dp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("${appState.coins}", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = CoinOrange)
+                    }
+                    // Lo que se acaba de gastar sube y se desvanece
+                    spent?.let { amount ->
+                        Text(
+                            "−$amount",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color(0xFFE0453A),
+                            modifier = Modifier.graphicsLayer {
+                                translationY = -60f - 90f * spentRise.value
+                                alpha = 1f - spentRise.value
+                            }
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 5.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            // Mismo alto que antes ocupaba la fila de comida; lo demás se ve bajando
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.height(167.dp)
             ) {
                 items(foods, key = { it.id }) { food ->
                     val canAfford = appState.coins >= food.price
                     val enabled = canChooseFood && canAfford
-                    Column(
-                        modifier = Modifier
-                            .size(120.dp, 157.dp)
-                            .graphicsLayer { alpha = if (enabled) 1f else 0.55f }
-                            .clip(RoundedCornerShape(17.dp))
-                            .background(Color.White.copy(alpha = 0.96f))
-                            .border(
-                                3.dp,
-                                if (selectedFood?.id == food.id) Purple else Color.Transparent,
-                                RoundedCornerShape(17.dp)
+                    val isSelected = selectedFood?.id == food.id
+                    Box {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(138.dp)
+                                .graphicsLayer { alpha = if (enabled || isSelected) 1f else 0.55f }
+                                .clip(RoundedCornerShape(17.dp))
+                                .background(if (isSelected) Color(0xFFF1E9FC) else Color.White.copy(alpha = 0.96f))
+                                .border(3.dp, if (isSelected) Purple else Color.Transparent, RoundedCornerShape(17.dp))
+                                // Sin monedas se puede tocar para ver el aviso "No tienes suficientes monedas".
+                                .clickable(enabled = canChooseFood) { selectFood(food) },
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterVertically)
+                        ) {
+                            Image(
+                                painter = painterResource(food.image),
+                                contentDescription = null,
+                                modifier = Modifier.size(58.dp)
                             )
-                            // Sin monedas se puede tocar para ver el aviso "No tienes suficientes monedas".
-                            .clickable(enabled = canChooseFood) { selectFood(food) },
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically)
-                    ) {
-                        Image(
-                            painter = painterResource(food.image),
-                            contentDescription = null,
-                            modifier = Modifier.size(75.dp)
-                        )
-                        Text(food.name, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Purple)
-                        Text(
-                            "+${food.happiness}% felicidad",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Turquoise
-                        )
-                        CoinLabel(food.price, 12)
+                            Text(food.name, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Purple, maxLines = 1)
+                            Text("+${food.happiness}%", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Turquoise)
+                            CoinLabel(food.price, 13)
+                        }
+                        // Indicador de que es la comida que estás comprando
+                        if (isSelected) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(6.dp)
+                                    .size(22.dp)
+                                    .clip(RoundedCornerShape(50))
+                                    .background(Purple),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Filled.Check, contentDescription = "Elegida", tint = Color.White, modifier = Modifier.size(15.dp))
+                            }
+                        }
                     }
                 }
             }
@@ -477,12 +544,7 @@ fun FeedMaicitoScreen(
 @Composable
 private fun CoinLabel(amount: Int, fontSize: Int) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            Icons.Filled.MonetizationOn,
-            contentDescription = null,
-            tint = CoinOrange,
-            modifier = Modifier.size((fontSize + 4).dp)
-        )
+        ZentemiIcon(R.drawable.ic_moneda, size = (fontSize + 8).dp)
         Spacer(modifier = Modifier.width(4.dp))
         Text("$amount", fontSize = fontSize.sp, fontWeight = FontWeight.Bold, color = CoinOrange)
     }
@@ -504,17 +566,15 @@ private fun HeartBurst(modifier: Modifier = Modifier) {
         val h = maxHeight
         progress.forEachIndexed { index, anim ->
             val p = anim.value
-            Icon(
-                Icons.Filled.Favorite,
-                contentDescription = null,
-                tint = if (index % 2 == 0) Color(0xFFFF2D55) else Color(0xFFFF3B30),
+            ZentemiIcon(
+                R.drawable.ic_felicidad,
+                size = (20 + (index % 4) * 6).dp,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .offset(
                         x = ((index % 4) * 25 - 37).dp,
                         y = (h / 2) - (h / 2 + 25.dp) * p
                     )
-                    .size((17 + (index % 4) * 5).dp)
                     .graphicsLayer {
                         alpha = 1f - p
                         val scale = 0.6f + 0.8f * p

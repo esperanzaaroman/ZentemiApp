@@ -1,5 +1,7 @@
 package com.zentemi.app.ui.main
 
+import com.zentemi.app.ui.components.ZentemiIcon
+import com.zentemi.app.R
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
@@ -77,12 +79,10 @@ fun StreakCelebration(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
-                Icon(
-                    Icons.Filled.LocalFireDepartment,
-                    contentDescription = null,
-                    tint = Color(0xFFFF9500),
+                ZentemiIcon(
+                    R.drawable.ic_racha,
+                    size = 76.dp,
                     modifier = Modifier
-                        .size(60.dp)
                         .graphicsLayer {
                             scaleX = flameScale
                             scaleY = flameScale

@@ -1,5 +1,15 @@
 package com.zentemi.app.ui.games
 
+import androidx.annotation.DrawableRes
+import com.zentemi.app.ui.components.ZentemiIcon
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.border
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -62,7 +72,11 @@ fun GameTopBar(
     title: String,
     progress: String,
     onClose: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Si se da, el título se dibuja como una etiqueta festiva con este ícono. */
+    @DrawableRes titleIcon: Int? = null,
+    /** Colores del degradado de la etiqueta festiva. */
+    titleColors: List<Color> = listOf(Color(0xFFFF9F1C), Color(0xFFFF4F98))
 ) {
     Row(
         modifier = modifier
@@ -85,16 +99,20 @@ fun GameTopBar(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Text(
-            text = title,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = Purple,
-            modifier = Modifier
-                .clip(RoundedCornerShape(50))
-                .background(Color.White.copy(alpha = 0.95f))
-                .padding(horizontal = 16.dp, vertical = 9.dp)
-        )
+        if (titleIcon != null) {
+            FunGameTitle(title = title, icon = titleIcon, colors = titleColors)
+        } else {
+            Text(
+                text = title,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Purple,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(Color.White.copy(alpha = 0.95f))
+                    .padding(horizontal = 16.dp, vertical = 9.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.weight(1f))
 
@@ -174,12 +192,7 @@ fun GameResultOverlay(
                             spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium)
                         ) + fadeIn()
                     ) {
-                        Icon(
-                            Icons.Filled.Star,
-                            contentDescription = null,
-                            tint = if (index < stars) SplashDotActive else Color.Gray.copy(alpha = 0.30f),
-                            modifier = Modifier.size(42.dp)
-                        )
+                        ZentemiIcon(R.drawable.ic_estrella, size = 46.dp, muted = index >= stars)
                     }
                 }
             }
@@ -190,9 +203,9 @@ fun GameResultOverlay(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (coinsEarned > 0) {
-                        RewardChip(Icons.Filled.MonetizationOn, "+$coinsEarned", Color(0xFFFF9500))
+                        RewardChip(R.drawable.ic_moneda, "+$coinsEarned", Color(0xFFFF9500))
                     }
-                    RewardChip(Icons.Filled.Favorite, "+$GAME_HAPPINESS_REWARD%", Color(0xFFFF2D55))
+                    RewardChip(R.drawable.ic_felicidad, "+$GAME_HAPPINESS_REWARD%", Color(0xFFFF2D55))
                 }
                 false -> Text(
                     "Ya usaste las ${appState.maxGameRewardsPerDay} recompensas de hoy. ¡Puedes seguir practicando!",
@@ -217,7 +230,7 @@ fun GameResultOverlay(
 }
 
 @Composable
-private fun RewardChip(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String, color: Color) {
+private fun RewardChip(@DrawableRes icon: Int, text: String, color: Color) {
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(50))
@@ -225,8 +238,57 @@ private fun RewardChip(icon: androidx.compose.ui.graphics.vector.ImageVector, te
             .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
+        ZentemiIcon(icon, size = 26.dp)
         Spacer(modifier = Modifier.width(6.dp))
         Text(text, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = color)
+    }
+}
+
+/**
+ * Título festivo de un juego: etiqueta con degradado, borde blanco, ícono
+ * en un circulito, un poco inclinada y con un "pop" al aparecer.
+ */
+@Composable
+private fun FunGameTitle(title: String, @DrawableRes icon: Int, colors: List<Color>) {
+    val pop = remember { Animatable(0.6f) }
+    LaunchedEffect(Unit) {
+        pop.animateTo(1f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessLow))
+    }
+    val shape = RoundedCornerShape(50)
+
+    Row(
+        modifier = Modifier
+            .graphicsLayer {
+                rotationZ = -3f
+                scaleX = pop.value
+                scaleY = pop.value
+            }
+            .shadow(8.dp, shape, spotColor = colors.last().copy(alpha = 0.6f))
+            .clip(shape)
+            .background(Brush.horizontalGradient(colors))
+            .border(2.5.dp, Color.White, shape)
+            .padding(start = 5.dp, end = 16.dp, top = 5.dp, bottom = 5.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(30.dp)
+                .clip(CircleShape)
+                .background(Color.White),
+            contentAlignment = Alignment.Center
+        ) {
+            ZentemiIcon(icon, size = 24.dp)
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = title,
+            fontFamily = Quicksand,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            style = TextStyle(
+                shadow = Shadow(Color.Black.copy(alpha = 0.25f), Offset(0f, 2f), blurRadius = 3f)
+            )
+        )
     }
 }

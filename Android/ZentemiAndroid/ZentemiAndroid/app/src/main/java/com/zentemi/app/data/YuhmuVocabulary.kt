@@ -1,12 +1,7 @@
 package com.zentemi.app.data
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.RawRes
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.Cake
-import androidx.compose.material.icons.filled.PanTool
-import androidx.compose.material.icons.filled.WbSunny
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.zentemi.app.R
 
 /**
@@ -22,7 +17,7 @@ data class YuhmuWord(
     val spanish: String,
     val yuhmu: String?,
     @param:RawRes val audio: Int,
-    val icon: ImageVector,
+    @param:DrawableRes val icon: Int,
     val lesson: Int
 )
 
@@ -42,7 +37,7 @@ object YuhmuVocabulary {
             spanish = "Buenos días",
             yuhmu = "Té xki hats’i",
             audio = R.raw.buenosdias,
-            icon = Icons.Filled.WbSunny,
+            icon = R.drawable.ic_buenos_dias,
             lesson = 1
         ),
         YuhmuWord(
@@ -50,7 +45,7 @@ object YuhmuVocabulary {
             spanish = "¿Cómo te llamas?",
             yuhmu = null,
             audio = R.raw.comotellamas,
-            icon = Icons.Filled.Badge,
+            icon = R.drawable.ic_como_te_llamas,
             lesson = 1
         ),
         YuhmuWord(
@@ -58,7 +53,7 @@ object YuhmuVocabulary {
             spanish = "¿Cuántos años tienes?",
             yuhmu = null,
             audio = R.raw.cuantosaniostienes,
-            icon = Icons.Filled.Cake,
+            icon = R.drawable.ic_cuantos_anios,
             lesson = 1
         ),
         YuhmuWord(
@@ -66,7 +61,7 @@ object YuhmuVocabulary {
             spanish = "Ayúdame por favor",
             yuhmu = null,
             audio = R.raw.ayudameporfavor,
-            icon = Icons.Filled.PanTool,
+            icon = R.drawable.ic_ayudame,
             lesson = 1
         )
     )

@@ -1,5 +1,9 @@
 package com.zentemi.app.ui.settings
 
+import androidx.compose.ui.window.DialogProperties
+
+import androidx.annotation.DrawableRes
+import com.zentemi.app.ui.components.ZentemiIcon
 import android.content.pm.ApplicationInfo
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.background
@@ -38,7 +42,6 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onLogout: () -> Unit
 ) {
-    var showLanguageSelector by remember { mutableStateOf(false) }
     var showAboutZentemi by remember { mutableStateOf(false) }
     var showLogoutConfirmation by remember { mutableStateOf(false) }
     var showResetConfirmation by remember { mutableStateOf(false) }
@@ -70,7 +73,7 @@ fun SettingsScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp)
-                    .padding(top = 4.dp)
+                    .padding(top = 16.dp)
             ) {
                 // Main settings card
                 Surface(
@@ -81,7 +84,7 @@ fun SettingsScreen(
                     Column {
                         // Music volume
                         VolumeRow(
-                            icon = Icons.Filled.MusicNote,
+                            icon = R.drawable.ic_musica,
                             iconColor = Purple,
                             title = "Música",
                             volume = appState.musicVolume,
@@ -92,7 +95,7 @@ fun SettingsScreen(
 
                         // Sound volume
                         VolumeRow(
-                            icon = Icons.Filled.VolumeUp,
+                            icon = R.drawable.ic_sonido,
                             iconColor = Purple,
                             title = "Sonido",
                             volume = appState.soundVolume,
@@ -103,7 +106,7 @@ fun SettingsScreen(
 
                         // Notifications
                         ToggleRow(
-                            icon = Icons.Filled.Notifications,
+                            icon = R.drawable.ic_notificaciones,
                             iconColor = Color.Red.copy(alpha = 0.65f),
                             iconBackground = Color.Red.copy(alpha = 0.09f),
                             title = "Notificaciones",
@@ -113,21 +116,9 @@ fun SettingsScreen(
 
                         HorizontalDivider(modifier = Modifier.padding(start = 61.dp), color = LockedNode.copy(alpha = 0.6f))
 
-                        // Language
-                        NavigationRow(
-                            icon = Icons.Filled.Language,
-                            iconColor = Turquoise,
-                            iconBackground = Turquoise.copy(alpha = 0.10f),
-                            title = "Idioma de la app",
-                            trailingText = appState.selectedLanguage,
-                            onClick = { showLanguageSelector = true }
-                        )
-
-                        HorizontalDivider(modifier = Modifier.padding(start = 61.dp), color = LockedNode.copy(alpha = 0.6f))
-
                         // About
                         NavigationRow(
-                            icon = Icons.Filled.Info,
+                            icon = R.drawable.ic_sobre_zentemi,
                             iconColor = Color(0xFFFF9800),
                             iconBackground = Color.Yellow.copy(alpha = 0.14f),
                             title = "Sobre Zentemi",
@@ -215,7 +206,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(9.dp))
 
                 Text(
-                    text = "Versión 1.0",
+                    text = "Versión 1.1",
                     fontSize = 12.sp,
                     color = SubText.copy(alpha = 0.55f)
                 )
@@ -236,46 +227,6 @@ fun SettingsScreen(
                 }
             }
         }
-    }
-
-    // Language selector dialog
-    if (showLanguageSelector) {
-        AlertDialog(
-            onDismissRequest = { showLanguageSelector = false },
-            title = { Text("Idioma de la app", fontWeight = FontWeight.Bold) },
-            text = {
-                Column {
-                    listOf("Español", "English", "Yuhmu").forEach { lang ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    appState.selectedLanguage = lang
-                                    showLanguageSelector = false
-                                }
-                                .padding(vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = appState.selectedLanguage == lang,
-                                onClick = {
-                                    appState.selectedLanguage = lang
-                                    showLanguageSelector = false
-                                },
-                                colors = RadioButtonDefaults.colors(selectedColor = Purple)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = lang, fontSize = 15.sp)
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showLanguageSelector = false }) {
-                    Text("Cancelar", color = Purple)
-                }
-            }
-        )
     }
 
     // About Zentemi dialog
@@ -338,7 +289,7 @@ fun SettingsScreen(
 
 @Composable
 private fun VolumeRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    @DrawableRes icon: Int,
     iconColor: Color,
     title: String,
     volume: Float,
@@ -357,15 +308,10 @@ private fun VolumeRow(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(iconColor.copy(alpha = 0.10f)),
+                    .background(BackgroundLight),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = iconColor,
-                    modifier = Modifier.size(20.dp)
-                )
+                ZentemiIcon(icon, size = 30.dp)
             }
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -403,7 +349,7 @@ private fun VolumeRow(
 
 @Composable
 private fun ToggleRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    @DrawableRes icon: Int,
     iconColor: Color,
     iconBackground: Color,
     title: String,
@@ -421,15 +367,10 @@ private fun ToggleRow(
             modifier = Modifier
                 .size(36.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(iconBackground),
+                .background(BackgroundLight),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = iconColor,
-                modifier = Modifier.size(20.dp)
-            )
+            ZentemiIcon(icon, size = 30.dp)
         }
 
         Spacer(modifier = Modifier.width(12.dp))
@@ -456,7 +397,7 @@ private fun ToggleRow(
 
 @Composable
 private fun NavigationRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    @DrawableRes icon: Int,
     iconColor: Color,
     iconBackground: Color,
     title: String,
@@ -475,15 +416,10 @@ private fun NavigationRow(
             modifier = Modifier
                 .size(36.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(iconBackground),
+                .background(BackgroundLight),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = iconColor,
-                modifier = Modifier.size(20.dp)
-            )
+            ZentemiIcon(icon, size = 30.dp)
         }
 
         Spacer(modifier = Modifier.width(12.dp))
@@ -519,8 +455,14 @@ private fun NavigationRow(
 private fun AboutZentemiDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        // Más ancha que la ventana estándar: casi todo el ancho de la pantalla
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier
+            .fillMaxWidth()
+            .widthIn(max = 520.dp)
+            .padding(horizontal = 20.dp),
         title = {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Image(
                     painter = painterResource(id = R.drawable.mascota),
                     contentDescription = null,

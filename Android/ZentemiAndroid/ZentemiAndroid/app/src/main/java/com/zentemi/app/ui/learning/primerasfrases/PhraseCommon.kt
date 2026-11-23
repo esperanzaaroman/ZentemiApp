@@ -1,5 +1,8 @@
 package com.zentemi.app.ui.learning.primerasfrases
 
+import androidx.annotation.DrawableRes
+import com.zentemi.app.ui.components.ZentemiIcon
+import com.zentemi.app.R
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -113,12 +116,15 @@ internal fun ListenButton(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            Icons.AutoMirrored.Filled.VolumeUp,
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(20.dp)
-        )
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(CircleShape)
+                .background(Color.White),
+            contentAlignment = Alignment.Center
+        ) {
+            ZentemiIcon(R.drawable.ic_escuchar_audio, size = 26.dp)
+        }
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = if (isPlaying) "Reproduciendo..." else "Escuchar audio",

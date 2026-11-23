@@ -1,5 +1,7 @@
 package com.zentemi.app.ui.games
 
+import androidx.annotation.DrawableRes
+import com.zentemi.app.ui.components.ZentemiIcon
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -254,12 +256,7 @@ private fun MemoCardView(
                 verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically)
             ) {
                 if (card.isAudio) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.VolumeUp,
-                        contentDescription = null,
-                        tint = Purple,
-                        modifier = Modifier.size(30.dp)
-                    )
+                    ZentemiIcon(R.drawable.ic_escuchar_audio, size = 40.dp)
                     Text(
                         text = card.word.yuhmu ?: "Yuhmu",
                         fontSize = 15.sp,
@@ -268,7 +265,7 @@ private fun MemoCardView(
                         textAlign = TextAlign.Center
                     )
                 } else {
-                    Icon(card.word.icon, contentDescription = null, tint = Turquoise, modifier = Modifier.size(30.dp))
+                    ZentemiIcon(card.word.icon, size = 40.dp)
                     Text(
                         text = card.word.spanish,
                         fontSize = 14.sp,

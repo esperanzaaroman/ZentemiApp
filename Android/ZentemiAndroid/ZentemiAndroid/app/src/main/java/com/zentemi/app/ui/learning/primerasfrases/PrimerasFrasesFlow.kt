@@ -45,7 +45,7 @@ private val scenes = listOf(
             "¡Así es! Ahora podemos conocernos un poco más.",
             "¿Cómo se pregunta «¿Cuántos años tienes?» en Yuhmu?",
             "¡Escucha cómo se dice en Yuhmu!",
-            "¡Gracias! Ahora intentaré pronunciarlo."
+            "¡Gracias! Lo voy a escuchar con atención."
         ),
         audio = R.raw.cuantosaniostienes
     ),
@@ -134,12 +134,22 @@ fun PrimerasFrasesFlow(
                     onClose = onExit,
                     onContinue = { next(it) }
                 )
-                3 -> PronunciationExerciseScreen(
+                // Antes era de pronunciación (micrófono); ahora se escucha y se elige
+                3 -> MeaningChoiceExerciseScreen(
                     appState = appState,
                     exerciseNumber = 3,
                     totalExercises = PRIMERAS_FRASES_EXERCISES,
                     onClose = onExit,
-                    onContinue = { next(it) }
+                    onContinue = { next(it) },
+                    audio = R.raw.cuantosaniostienes,
+                    answers = listOf(
+                        "¿Cuántos años tienes?",
+                        "Buenos días",
+                        "Ayúdame por favor",
+                        "¿Cómo te llamas?"
+                    ),
+                    correctAnswerIndex = 0,
+                    successText = "¡Correcto! Ya sabes preguntar la edad."
                 )
                 4 -> MeaningChoiceExerciseScreen(
                     appState = appState,

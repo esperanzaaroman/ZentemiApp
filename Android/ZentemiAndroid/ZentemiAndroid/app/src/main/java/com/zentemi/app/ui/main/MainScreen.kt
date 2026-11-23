@@ -1,5 +1,8 @@
 package com.zentemi.app.ui.main
 
+import androidx.annotation.DrawableRes
+import com.zentemi.app.ui.components.ZentemiIcon
+import com.zentemi.app.R
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,7 +27,7 @@ import com.zentemi.app.state.AppState
 import com.zentemi.app.ui.theme.*
 
 data class TabItem(
-    val icon: ImageVector,
+    @DrawableRes val icon: Int,
     val label: String
 )
 
@@ -37,16 +40,15 @@ fun MainScreen(
     onSettingsPressed: () -> Unit,
     onLogout: () -> Unit
 ) {
-    var selectedTab by remember { mutableIntStateOf(2) } // HomeView is default
+    var selectedTab by remember { mutableIntStateOf(1) } // Inicio es la pestaña por defecto
 
     val tabs = listOf(
-        TabItem(Icons.Filled.Storefront, "Tienda"),
-        TabItem(Icons.Filled.Backpack, "Mochila"),
-        TabItem(Icons.Filled.PlayCircle, "Jugar"),
-        TabItem(Icons.Filled.Person, "Perfil")
+        TabItem(R.drawable.ic_tienda, "Tienda"),
+        TabItem(R.drawable.ic_inicio, "Inicio"),
+        TabItem(R.drawable.ic_perfil, "Perfil")
     )
 
-    // Backpack scale animation on purchase
+    // Al comprar, el ícono de la tienda rebota
     val backpackScale = remember { Animatable(1f) }
 
     LaunchedEffect(appState.purchasedItemAnimation) {
@@ -74,14 +76,13 @@ fun MainScreen(
         // Content
         when (selectedTab) {
             0 -> StoreScreen(appState = appState)
-            1 -> BackpackScreen(appState = appState)
-            2 -> HomeScreen(
+            1 -> HomeScreen(
                 appState = appState,
                 onPlayPressed = onPlayPressed,
                 onFeedPressed = onFeedPressed,
                 onPlayWithPressed = onPlayWithPressed
             )
-            3 -> ProfileScreen(
+            2 -> ProfileScreen(
                 appState = appState,
                 onSettingsPressed = onSettingsPressed,
                 onLogout = onLogout
@@ -115,14 +116,15 @@ fun MainScreen(
                         .padding(vertical = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        imageVector = tab.icon,
+                    ZentemiIcon(
+                        icon = tab.icon,
                         contentDescription = tab.label,
-                        tint = if (isSelected) Purple else Color.Gray.copy(alpha = 0.5f),
+                        // La pestaña activa a color y un poco más grande; las demás apagadas
+                        size = if (isSelected) 32.dp else 28.dp,
+                        muted = !isSelected,
                         modifier = Modifier
-                            .size(24.dp)
                             .then(
-                                if (index == 1) Modifier.scale(backpackScale.value)
+                                if (index == 0) Modifier.scale(backpackScale.value)
                                 else Modifier
                             )
                     )

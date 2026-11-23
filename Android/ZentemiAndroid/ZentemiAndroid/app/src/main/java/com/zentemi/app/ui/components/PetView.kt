@@ -13,6 +13,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.zentemi.app.R
+import com.zentemi.app.data.ItemSlot
+import com.zentemi.app.data.ShopCatalog
+import com.zentemi.app.data.ShopItem
 import com.zentemi.app.state.AppState
 import kotlin.math.cos
 import kotlin.math.sin
@@ -27,8 +30,17 @@ import kotlin.math.sin
 fun PetView(
     appState: AppState,
     size: Dp = 115.dp,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Artículo que se está probando en la tienda: reemplaza lo que haya en su zona. */
+    preview: ShopItem? = null
 ) {
+    val accessories = if (preview == null || !preview.isAccessory) {
+        appState.equippedAccessories
+    } else {
+        (appState.equippedAccessories.filter { it.slot != preview.slot } + preview)
+            .sortedBy { it.slot.ordinal }
+    }
+
     val scale = size / 115.dp
 
     val hueFilter = remember(appState.mascotHue) {
@@ -47,12 +59,23 @@ fun PetView(
             modifier = Modifier.size(size)
         )
 
+        // Los moños y flores se acomodan según el peinado que trae puesto
+        val hairId = accessories.firstOrNull { it.slot == ItemSlot.HAIR }?.id
+        val (shiftX, shiftY) = ShopCatalog.adornmentShiftForHair[hairId] ?: (0f to 0f)
+
         // Accesorios puestos, en orden de zona (ver ShopCatalog / ItemSlot).
-        appState.equippedAccessories.forEach { item ->
+        accessories.forEach { item ->
             val image = item.image
             val layout = item.layout
             if (image != null && layout != null) {
-                Accessory(image, layout.width, layout.x, layout.y, scale)
+                val adornment = item.slot == ItemSlot.ADORNMENT
+                Accessory(
+                    image,
+                    layout.width,
+                    layout.x + if (adornment) shiftX else 0f,
+                    layout.y + if (adornment) shiftY else 0f,
+                    scale
+                )
             }
         }
     }

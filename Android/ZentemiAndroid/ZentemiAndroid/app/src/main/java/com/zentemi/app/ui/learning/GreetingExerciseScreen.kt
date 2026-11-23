@@ -1,5 +1,7 @@
 package com.zentemi.app.ui.learning
 
+import androidx.annotation.DrawableRes
+import com.zentemi.app.ui.components.ZentemiIcon
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -179,16 +181,14 @@ fun GreetingExerciseScreen(
                                 .size(38.dp)
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(
-                                    if (isAudioPlaying) Color.White.copy(alpha = 0.18f)
-                                    else Purple
+                                    Color.White
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                Icons.Filled.VolumeUp,
+                            ZentemiIcon(
+                                R.drawable.ic_escuchar_audio,
                                 contentDescription = "Audio",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
+                                size = 32.dp
                             )
                         }
 

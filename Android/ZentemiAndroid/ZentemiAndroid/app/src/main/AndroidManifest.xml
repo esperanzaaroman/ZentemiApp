@@ -3,7 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Ejercicio 3 de "Primeras frases": practicar la pronunciación -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- El ejercicio se puede omitir, así que el micrófono no es obligatorio -->
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
