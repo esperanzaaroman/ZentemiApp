@@ -240,7 +240,7 @@ fun SettingsScreen(
             onDismissRequest = { showLogoutConfirmation = false },
             title = { Text("¿Cerrar sesión?", fontWeight = FontWeight.Bold) },
             text = {
-                Text("Tendrás que ingresar nuevamente tu nombre de usuario y PIN para entrar a tu cuenta.")
+                Text("Tendrás que iniciar sesión nuevamente con la cuenta del tutor para acceder.")
             },
             confirmButton = {
                 TextButton(

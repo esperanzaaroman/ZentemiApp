@@ -5,9 +5,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Icon
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,18 +22,61 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zentemi.app.R
+import com.zentemi.app.data.AuthService
 import com.zentemi.app.state.AppState
 import com.zentemi.app.ui.components.*
 import com.zentemi.app.ui.theme.*
+import kotlinx.coroutines.launch
 
+/**
+ * Registro familiar (equivalente a NameView.swift en iOS):
+ * nombre del menor + correo y contraseña del tutor + consentimiento de privacidad.
+ *
+ * Al crearse la cuenta, la puerta de autenticación de la navegación
+ * lleva automáticamente a la verificación de correo.
+ */
 @Composable
 fun NameScreen(
     appState: AppState,
-    onBack: () -> Unit,
-    onNext: () -> Unit
+    onBack: () -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
-    val isValidName = name.trim().length >= 3
+    var childName by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var acceptedPrivacyConsent by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val scope = rememberCoroutineScope()
+
+    val isValidChildName = childName.trim().length >= 3
+    val cleanEmail = email.trim()
+    val isValidEmail = cleanEmail.contains("@") && cleanEmail.contains(".") && cleanEmail.length >= 6
+    val isValidPassword = password.length >= 6 && password == confirmPassword
+    val canCreateAccount = isValidChildName && isValidEmail && isValidPassword &&
+        acceptedPrivacyConsent && !isLoading
+
+    fun executeRegister() {
+        if (!canCreateAccount) return
+        isLoading = true
+        errorMessage = null
+        // El nombre se fija antes para que el perfil del menor se cree con él
+        appState.userName = childName.trim()
+        scope.launch {
+            try {
+                AuthService.registerParent(
+                    email = email,
+                    password = password,
+                    acceptedPrivacyConsent = acceptedPrivacyConsent
+                )
+            } catch (e: Exception) {
+                errorMessage = e.message
+            } finally {
+                isLoading = false
+            }
+        }
+    }
 
     // Mascot "breathing" (stretches up from its feet)
     val anim = rememberInfiniteTransition(label = "mascot")
@@ -54,7 +97,7 @@ fun NameScreen(
                 painter = painterResource(id = R.drawable.mascota),
                 contentDescription = "Maicito",
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(90.dp)
                     .graphicsLayer {
                         scaleY = mascotScaleY
                         transformOrigin = TransformOrigin(0.5f, 1f)
@@ -62,15 +105,14 @@ fun NameScreen(
             )
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                AuthTitle(text = "¿Cómo te llamas?", color = DarkText, fontSize = 30)
+                AuthTitle(text = "Registro Familiar", color = DarkText, fontSize = 30)
                 Spacer(modifier = Modifier.height(8.dp))
                 AuthSubtitle(
-                    text = "Maicito quiere saber tu nombre para\nempezar la aventura.",
+                    text = "Supervisado por un adulto responsable",
                     color = SubText
                 )
             }
 
-            // Name card
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -79,71 +121,93 @@ fun NameScreen(
                     .clip(RoundedCornerShape(24.dp))
                     .background(Color.White.copy(alpha = 0.97f))
                     .padding(22.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text(
-                    text = "Tu nombre",
-                    fontFamily = Quicksand,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = SubText
-                )
-
+                FieldLabel("Nombre del menor / aprendiz")
                 AuthTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    placeholder = "Escribe tu nombre",
+                    value = childName,
+                    onValueChange = { childName = it },
+                    placeholder = "¿Cómo te llamas?",
                     bordered = true
                 )
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(
-                                if (isValidName) SuccessGreen.copy(alpha = 0.15f)
-                                else Color.Gray.copy(alpha = 0.12f)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (isValidName) {
-                            Icon(
-                                imageVector = Icons.Filled.Check,
-                                contentDescription = null,
-                                tint = SuccessGreen,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
+                FieldLabel("Correo del tutor legal")
+                AuthTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    placeholder = "tutor@ejemplo.com",
+                    bordered = true,
+                    email = true
+                )
+
+                FieldLabel("Contraseña del tutor (mínimo 6 caracteres)")
+                AuthTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    placeholder = "Contraseña",
+                    bordered = true,
+                    password = true
+                )
+
+                FieldLabel("Confirmar contraseña")
+                AuthTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    placeholder = "Repite la contraseña",
+                    bordered = true,
+                    password = true
+                )
+
+                if (confirmPassword.isNotEmpty()) {
+                    PinMatchRow(
+                        matches = password == confirmPassword,
+                        textColor = SubText,
+                        matchText = "Las contraseñas coinciden",
+                        mismatchText = "Las contraseñas no coinciden"
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.Top) {
+                    Checkbox(
+                        checked = acceptedPrivacyConsent,
+                        onCheckedChange = { acceptedPrivacyConsent = it },
+                        colors = CheckboxDefaults.colors(checkedColor = Purple)
+                    )
                     Text(
-                        text = if (isValidName) "Se ve muy bien" else "Escribe al menos 3 caracteres",
+                        text = "Soy mayor de edad y autorizo como tutor el tratamiento de datos " +
+                            "para el aprendizaje del menor en Zentemi (cumplimiento LFPDPPP y LGDNNA).",
                         fontFamily = Quicksand,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
-                        color = SubText
+                        color = SubText,
+                        modifier = Modifier.padding(top = 12.dp)
                     )
                 }
             }
 
-            Text(
-                text = "Podrás cambiarlo después en tu perfil",
-                fontFamily = Quicksand,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = SubText.copy(alpha = 0.6f)
-            )
+            errorMessage?.let { AuthMessage(text = it) }
+
+            if (isLoading) {
+                CircularProgressIndicator(color = Purple)
+            }
 
             AuthPrimaryButton(
-                text = "¡Empezar!",
-                onClick = {
-                    appState.userName = name.trim()
-                    onNext()
-                },
-                enabled = isValidName,
+                text = if (isLoading) "Creando cuenta..." else "Crear cuenta",
+                onClick = { executeRegister() },
+                enabled = canCreateAccount,
                 onLightBackground = true
             )
         }
     }
+}
+
+@Composable
+private fun FieldLabel(text: String) {
+    Text(
+        text = text,
+        fontFamily = Quicksand,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = SubText
+    )
 }

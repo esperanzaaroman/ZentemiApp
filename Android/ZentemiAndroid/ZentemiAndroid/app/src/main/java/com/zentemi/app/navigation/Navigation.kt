@@ -8,10 +8,13 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.zentemi.app.audio.MusicManager
 import com.zentemi.app.audio.MusicTrack
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.zentemi.app.data.AuthService
 import com.zentemi.app.state.AppState
 import com.zentemi.app.ui.learning.primerasfrases.PrimerasFrasesFlow
 import com.zentemi.app.ui.learning.LearningPathScreen
@@ -24,25 +27,19 @@ import com.zentemi.app.ui.games.MemoramaGame
 import com.zentemi.app.ui.games.MercadoGame
 import com.zentemi.app.ui.main.FeedMaicitoScreen
 import com.zentemi.app.ui.main.MainScreen
-import com.zentemi.app.ui.onboarding.CreatePINScreen
+import com.zentemi.app.ui.onboarding.EmailVerificationScreen
 import com.zentemi.app.ui.onboarding.LoginScreen
 import com.zentemi.app.ui.onboarding.NameScreen
 import com.zentemi.app.ui.onboarding.OnboardingScreen
-import com.zentemi.app.ui.onboarding.RecoveryWordScreen
 import com.zentemi.app.ui.onboarding.SignInScreen
-import com.zentemi.app.ui.onboarding.RecoveryKeyScreen
-import com.zentemi.app.ui.onboarding.NewPINScreen
 import com.zentemi.app.ui.settings.SettingsScreen
 
 object Routes {
     const val ONBOARDING = "onboarding"
     const val LOGIN = "login"
     const val NAME = "name"
-    const val CREATE_PIN = "create_pin"
-    const val RECOVERY_WORD = "recovery_word"
     const val SIGN_IN = "sign_in"
-    const val RECOVERY_KEY = "recovery_key"
-    const val NEW_PIN = "new_pin"
+    const val EMAIL_VERIFICATION = "email_verification"
     const val MAIN = "main"
     const val LEARNING_PATH = "learning_path"
     const val LESSON_INTRO = "lesson_intro/{lessonNumber}"
@@ -54,6 +51,9 @@ object Routes {
     const val GAME_MAICITO_PIDE = "game_maicito_pide"
     const val GAME_MEMORAMA = "game_memorama"
     const val GAME_MERCADO = "game_mercado"
+
+    /** Pantallas accesibles sin sesión iniciada. */
+    val publicRoutes = setOf(ONBOARDING, LOGIN, NAME, SIGN_IN)
 
     fun lessonIntro(lessonNumber: Int) = "lesson_intro/$lessonNumber"
     fun lessonComplete(correct: Int, total: Int, elapsed: Int) =
@@ -79,9 +79,42 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
         appState.updateDailyStreak()
     }
 
+    // ── Puerta de autenticación (igual que ContentView en iOS) ──
+    // Sin sesión → pantallas públicas; sesión sin verificar → verificación
+    // de correo; sesión verificada → app principal.
+    val isAuthenticated by AuthService.isAuthenticated.collectAsState()
+    val isEmailVerified by AuthService.isEmailVerified.collectAsState()
+
+    val startDestination = remember {
+        when {
+            !isAuthenticated -> Routes.ONBOARDING
+            !isEmailVerified -> Routes.EMAIL_VERIFICATION
+            else -> Routes.MAIN
+        }
+    }
+
+    LaunchedEffect(isAuthenticated, isEmailVerified) {
+        val current = navController.currentDestination?.route ?: return@LaunchedEffect
+        val target = when {
+            !isAuthenticated ->
+                if (current in Routes.publicRoutes) null else Routes.LOGIN
+            !isEmailVerified ->
+                if (current == Routes.EMAIL_VERIFICATION) null else Routes.EMAIL_VERIFICATION
+            else ->
+                if (current in Routes.publicRoutes || current == Routes.EMAIL_VERIFICATION) Routes.MAIN
+                else null
+        }
+        if (target != null) {
+            navController.navigate(target) {
+                popUpTo(navController.graph.id) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
-        startDestination = Routes.ONBOARDING
+        startDestination = startDestination
     ) {
 
         composable(Routes.ONBOARDING) {
@@ -105,71 +138,24 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
             )
         }
 
+        // Registro familiar: nombre del menor + cuenta del tutor (Firebase Auth).
+        // Al crearse la sesión, la puerta de autenticación lleva a la verificación.
         composable(Routes.NAME) {
             NameScreen(
                 appState = appState,
-                onBack = { navController.popBackStack() },
-                onNext = {
-                    navController.navigate(Routes.CREATE_PIN)
-                }
+                onBack = { navController.popBackStack() }
             )
         }
 
-        composable(Routes.CREATE_PIN) {
-            CreatePINScreen(
-                onBack = { navController.popBackStack() },
-                onNext = {
-                    navController.navigate(Routes.RECOVERY_WORD)
-                }
-            )
-        }
-
-        composable(Routes.RECOVERY_WORD) {
-            RecoveryWordScreen(
-                onContinue = {
-                    navController.navigate(Routes.MAIN) {
-                        popUpTo(Routes.LOGIN) { inclusive = true }
-                    }
-                }
-            )
-        }
-
+        // Inicio de sesión del tutor con correo y contraseña.
         composable(Routes.SIGN_IN) {
             SignInScreen(
-                appState = appState,
-                onBack = { navController.popBackStack() },
-                onSignedIn = {
-                    navController.navigate(Routes.MAIN) {
-                        popUpTo(Routes.LOGIN) { inclusive = true }
-                    }
-                },
-                onForgotPIN = {
-                    navController.navigate(Routes.RECOVERY_KEY + "?type=pin")
-                },
-                onForgotUsername = {
-                    navController.navigate(Routes.RECOVERY_KEY + "?type=username")
-                }
+                onBack = { navController.popBackStack() }
             )
         }
 
-        composable(Routes.RECOVERY_KEY + "?type={type}") {
-            val type = it.arguments?.getString("type") ?: "pin"
-            RecoveryKeyScreen(
-                recoveryType = type,
-                onBack = { navController.popBackStack() },
-                onNext = {
-                    navController.navigate(Routes.NEW_PIN)
-                }
-            )
-        }
-
-        composable(Routes.NEW_PIN) {
-            NewPINScreen(
-                onBack = { navController.popBackStack() },
-                onNext = {
-                    navController.navigate(Routes.RECOVERY_WORD)
-                }
-            )
+        composable(Routes.EMAIL_VERIFICATION) {
+            EmailVerificationScreen()
         }
 
         composable(Routes.MAIN) {
@@ -187,11 +173,7 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
                 onSettingsPressed = {
                     navController.navigate(Routes.SETTINGS)
                 },
-                onLogout = {
-                    navController.navigate(Routes.LOGIN) {
-                        popUpTo(Routes.MAIN) { inclusive = true }
-                    }
-                }
+                onLogout = { AuthService.signOut() }
             )
         }
 
@@ -292,11 +274,7 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
             SettingsScreen(
                 appState = appState,
                 onBack = { navController.popBackStack() },
-                onLogout = {
-                    navController.navigate(Routes.LOGIN) {
-                        popUpTo(Routes.MAIN) { inclusive = true }
-                    }
-                }
+                onLogout = { AuthService.signOut() }
             )
         }
     }
