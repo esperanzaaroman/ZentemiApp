@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.sp
 import com.zentemi.app.state.AppState
 import com.zentemi.app.data.ShopCatalog
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Logout
+import com.zentemi.app.data.AuthService
 import com.zentemi.app.ui.components.MaicitoBackdrop
 import com.zentemi.app.ui.components.PetView
 import com.zentemi.app.ui.components.WaveHeader
@@ -36,9 +38,13 @@ import com.zentemi.app.ui.theme.*
 fun ProfileScreen(
     appState: AppState,
     onSettingsPressed: () -> Unit,
+    onCreateAccount: () -> Unit,
+    onSignIn: () -> Unit,
+    onVerifyEmail: () -> Unit,
     onLogout: () -> Unit
 ) {
     var showEditor by remember { mutableStateOf(false) }
+    var showLogoutConfirmation by remember { mutableStateOf(false) }
     var showLevelList by remember { mutableStateOf(false) }
 
     // Artículos de la tienda comprados (sin contar los que vienen de regalo)
@@ -225,6 +231,20 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Cuenta: invitar a guardar el progreso, o mostrar la cuenta con sesión
+        val email = appState.accountEmail
+        if (appState.isGuest || email == null) {
+            SaveProgressCard(onCreateAccount = onCreateAccount, onSignIn = onSignIn)
+        } else {
+            AccountCard(
+                email = email,
+                onVerifyEmail = onVerifyEmail,
+                onLogout = { showLogoutConfirmation = true }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         // Stats section
         Row(
             modifier = Modifier
@@ -372,6 +392,209 @@ fun ProfileScreen(
             onDismiss = { showEditor = false }
         )
     }
+
+    if (showLogoutConfirmation) {
+        LogoutConfirmationDialog(
+            onConfirm = {
+                showLogoutConfirmation = false
+                onLogout()
+            },
+            onDismiss = { showLogoutConfirmation = false }
+        )
+    }
+}
+
+/** Modo invitado: invita a guardar el progreso en la nube (opcional). */
+@Composable
+private fun SaveProgressCard(
+    onCreateAccount: () -> Unit,
+    onSignIn: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 18.dp),
+        shape = RoundedCornerShape(20.dp),
+        color = Color.White,
+        shadowElevation = 3.dp
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Filled.CloudUpload,
+                    contentDescription = null,
+                    tint = Purple,
+                    modifier = Modifier.size(28.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "Guardar mi progreso",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
+                )
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "Ahora tu progreso está guardado solo en este teléfono. " +
+                    "Pídele a un adulto que cree una cuenta para guardarlo en la nube.",
+                fontSize = 13.sp,
+                color = SubText,
+                lineHeight = 18.sp
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(
+                    onClick = onCreateAccount,
+                    colors = ButtonDefaults.buttonColors(containerColor = Purple),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Crear cuenta", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                }
+                OutlinedButton(
+                    onClick = onSignIn,
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Iniciar sesión", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Purple)
+                }
+            }
+        }
+    }
+}
+
+/** Con sesión: correo del tutor, aviso de verificación y cerrar sesión. */
+@Composable
+private fun AccountCard(
+    email: String,
+    onVerifyEmail: () -> Unit,
+    onLogout: () -> Unit
+) {
+    val isEmailVerified by AuthService.isEmailVerified.collectAsState()
+
+    // Si confirmó el enlace con la app cerrada, se actualiza al ver el perfil.
+    LaunchedEffect(Unit) {
+        if (!AuthService.isEmailVerified.value) {
+            runCatching { AuthService.reloadAndCheckVerification() }
+        }
+    }
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 18.dp),
+        shape = RoundedCornerShape(20.dp),
+        color = Color.White,
+        shadowElevation = 3.dp
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Filled.CloudDone,
+                    contentDescription = null,
+                    tint = Turquoise,
+                    modifier = Modifier.size(28.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Progreso guardado en la nube",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DarkText
+                    )
+                    Text(
+                        text = email,
+                        fontSize = 13.sp,
+                        color = SubText,
+                        maxLines = 1
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            if (isEmailVerified) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Filled.Verified,
+                        contentDescription = null,
+                        tint = SuccessGreen,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Correo verificado", fontSize = 13.sp, color = SubText)
+                }
+            } else {
+                // Aviso, no bloqueo: la app se puede usar sin verificar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(CoinGold.copy(alpha = 0.15f))
+                        .clickable(onClick = onVerifyEmail)
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Filled.MarkEmailUnread,
+                        contentDescription = null,
+                        tint = CoinGoldDark,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Falta confirmar el correo del adulto. Toca aquí para verificarlo.",
+                        fontSize = 13.sp,
+                        color = DarkText,
+                        lineHeight = 18.sp,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = onLogout,
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = null,
+                    tint = ErrorRed,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Cerrar sesión", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = ErrorRed)
+            }
+        }
+    }
+}
+
+/** Misma confirmación en Perfil y Ajustes: el progreso no se borra del teléfono. */
+@Composable
+fun LogoutConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("¿Cerrar sesión?", fontWeight = FontWeight.Bold) },
+        text = {
+            Text(
+                "Tu progreso se queda en este teléfono y puedes seguir jugando. " +
+                    "Para volver a guardarlo en la nube, inicia sesión otra vez."
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Cerrar sesión", color = Color.Red, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancelar") }
+        }
+    )
 }
 
 @Composable

@@ -16,14 +16,16 @@ import androidx.compose.ui.unit.sp
 import com.zentemi.app.data.AuthService
 import com.zentemi.app.ui.components.*
 import com.zentemi.app.ui.theme.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
  * Verificación del correo del tutor (equivalente a EmailVerificationView.swift).
- * Cuando el correo queda verificado, la navegación entra sola a la app.
+ * No es obligatoria: se abre desde el aviso de Perfil y se puede dejar
+ * para más tarde. Al verificarse, regresa sola al Perfil.
  */
 @Composable
-fun EmailVerificationScreen() {
+fun EmailVerificationScreen(onBack: () -> Unit) {
     var isChecking by remember { mutableStateOf(false) }
     var isResending by remember { mutableStateOf(false) }
     var statusMessage by remember { mutableStateOf<String?>(null) }
@@ -40,7 +42,7 @@ fun EmailVerificationScreen() {
                 val verified = AuthService.reloadAndCheckVerification()
                 isSuccessMessage = verified
                 statusMessage = if (verified) {
-                    "¡Correo verificado con éxito! Entrando..."
+                    "¡Correo verificado con éxito!"
                 } else {
                     "Aún no se ha verificado. Haz clic en el enlace que enviamos a tu correo."
                 }
@@ -73,8 +75,17 @@ fun EmailVerificationScreen() {
     // Comprobación pasiva al entrar a la pantalla
     LaunchedEffect(Unit) { checkVerificationStatus() }
 
+    // Ya verificado: se muestra el mensaje un momento y regresa
+    val isEmailVerified by AuthService.isEmailVerified.collectAsState()
+    LaunchedEffect(isEmailVerified) {
+        if (isEmailVerified) {
+            delay(1200)
+            onBack()
+        }
+    }
+
     ZentemiBackground {
-        AuthLayout {
+        AuthLayout(onBack = onBack) {
 
             HeaderIcon(icon = Icons.Filled.MarkEmailUnread, size = 64.dp)
 
@@ -104,8 +115,9 @@ fun EmailVerificationScreen() {
                     color = Color.White
                 )
                 Text(
-                    text = "Por protección de datos de los menores, el padre o tutor debe validar " +
-                        "su identidad antes de que el alumno comience sus lecciones de Yuhmu.",
+                    text = "Por protección de datos de los menores, pedimos al padre o tutor " +
+                        "confirmar su correo. Mientras tanto, el alumno puede seguir " +
+                        "aprendiendo Yuhmu y su progreso se guarda igual.",
                     fontFamily = Quicksand,
                     fontSize = 14.sp,
                     color = Color.White.copy(alpha = 0.85f)
@@ -131,9 +143,9 @@ fun EmailVerificationScreen() {
                 )
             }
 
-            TextButton(onClick = { AuthService.signOut() }) {
+            TextButton(onClick = onBack) {
                 Text(
-                    text = "Iniciar con otra cuenta",
+                    text = "Más tarde",
                     fontFamily = Quicksand,
                     fontSize = 13.sp,
                     color = Color.White.copy(alpha = 0.7f)

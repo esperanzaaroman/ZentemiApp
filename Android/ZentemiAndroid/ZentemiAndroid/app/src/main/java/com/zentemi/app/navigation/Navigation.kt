@@ -15,7 +15,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.zentemi.app.data.AuthService
+import com.zentemi.app.data.NetworkMonitor
 import com.zentemi.app.state.AppState
+import com.zentemi.app.ui.components.ChooseProgressDialog
+import com.zentemi.app.ui.components.SuggestAccountDialog
 import com.zentemi.app.ui.learning.primerasfrases.PrimerasFrasesFlow
 import com.zentemi.app.ui.learning.LearningPathScreen
 import com.zentemi.app.ui.learning.LessonCompleteScreen
@@ -27,8 +30,8 @@ import com.zentemi.app.ui.games.MemoramaGame
 import com.zentemi.app.ui.games.MercadoGame
 import com.zentemi.app.ui.main.FeedMaicitoScreen
 import com.zentemi.app.ui.main.MainScreen
+import com.zentemi.app.ui.onboarding.CreateAccountScreen
 import com.zentemi.app.ui.onboarding.EmailVerificationScreen
-import com.zentemi.app.ui.onboarding.LoginScreen
 import com.zentemi.app.ui.onboarding.NameScreen
 import com.zentemi.app.ui.onboarding.OnboardingScreen
 import com.zentemi.app.ui.onboarding.SignInScreen
@@ -36,8 +39,8 @@ import com.zentemi.app.ui.settings.SettingsScreen
 
 object Routes {
     const val ONBOARDING = "onboarding"
-    const val LOGIN = "login"
     const val NAME = "name"
+    const val CREATE_ACCOUNT = "create_account"
     const val SIGN_IN = "sign_in"
     const val EMAIL_VERIFICATION = "email_verification"
     const val MAIN = "main"
@@ -52,8 +55,8 @@ object Routes {
     const val GAME_MEMORAMA = "game_memorama"
     const val GAME_MERCADO = "game_mercado"
 
-    /** Pantallas accesibles sin sesión iniciada. */
-    val publicRoutes = setOf(ONBOARDING, LOGIN, NAME, SIGN_IN)
+    /** Pantallas para entrar a una cuenta; al iniciar sesión se regresa solo a la app. */
+    val accountRoutes = setOf(CREATE_ACCOUNT, SIGN_IN)
 
     fun lessonIntro(lessonNumber: Int) = "lesson_intro/$lessonNumber"
     fun lessonComplete(correct: Int, total: Int, elapsed: Int) =
@@ -79,38 +82,46 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
         appState.updateDailyStreak()
     }
 
-    // ── Puerta de autenticación (igual que ContentView en iOS) ──
-    // Sin sesión → pantallas públicas; sesión sin verificar → verificación
-    // de correo; sesión verificada → app principal.
-    val isAuthenticated by AuthService.isAuthenticated.collectAsState()
-    val isEmailVerified by AuthService.isEmailVerified.collectAsState()
-
+    // ── Modo invitado ──
+    // La cuenta es opcional: Onboarding → nombre → app. Crear cuenta e
+    // iniciar sesión se abren desde Perfil (o desde la sugerencia), y al
+    // tener sesión se regresa sola a donde estaba.
     val startDestination = remember {
-        when {
-            !isAuthenticated -> Routes.ONBOARDING
-            !isEmailVerified -> Routes.EMAIL_VERIFICATION
-            else -> Routes.MAIN
+        if (appState.hasCompletedOnboarding) Routes.MAIN else Routes.ONBOARDING
+    }
+
+    val isAuthenticated by AuthService.isAuthenticated.collectAsState()
+    LaunchedEffect(isAuthenticated) {
+        if (isAuthenticated && currentRoute in Routes.accountRoutes) {
+            navController.popBackStack(Routes.MAIN, inclusive = false)
         }
     }
 
-    LaunchedEffect(isAuthenticated, isEmailVerified) {
-        val current = navController.currentDestination?.route ?: return@LaunchedEffect
-        val target = when {
-            !isAuthenticated ->
-                if (current in Routes.publicRoutes) null else Routes.LOGIN
-            !isEmailVerified ->
-                if (current == Routes.EMAIL_VERIFICATION) null else Routes.EMAIL_VERIFICATION
-            else ->
-                if (current in Routes.publicRoutes || current == Routes.EMAIL_VERIFICATION) Routes.MAIN
-                else null
-        }
-        if (target != null) {
-            navController.navigate(target) {
-                popUpTo(navController.graph.id) { inclusive = true }
-                launchSingleTop = true
-            }
-        }
+    // Sugerir cuenta: invitado + internet + 7 días desde el último "Ahora no".
+    val isOnline by NetworkMonitor.isOnline.collectAsState()
+    if (currentRoute == Routes.MAIN && isOnline && appState.isAccountSuggestionDue) {
+        SuggestAccountDialog(
+            petName = appState.petName,
+            onCreateAccount = {
+                // También cuenta como respuesta: si regresa sin crearla,
+                // no vuelve a salir enseguida.
+                appState.markAccountSuggestionAnswered()
+                navController.navigate(Routes.CREATE_ACCOUNT)
+            },
+            onNotNow = { appState.markAccountSuggestionAnswered() }
+        )
     }
+
+    // Al iniciar sesión con progreso de invitado en el teléfono: elegir cuál usar.
+    if (appState.pendingProgressChoice != null) {
+        ChooseProgressDialog(
+            onUsePhone = { appState.keepPhoneProgress() },
+            onUseAccount = { appState.useAccountProgress() }
+        )
+    }
+
+    val goToCreateAccount = { navController.navigate(Routes.CREATE_ACCOUNT) }
+    val goToSignIn = { navController.navigate(Routes.SIGN_IN) }
 
     NavHost(
         navController = navController,
@@ -120,29 +131,35 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
         composable(Routes.ONBOARDING) {
             OnboardingScreen(
                 onFinish = {
-                    navController.navigate(Routes.LOGIN) {
+                    navController.navigate(Routes.NAME) {
                         popUpTo(Routes.ONBOARDING) { inclusive = true }
                     }
                 }
             )
         }
 
-        composable(Routes.LOGIN) {
-            LoginScreen(
-                onCreateAccount = {
-                    navController.navigate(Routes.NAME)
+        // Solo el nombre; el progreso se guarda en el teléfono desde aquí.
+        composable(Routes.NAME) {
+            NameScreen(
+                appState = appState,
+                onBack = {
+                    navController.navigate(Routes.ONBOARDING) {
+                        popUpTo(Routes.NAME) { inclusive = true }
+                    }
                 },
-                onSignIn = {
-                    navController.navigate(Routes.SIGN_IN)
+                onNext = {
+                    appState.hasCompletedOnboarding = true
+                    navController.navigate(Routes.MAIN) {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
                 }
             )
         }
 
-        // Registro familiar: nombre del menor + cuenta del tutor (Firebase Auth).
-        // Al crearse la sesión, la puerta de autenticación lleva a la verificación.
-        composable(Routes.NAME) {
-            NameScreen(
-                appState = appState,
+        // Cuenta del tutor (Firebase Auth) para guardar el progreso en la nube.
+        composable(Routes.CREATE_ACCOUNT) {
+            CreateAccountScreen(
+                childName = appState.userName,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -155,7 +172,9 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
         }
 
         composable(Routes.EMAIL_VERIFICATION) {
-            EmailVerificationScreen()
+            EmailVerificationScreen(
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(Routes.MAIN) {
@@ -172,6 +191,11 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
                 },
                 onSettingsPressed = {
                     navController.navigate(Routes.SETTINGS)
+                },
+                onCreateAccount = goToCreateAccount,
+                onSignIn = goToSignIn,
+                onVerifyEmail = {
+                    navController.navigate(Routes.EMAIL_VERIFICATION)
                 },
                 onLogout = { AuthService.signOut() }
             )

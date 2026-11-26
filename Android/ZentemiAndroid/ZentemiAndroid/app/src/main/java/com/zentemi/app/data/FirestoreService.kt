@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.Source
 import com.google.firebase.firestore.firestoreSettings
 import com.google.firebase.firestore.persistentCacheSettings
 import kotlinx.coroutines.CoroutineScope
@@ -88,26 +89,34 @@ object FirestoreService {
 
     // ── Gestión de Perfiles Infantiles (`users/{uid}/children/{childId}`) ──
 
-    /** Obtiene la lista de perfiles infantiles asociados a la cuenta del tutor. */
-    suspend fun fetchChildren(parentUID: String): List<ChildProfile> {
-        val snapshot = childrenCollection(parentUID).get().await()
+    /**
+     * Obtiene la lista de perfiles infantiles asociados a la cuenta del tutor.
+     *
+     * Con [fromServer] = true no se acepta la caché: sin red lanza error en vez
+     * de devolver una lista vacía (que haría creer que la cuenta es nueva).
+     */
+    suspend fun fetchChildren(parentUID: String, fromServer: Boolean = false): List<ChildProfile> {
+        val source = if (fromServer) Source.SERVER else Source.DEFAULT
+        val snapshot = childrenCollection(parentUID).get(source).await()
         return snapshot.documents.mapNotNull { doc ->
             runCatching { doc.toObject(ChildProfile::class.java) }.getOrNull()
         }
     }
 
-    /** Crea un nuevo perfil infantil bajo la tutela del adulto autenticado. */
-    suspend fun createChildProfile(parentUID: String, userName: String): ChildProfile {
+    /**
+     * Crea un nuevo perfil infantil bajo la tutela del adulto autenticado.
+     * Recibe el perfil completo para que una cuenta nueva empiece con el
+     * progreso que el menor ya tenía en el teléfono como invitado.
+     *
+     * No espera la confirmación del servidor: sin red, la escritura queda en
+     * la caché offline de Firestore y se sube sola al volver la conexión.
+     */
+    fun createChildProfile(parentUID: String, profile: ChildProfile): ChildProfile {
         val childRef = childrenCollection(parentUID).document()
-        val newProfile = ChildProfile(
-            userName = userName,
-            petName = "Maicito",
-            coins = 1500,
-            currentLevel = 1,
-            streak = 1
-        )
-        childRef.set(newProfile).await()
-        return newProfile.copy(id = childRef.id)
+        val newProfile = profile.copy(id = childRef.id)
+        childRef.set(newProfile)
+            .addOnFailureListener { Log.w(TAG, "No se pudo crear el perfil del menor", it) }
+        return newProfile
     }
 
     /** Guarda o actualiza el estado completo del perfil infantil (monedas, XP, racha, etc.). */

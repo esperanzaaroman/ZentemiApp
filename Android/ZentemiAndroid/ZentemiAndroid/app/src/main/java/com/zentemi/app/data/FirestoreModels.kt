@@ -41,7 +41,19 @@ data class ChildProfile(
     var lessonsCompleted: Int = 0,
     var avatar: ChildAvatarSettings = ChildAvatarSettings(),
     var settings: ChildAppSettings = ChildAppSettings(),
-    var createdAt: Timestamp = Timestamp.now()
+    var createdAt: Timestamp = Timestamp.now(),
+
+    // ── Campos nuevos de Android (iOS todavía no los usa) ──
+    // Son null cuando el documento no los tiene (perfiles viejos o creados
+    // desde iOS). Así se distingue "no viene el dato" de "viene vacío" y no
+    // se borra el progreso local al aplicar un documento viejo.
+    var pathLessonsCompleted: Int? = null,
+    var unlockedPathLesson: Int? = null,
+    var greetingsRewardClaimed: Boolean? = null,
+    /** Ids de los artículos comprados en la tienda (incluye los 7 originales). */
+    var ownedItems: List<String>? = null,
+    /** Ids de los artículos que Maicito trae puestos. */
+    var equippedItems: List<String>? = null
 )
 
 // ── Configuraciones de Avatar ──

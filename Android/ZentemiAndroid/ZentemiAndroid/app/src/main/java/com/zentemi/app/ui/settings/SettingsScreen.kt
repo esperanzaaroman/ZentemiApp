@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zentemi.app.state.AppState
+import com.zentemi.app.ui.main.LogoutConfirmationDialog
 import com.zentemi.app.ui.theme.*
 
 @Composable
@@ -185,25 +186,28 @@ fun SettingsScreen(
                     .padding(bottom = 22.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                ChunkyButton(
-                    text = "Cerrar sesión",
-                    onClick = { showLogoutConfirmation = true },
-                    color = ErrorRed,
-                    lipColor = Color(0xFFD94848),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 60.dp),
-                    leading = {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Logout,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                )
+                // En modo invitado no hay sesión que cerrar
+                if (!appState.isGuest) {
+                    ChunkyButton(
+                        text = "Cerrar sesión",
+                        onClick = { showLogoutConfirmation = true },
+                        color = ErrorRed,
+                        lipColor = Color(0xFFD94848),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 60.dp),
+                        leading = {
+                            Icon(
+                                Icons.AutoMirrored.Filled.Logout,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    )
 
-                Spacer(modifier = Modifier.height(9.dp))
+                    Spacer(modifier = Modifier.height(9.dp))
+                }
 
                 Text(
                     text = "Versión 1.1",
@@ -236,27 +240,12 @@ fun SettingsScreen(
 
     // Logout confirmation
     if (showLogoutConfirmation) {
-        AlertDialog(
-            onDismissRequest = { showLogoutConfirmation = false },
-            title = { Text("¿Cerrar sesión?", fontWeight = FontWeight.Bold) },
-            text = {
-                Text("Tendrás que iniciar sesión nuevamente con la cuenta del tutor para acceder.")
+        LogoutConfirmationDialog(
+            onConfirm = {
+                showLogoutConfirmation = false
+                onLogout()
             },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showLogoutConfirmation = false
-                        onLogout()
-                    }
-                ) {
-                    Text("Cerrar sesión", color = Color.Red, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLogoutConfirmation = false }) {
-                    Text("Cancelar")
-                }
-            }
+            onDismiss = { showLogoutConfirmation = false }
         )
     }
 

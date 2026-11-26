@@ -44,8 +44,13 @@ sealed class ZentemiAuthError(message: String) : Exception(message) {
  *
  * Equivalente Android de Swift/Zentemi/Zentemi/Services/AuthService.swift:
  * cuenta de tutor con correo y contraseña, verificación de correo,
- * circuit breaker anti fuerza bruta (5 intentos → 15 min, 10 → 1 h),
- * cierre de sesión por 30 minutos de inactividad y bitácora de auditoría.
+ * circuit breaker anti fuerza bruta (5 intentos → 15 min, 10 → 1 h)
+ * y bitácora de auditoría.
+ *
+ * La cuenta es opcional (modo invitado): sin sesión la app funciona igual y
+ * guarda todo en el teléfono. Por eso aquí no hay cierre de sesión por
+ * inactividad como en iOS: cerraría la sesión sin avisar y la app seguiría
+ * en modo invitado sin sincronizar.
  *
  * Debe inicializarse una vez con [init] (lo hace MainActivity).
  */
@@ -59,7 +64,6 @@ object AuthService {
     private const val EXTENDED_FAILED_ATTEMPTS = 10
     private const val BASE_LOCKOUT_SECONDS = 15 * 60L
     private const val EXTENDED_LOCKOUT_SECONDS = 60 * 60L
-    private const val INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000L
 
     private const val LOCKOUT_TIMESTAMP_KEY = "zentemi.auth.lockoutTimestamp"
     private const val LOCKOUT_DURATION_KEY = "zentemi.auth.lockoutDuration"
@@ -103,11 +107,6 @@ object AuthService {
         }
     }
 
-    private val inactivityTimeout = Runnable {
-        Log.i(TAG, "Sesión cerrada automáticamente por 30 minutos de inactividad.")
-        runCatching { signOut() }
-    }
-
     // ── Inicialización ──
 
     fun init(context: Context) {
@@ -128,7 +127,6 @@ object AuthService {
             _currentUser.value = u
             _isAuthenticated.value = u != null
             _isEmailVerified.value = u?.isEmailVerified ?: false
-            if (u != null) resetInactivityTimer() else stopInactivityTimer()
         }
 
         // Evalúa si el dispositivo arranca en estado de bloqueo
@@ -258,22 +256,6 @@ object AuthService {
         _currentUser.value = null
         _isAuthenticated.value = false
         _isEmailVerified.value = false
-        stopInactivityTimer()
-    }
-
-    // ── Monitoreo de Sesión Inactiva (30 minutos) ──
-
-    fun registerUserActivity() {
-        if (_isAuthenticated.value) resetInactivityTimer()
-    }
-
-    private fun resetInactivityTimer() {
-        mainHandler.removeCallbacks(inactivityTimeout)
-        mainHandler.postDelayed(inactivityTimeout, INACTIVITY_TIMEOUT_MS)
-    }
-
-    private fun stopInactivityTimer() {
-        mainHandler.removeCallbacks(inactivityTimeout)
     }
 
     // ── Lógica Interna de Circuit Breaker ──
