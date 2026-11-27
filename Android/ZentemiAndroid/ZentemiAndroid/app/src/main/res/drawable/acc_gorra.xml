@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Gorra -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="210dp" android:height="130dp"
+    android:viewportWidth="210" android:viewportHeight="130">
+    <!-- visera -->
+    <path android:fillColor="#1F5FBF" android:strokeColor="#3B2A20" android:strokeWidth="6" android:strokeLineJoin="round"
+        android:pathData="M140,84 C178,80 204,92 200,108 C194,122 150,116 124,102 Z"/>
+    <!-- copa -->
+    <path android:fillColor="#2F80ED" android:strokeColor="#3B2A20" android:strokeWidth="6" android:strokeLineJoin="round"
+        android:pathData="M24,104 C22,40 62,14 102,14 C142,14 178,40 176,104 C130,96 70,96 24,104 Z"/>
+    <!-- costura -->
+    <path android:fillColor="#00000000" android:strokeColor="#1F5FBF" android:strokeWidth="4" android:strokeLineCap="round"
+        android:pathData="M102,16 C92,44 92,72 98,98"/>
+    <!-- brillo -->
+    <path android:fillColor="#7FB3FF" android:pathData="M44,80 C46,52 64,32 86,26 C70,40 60,58 58,80 Z"/>
+    <!-- botón -->
+    <path android:fillColor="#2F80ED" android:strokeColor="#3B2A20" android:strokeWidth="5"
+        android:pathData="M94,14 a8,7 0 1,0 16,0 a8,7 0 1,0 -16,0"/>
+    <!-- estrella del frente -->
+    <path android:fillColor="#FFC93C" android:strokeColor="#3B2A20" android:strokeWidth="4" android:strokeLineJoin="round"
+        android:pathData="M132,48 L137,60 L150,61 L140,69 L143,82 L132,75 L121,82 L124,69 L114,61 L127,60 Z"/>
+</vector>

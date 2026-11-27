@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Moño rosa -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="160dp" android:height="100dp"
+    android:viewportWidth="160" android:viewportHeight="100">
+    <!-- lazo izquierdo -->
+    <path android:fillColor="#FF7EB6" android:strokeColor="#3B2A20" android:strokeWidth="6" android:strokeLineJoin="round"
+        android:pathData="M80,50 C62,14 16,8 12,48 C14,90 62,86 80,50 Z"/>
+    <!-- lazo derecho -->
+    <path android:fillColor="#FF7EB6" android:strokeColor="#3B2A20" android:strokeWidth="6" android:strokeLineJoin="round"
+        android:pathData="M80,50 C98,14 144,8 148,48 C146,90 98,86 80,50 Z"/>
+
+    <!-- brillos -->
+    <path android:fillColor="#FFFFFF" android:fillAlpha="0.45" android:pathData="M26,40 C30,28 44,24 54,30 C42,30 34,34 26,40 Z M106,30 C116,24 130,28 134,40 C126,34 118,30 106,30 Z"/>
+    <!-- nudo -->
+    <path android:fillColor="#FF4F98" android:strokeColor="#3B2A20" android:strokeWidth="6"
+        android:pathData="M64,50 a16,18 0 1,0 32,0 a16,18 0 1,0 -32,0"/>
+</vector>

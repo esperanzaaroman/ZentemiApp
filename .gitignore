@@ -3,6 +3,9 @@
 .AppleDouble
 .LSOverride
 
+# Windows
+Thumbs.db
+
 # Xcode
 build/
 *.pbxuser
@@ -31,10 +34,12 @@ Package.resolved
 # Firebase Credentials (Auditoría C-04 / A-04)
 # Descomentar una vez que cada desarrollador tenga su copia local
 # GoogleService-Info.plist
-# google-services.json
+google-services.json
 
 # Android
 .gradle/
 *.apk
 *.aab
 local.properties
+.idea/
+*.iml

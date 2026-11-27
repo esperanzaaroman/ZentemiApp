@@ -1,5 +1,8 @@
 package com.zentemi.app.ui.learning
 
+import androidx.annotation.DrawableRes
+import com.zentemi.app.ui.components.ZentemiIcon
+import com.zentemi.app.R
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,7 +49,7 @@ fun LessonIntroScreen(
     onStartExercise: () -> Unit
 ) {
     val title = when (lessonNumber) {
-        1 -> "Saludos básicos"
+        1 -> "Primeras frases"
         2 -> "Mi familia"
         else -> "Lección $lessonNumber"
     }
@@ -218,21 +221,21 @@ fun LessonIntroScreen(
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             InfoRow(
-                                icon = Icons.Filled.CheckCircle,
+                                icon = R.drawable.ic_leccion_completa,
                                 text = "$exercises ejercicios",
                                 color = Turquoise,
                                 onClick = { selectedInfo = LessonInfoType.EXERCISES }
                             )
 
                             InfoRow(
-                                icon = Icons.Filled.Schedule,
+                                icon = R.drawable.ic_tiempo,
                                 text = "~$estimatedMinutes min",
                                 color = Purple,
                                 onClick = { selectedInfo = LessonInfoType.TIME }
                             )
 
                             InfoRow(
-                                icon = Icons.Filled.MonetizationOn,
+                                icon = R.drawable.ic_moneda,
                                 text = "+$reward monedas",
                                 color = CoinGold,
                                 onClick = { selectedInfo = LessonInfoType.COINS }
@@ -269,7 +272,7 @@ fun LessonIntroScreen(
 
 @Composable
 private fun InfoRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    @DrawableRes icon: Int,
     text: String,
     color: Color,
     onClick: () -> Unit
@@ -287,12 +290,7 @@ private fun InfoRow(
                 .background(color.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = color,
-                modifier = Modifier.size(20.dp)
-            )
+            ZentemiIcon(icon, size = 30.dp)
         }
 
         Spacer(modifier = Modifier.width(11.dp))
@@ -325,17 +323,17 @@ private fun LessonInfoOverlay(
 ) {
     val (icon, title, message) = when (infoType) {
         LessonInfoType.EXERCISES -> Triple(
-            Icons.Filled.CheckCircle,
+            R.drawable.ic_leccion_completa,
             "Ejercicios",
             "Esta sección contiene $exercises ejercicios para practicar lo aprendido."
         )
         LessonInfoType.TIME -> Triple(
-            Icons.Filled.Schedule,
+            R.drawable.ic_tiempo,
             "Tiempo estimado",
             "Los ~$estimatedMinutes minutos son solo un tiempo estimado. Puedes avanzar a tu propio ritmo y tomarte el tiempo que necesites."
         )
         LessonInfoType.COINS -> Triple(
-            Icons.Filled.MonetizationOn,
+            R.drawable.ic_moneda,
             "Recompensa",
             "Al completar esta sección recibirás $reward monedas para utilizar dentro de Zentemi."
         )
@@ -364,12 +362,7 @@ private fun LessonInfoOverlay(
                 modifier = Modifier.padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = iconColor,
-                    modifier = Modifier.size(27.dp)
-                )
+                ZentemiIcon(icon, size = 48.dp)
 
                 Spacer(modifier = Modifier.height(14.dp))
 

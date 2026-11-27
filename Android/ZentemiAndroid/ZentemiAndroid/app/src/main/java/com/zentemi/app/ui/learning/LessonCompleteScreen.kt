@@ -1,5 +1,8 @@
 package com.zentemi.app.ui.learning
 
+import androidx.annotation.DrawableRes
+import com.zentemi.app.ui.components.ZentemiIcon
+import com.zentemi.app.R
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
@@ -41,12 +44,14 @@ fun LessonCompleteScreen(
     val rewardCoins = 700
     val rewardXP = 140
 
+    // Igual que iOS: siempre 3 estrellas; las no ganadas se muestran grises.
+    val maxStars = 3
     val starsEarned = when {
-        totalAnswers == 0 -> 1
-        correctAnswers.toFloat() / totalAnswers >= 1.0f -> 4
-        correctAnswers.toFloat() / totalAnswers >= 0.75f -> 3
-        correctAnswers.toFloat() / totalAnswers >= 0.50f -> 2
-        else -> 1
+        totalAnswers == 0 -> 0
+        correctAnswers.toFloat() / totalAnswers >= 0.8f -> 3
+        correctAnswers.toFloat() / totalAnswers >= 0.5f -> 2
+        correctAnswers > 0 -> 1
+        else -> 0
     }
 
     val formattedTime = "${elapsedSeconds / 60}:${String.format("%02d", elapsedSeconds % 60)}"
@@ -77,7 +82,7 @@ fun LessonCompleteScreen(
 
         // Show stars one by one
         delay(450)
-        for (i in 1..starsEarned) {
+        for (i in 1..maxStars) {
             delay(180)
             visibleStars = i
         }
@@ -99,7 +104,11 @@ fun LessonCompleteScreen(
         if (!rewardApplied) {
             rewardApplied = true
             val wasAlreadyClaimed = appState.greetingsRewardClaimed
-            appState.completeGreetingsLesson()
+            appState.completeGreetingsLesson(
+                correctAnswers = correctAnswers,
+                totalAnswers = totalAnswers,
+                elapsedSeconds = elapsedSeconds
+            )
 
             if (!wasAlreadyClaimed) {
                 // Animate XP counting up
@@ -158,7 +167,7 @@ fun LessonCompleteScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Celebration header with waves
-            WaveHeader(waveHeight = 30.dp) {
+            WaveHeader(waveHeight = 18.dp) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -202,7 +211,7 @@ fun LessonCompleteScreen(
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                         modifier = Modifier.height(44.dp)
                     ) {
-                        repeat(starsEarned) { index ->
+                        repeat(maxStars) { index ->
                             AnimatedVisibility(
                                 visible = index < visibleStars,
                                 enter = scaleIn(
@@ -212,11 +221,10 @@ fun LessonCompleteScreen(
                                     )
                                 ) + fadeIn()
                             ) {
-                                Icon(
-                                    Icons.Filled.Star,
-                                    contentDescription = null,
-                                    tint = SplashDotActive,
-                                    modifier = Modifier.size(42.dp)
+                                ZentemiIcon(
+                                    R.drawable.ic_estrella,
+                                    size = 46.dp,
+                                    muted = index >= starsEarned
                                 )
                             }
                         }
@@ -233,7 +241,7 @@ fun LessonCompleteScreen(
             ) {
                 ResultCard(
                     visible = showCorrectCard,
-                    icon = Icons.Filled.Check,
+                    icon = R.drawable.ic_leccion_completa,
                     value = "$correctAnswers/$totalAnswers",
                     title = "Aciertos",
                     color = Turquoise,
@@ -242,7 +250,7 @@ fun LessonCompleteScreen(
 
                 ResultCard(
                     visible = showTimeCard,
-                    icon = Icons.Filled.Schedule,
+                    icon = R.drawable.ic_tiempo,
                     value = formattedTime,
                     title = "Tiempo",
                     color = Purple,
@@ -251,7 +259,7 @@ fun LessonCompleteScreen(
 
                 ResultCard(
                     visible = showCoinsCard,
-                    icon = Icons.Filled.MonetizationOn,
+                    icon = R.drawable.ic_moneda,
                     value = "+$rewardCoins",
                     title = "Monedas",
                     color = Color(0xFFFF9800),
@@ -351,7 +359,7 @@ fun LessonCompleteScreen(
 @Composable
 private fun ResultCard(
     visible: Boolean,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    @DrawableRes icon: Int,
     value: String,
     title: String,
     color: Color,
@@ -386,12 +394,7 @@ private fun ResultCard(
                         .background(color.copy(alpha = 0.14f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = color,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    ZentemiIcon(icon, size = 30.dp)
                 }
 
                 Spacer(modifier = Modifier.height(7.dp))

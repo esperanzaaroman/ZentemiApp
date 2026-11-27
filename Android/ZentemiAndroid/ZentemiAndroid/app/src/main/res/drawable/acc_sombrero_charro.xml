@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sombrero de charro -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp" android:height="150dp"
+    android:viewportWidth="240" android:viewportHeight="150">
+    <!-- ala -->
+    <path android:fillColor="#8B5A2B" android:strokeColor="#3B2A20" android:strokeWidth="6"
+        android:pathData="M6,112 a114,30 0 1,0 228,0 a114,30 0 1,0 -228,0"/>
+    <!-- bordado del ala -->
+    <path android:fillColor="#00000000" android:strokeColor="#F4C542" android:strokeWidth="4" android:strokeLineCap="round"
+        android:pathData="M28,112 a92,20 0 1,0 184,0 a92,20 0 1,0 -184,0"/>
+    <!-- copa -->
+    <path android:fillColor="#A0693A" android:strokeColor="#3B2A20" android:strokeWidth="6" android:strokeLineJoin="round"
+        android:pathData="M70,110 C68,52 88,12 120,12 C152,12 172,52 170,110 Z"/>
+    <!-- brillo copa -->
+    <path android:fillColor="#C08552" android:pathData="M92,96 C90,60 100,30 116,24 C104,40 100,66 102,96 Z"/>
+    <!-- cinta -->
+    <path android:fillColor="#E63946" android:strokeColor="#3B2A20" android:strokeWidth="5" android:strokeLineJoin="round"
+        android:pathData="M71,84 C100,92 140,92 169,84 L170,104 C140,112 100,112 70,104 Z"/>
+    <!-- puntos dorados de la cinta -->
+    <path android:fillColor="#F4C542"
+        android:pathData="M90,98 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0 M116,100 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0 M142,98 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0"/>
+</vector>
