@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.util.Patterns
+import androidx.annotation.VisibleForTesting
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.FirebaseAuth
@@ -91,7 +92,17 @@ object AuthService {
 
     val userEmail: String? get() = _currentUser.value?.email
 
-    private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+    private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+
+    /** Las pruebas ponen aquí un FirebaseAuth falso; en la app queda en null. */
+    @VisibleForTesting
+    internal var authForTesting: FirebaseAuth? = null
+    private val auth: FirebaseAuth get() = authForTesting ?: firebaseAuth
+
+    /** Hora actual en milisegundos. Las pruebas la reemplazan para simular el paso del tiempo. */
+    @VisibleForTesting
+    internal var clock: () -> Long = { System.currentTimeMillis() }
+
     private lateinit var prefs: SharedPreferences
     private val mainHandler = Handler(Looper.getMainLooper())
     private var initialized = false
@@ -130,6 +141,24 @@ object AuthService {
         }
 
         // Evalúa si el dispositivo arranca en estado de bloqueo
+        evaluateLockoutStatus()
+    }
+
+    /**
+     * Solo para pruebas: usa estas preferencias, este reloj y este FirebaseAuth
+     * sin pasar por [init] (que se conecta a Firebase y solo corre una vez).
+     */
+    @VisibleForTesting
+    internal fun initForTesting(prefs: SharedPreferences, auth: FirebaseAuth, clock: () -> Long) {
+        initialized = true
+        this.prefs = prefs
+        this.authForTesting = auth
+        this.clock = clock
+        mainHandler.removeCallbacks(lockoutTick)
+        _failedAttempts.value = prefs.getInt(FAILED_ATTEMPTS_KEY, 0)
+        _currentUser.value = null
+        _isAuthenticated.value = false
+        _isEmailVerified.value = false
         evaluateLockoutStatus()
     }
 
@@ -273,7 +302,7 @@ object AuthService {
 
     private fun triggerLockout(durationSeconds: Long) {
         prefs.edit()
-            .putLong(LOCKOUT_TIMESTAMP_KEY, System.currentTimeMillis())
+            .putLong(LOCKOUT_TIMESTAMP_KEY, clock())
             .putLong(LOCKOUT_DURATION_KEY, durationSeconds)
             .apply()
 
@@ -293,7 +322,7 @@ object AuthService {
             return false
         }
 
-        val elapsedSeconds = (System.currentTimeMillis() - timestamp) / 1000
+        val elapsedSeconds = (clock() - timestamp) / 1000
         val remaining = duration - elapsedSeconds
 
         return if (remaining > 0) {

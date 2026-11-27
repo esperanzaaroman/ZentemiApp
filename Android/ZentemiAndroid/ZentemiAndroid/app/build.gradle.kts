@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.gms.google-services")
+    jacoco
 }
 
 android {
@@ -22,6 +23,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Reporte de cobertura de las pruebas unitarias:
+            // gradle :app:createDebugUnitTestCoverageReport
+            enableUnitTestCoverage = true
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -42,6 +48,27 @@ android {
 
     buildFeatures {
         compose = true
+    }
+
+    testOptions {
+        unitTests {
+            // Robolectric necesita los recursos y el manifest de la app
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
+    }
+}
+
+jacoco {
+    toolVersion = "0.8.13"
+}
+
+tasks.withType<Test>().configureEach {
+    // Robolectric carga las clases con su propio classloader; sin esto
+    // JaCoCo no cuenta su cobertura.
+    extensions.configure<JacocoTaskExtension> {
+        isIncludeNoLocationClasses = true
+        excludes = listOf("jdk.internal.*")
     }
 }
 
@@ -80,6 +107,12 @@ dependencies {
 
     // Coroutines + await() para las Task de Firebase
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+
+    // Pruebas unitarias (JVM): JUnit4 + Robolectric (SharedPreferences, Looper) + MockK
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.16")
+    testImplementation("androidx.test:core-ktx:1.6.1")
+    testImplementation("io.mockk:mockk:1.14.5")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

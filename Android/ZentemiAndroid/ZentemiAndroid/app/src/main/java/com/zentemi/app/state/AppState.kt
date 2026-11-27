@@ -30,6 +30,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -42,7 +43,11 @@ import java.time.ZoneId
  * Firestore (ver "Sincronización con Firestore" al final).
  */
 @OptIn(FlowPreview::class)
-class AppState(application: Application) : AndroidViewModel(application) {
+class AppState @JvmOverloads constructor(
+    application: Application,
+    /** Reloj de la app. Las pruebas pasan uno propio para controlar la hora. */
+    private val clock: Clock = Clock.systemUTC()
+) : AndroidViewModel(application) {
 
     private val prefs: SharedPreferences =
         application.getSharedPreferences("zentemi", Context.MODE_PRIVATE)
@@ -79,6 +84,13 @@ class AppState(application: Application) : AndroidViewModel(application) {
 
     val xpRemaining: Int
         get() = xpRequiredPerLevel - currentLevelXP
+
+    /** Suma XP y recalcula el nivel (tope en [maxLevel]). Ignora 0 o negativos. */
+    fun addXP(amount: Int) {
+        if (amount <= 0) return
+        totalXP += amount
+        currentLevel = minOf((totalXP / xpRequiredPerLevel) + 1, maxLevel)
+    }
 
     // ── Avatar customization ──
     var avatarBackgroundHue by saved(prefs.persistedFloat("avatarBackgroundHue", 0.72f))
@@ -122,7 +134,7 @@ class AppState(application: Application) : AndroidViewModel(application) {
 
     /** Día de hoy en Ciudad de México, contado como días desde 1970. */
     val todayEpochDay: Long
-        get() = LocalDate.now(streakZone).toEpochDay()
+        get() = LocalDate.now(clock.withZone(streakZone)).toEpochDay()
 
     /**
      * Suma 1 a la racha si ayer se abrió la app, la reinicia a 1 si pasó más
@@ -158,7 +170,7 @@ class AppState(application: Application) : AndroidViewModel(application) {
     /** Comidas de las últimas 4 horas. */
     val recentMealTimes: List<Long>
         get() {
-            val now = System.currentTimeMillis()
+            val now = clock.millis()
             return mealTimesRaw.split(",")
                 .mapNotNull { it.toLongOrNull() }
                 .filter { now - it in 0 until feedingIntervalMs }
@@ -167,8 +179,12 @@ class AppState(application: Application) : AndroidViewModel(application) {
     val availableMeals: Int
         get() = maxOf(0, maxMeals - recentMealTimes.size)
 
-    fun registerMeal() {
-        mealTimesRaw = (recentMealTimes + System.currentTimeMillis()).joinToString(",")
+    /** Registra una comida. Devuelve false (y no la cuenta) si ya comió 3 veces en 4 horas. */
+    fun registerMeal(): Boolean {
+        val recent = recentMealTimes
+        if (recent.size >= maxMeals) return false
+        mealTimesRaw = (recent + clock.millis()).joinToString(",")
+        return true
     }
 
     // ── Artículos de la tienda (catálogo en data/ShopCatalog.kt) ──
@@ -376,8 +392,7 @@ class AppState(application: Application) : AndroidViewModel(application) {
         if (!greetingsRewardClaimed) {
             greetingsRewardClaimed = true
             coins += 700
-            totalXP += 140
-            currentLevel = minOf((totalXP / xpRequiredPerLevel) + 1, maxLevel)
+            addXP(140)
             lessonsCompleted += 1
             if (pathLessonsCompleted < 1) {
                 pathLessonsCompleted = 1
@@ -413,7 +428,7 @@ class AppState(application: Application) : AndroidViewModel(application) {
         get() {
             val last = lastUserNameChange ?: return true
             val sevenDaysMs = 7L * 24 * 60 * 60 * 1000
-            return System.currentTimeMillis() - last >= sevenDaysMs
+            return clock.millis() - last >= sevenDaysMs
         }
 
     // ── Modo invitado ──
@@ -451,12 +466,12 @@ class AppState(application: Application) : AndroidViewModel(application) {
         get() {
             if (!isGuest) return false
             val last = lastAccountPromptAnswered ?: return true
-            return System.currentTimeMillis() - last >= accountPromptIntervalMs
+            return clock.millis() - last >= accountPromptIntervalMs
         }
 
     /** Se llama al responder el diálogo (con cualquiera de los dos botones). */
     fun markAccountSuggestionAnswered() {
-        lastAccountPromptAnswered = System.currentTimeMillis()
+        lastAccountPromptAnswered = clock.millis()
     }
 
     private fun progressSignature(): String = listOf(
