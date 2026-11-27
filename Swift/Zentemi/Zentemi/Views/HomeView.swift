@@ -1,6 +1,8 @@
-
 import SwiftUI
 
+/// Pantalla de Inicio renovada: saludo personalizado, paisaje suave con milpa (`HomeSceneView`),
+/// Maicito con su burbuja de nombre y fondo comprado, tarjeta de felicidad y botón "Comenzar lección".
+/// Espejo exacto de `HomeScreen.kt` en Android v1.1.
 struct HomeView: View {
 
     @EnvironmentObject var appState: AppState
@@ -8,490 +10,303 @@ struct HomeView: View {
     @State private var showCoinsInfo = false
     @State private var showStreakInfo = false
     @State private var mascotScaleY: CGFloat = 1.0
+    @State private var glowScale: CGFloat = 0.94
     @State private var animateBackground = false
     @State private var showLearningPath = false
-
     @State private var showFeedingScreen = false
-    @State private var showGamesScreen = false
-
-    // NUEVO: Celebración de racha
+    @State private var showGamesHub = false
     @State private var showStreakCelebration = false
 
     @AppStorage("zentemi.lastCelebratedStreakDate")
     private var lastCelebratedStreakDate: Double = 0
 
+    private let coinYellow = Color(red: 0.949, green: 0.718, blue: 0.020)
+    private let streakRed = Color(red: 0.941, green: 0.282, blue: 0.243)
+
     var body: some View {
-
         ZStack {
-
             background
 
-            VStack(spacing: 18) {
+            VStack(spacing: 0) {
+                // MARK: - Encabezado: Saludo (izquierda) + Monedas y Racha (derecha)
+                HStack(alignment: .center, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("¡Hola, \(appState.userName)!")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundStyle(GameTheme.purpleDark)
+                            .lineLimit(1)
 
-                // MARK: - Indicadores superiores
+                        Text("Qué gusto verte hoy")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(GameTheme.subText.opacity(0.85))
+                    }
 
-                HStack {
+                    Spacer(minLength: 6)
 
                     statBadge(
-                        icon: "dollarsign.circle.fill",
+                        icon: "ic_moneda",
                         value: "\(appState.coins)",
-                        foreground: .yellow
-                    )
-                    .onTapGesture {
+                        tint: Color(red: 1.0, green: 0.945, blue: 0.780),
+                        textColor: Color(red: 0.400, green: 0.302, blue: 0.051)
+                    ) {
                         showCoinsInfo = true
                     }
 
-                    Spacer()
-
                     statBadge(
-                        icon: "flame.fill",
+                        icon: "ic_racha",
                         value: "\(appState.streak)",
-                        foreground: .red
-                    )
-                    .onTapGesture {
+                        tint: Color(red: 1.0, green: 0.886, blue: 0.867),
+                        textColor: Color(red: 0.761, green: 0.212, blue: 0.173)
+                    ) {
                         showStreakInfo = true
                     }
                 }
-                .padding(.horizontal, 22)
+                .padding(.leading, 22)
+                .padding(.trailing, 18)
                 .padding(.top, 12)
+                .padding(.bottom, 4)
 
-                Spacer()
+                // MARK: - Paisaje + Maicito + Burbuja de nombre
+                ZStack {
+                    if appState.equippedBackdrop == nil {
+                        HomeSceneView()
+                    }
 
-                // MARK: - Mascota
+                    VStack(spacing: 4) {
+                        nameBubble(name: appState.petName)
 
-                VStack(spacing: 5) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    RadialGradient(
+                                        colors: [
+                                            Color(red: 0.957, green: 0.769, blue: 0.416).opacity(0.35),
+                                            GameTheme.purple.opacity(0.06),
+                                            Color.clear
+                                        ],
+                                        center: .center,
+                                        startRadius: 10,
+                                        endRadius: 125
+                                    )
+                                )
+                                .frame(width: 250, height: 250)
+                                .scaleEffect(glowScale)
 
-                    Text(appState.petName)
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundStyle(
-                            Color(
-                                red: 0.35,
-                                green: 0.17,
-                                blue: 0.65
-                            )
-                        )
-                        .offset(y: -15)
+                            if let backdrop = appState.equippedBackdrop?.backdrop {
+                                MaicitoBackdropView(backdrop: backdrop)
+                                    .frame(width: 215, height: 215)
+                                    .clipShape(Circle())
+                                    .overlay(
+                                        Circle()
+                                            .stroke(Color.white, lineWidth: 4)
+                                    )
+                            }
 
-                    ZStack {
+                            Ellipse()
+                                .fill(GameTheme.purple.opacity(0.13))
+                                .frame(width: 120, height: 16)
+                                .offset(y: 92)
 
-                        Circle()
-                            .fill(.white.opacity(0.22))
-                            .frame(width: 220, height: 220)
-                            .blur(radius: 25)
-
-                        Circle()
-                            .fill(.yellow.opacity(0.15))
-                            .frame(width: 170, height: 170)
-                            .blur(radius: 25)
-
-                        // ÚNICO CAMBIO:
-                        // Ahora usa la mascota con accesorios.
-
-                        PetView(size: 190)
-                            .scaleEffect(
-                                x: 1.0,
-                                y: mascotScaleY,
-                                anchor: .bottom
-                            )
+                            PetView(size: 190)
+                                .scaleEffect(x: 1.0, y: mascotScaleY, anchor: .bottom)
+                        }
+                        .frame(width: 250, height: 250)
                     }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                // MARK: - Felicidad
-
+                // MARK: - Tarjeta de Felicidad
                 VStack(alignment: .leading, spacing: 14) {
-
                     HStack {
-
                         Text("Felicidad de \(appState.petName)")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(GameTheme.darkText)
 
                         Spacer()
 
                         Text("\(appState.happiness)%")
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(.teal)
+                            .foregroundStyle(GameTheme.turquoise)
                     }
 
-                    ProgressView(
-                        value: Double(appState.happiness),
-                        total: 100
-                    )
-                    .tint(.teal)
-                    .scaleEffect(x: 1, y: 1.8)
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(GameTheme.turquoise.opacity(0.15))
+
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(GameTheme.turquoise)
+                                .frame(width: geo.size.width * CGFloat(min(max(appState.happiness, 0), 100)) / 100)
+                        }
+                    }
+                    .frame(height: 8)
 
                     HStack(spacing: 12) {
-
                         Button {
-
                             showFeedingScreen = true
-
                         } label: {
-
                             Text("Alimentar a \(appState.petName)")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(
-                                    Color(
-                                        red: 0.35,
-                                        green: 0.17,
-                                        blue: 0.65
-                                    )
-                                )
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(GameTheme.purpleDark)
+                                .multilineTextAlignment(.center)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
-                                .background(
-                                    Color.purple.opacity(0.10)
-                                )
-                                .clipShape(
-                                    RoundedRectangle(cornerRadius: 12)
-                                )
+                                .padding(.horizontal, 6)
+                                .background(GameTheme.purple.opacity(0.10))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
 
                         Button {
-
-                            showGamesScreen = true
-
+                            showGamesHub = true
                         } label: {
-
                             Text("Jugar con \(appState.petName)")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(
-                                    Color(
-                                        red: 0.35,
-                                        green: 0.17,
-                                        blue: 0.65
-                                    )
-                                )
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(GameTheme.purpleDark)
+                                .multilineTextAlignment(.center)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
-                                .background(
-                                    Color.purple.opacity(0.10)
-                                )
-                                .clipShape(
-                                    RoundedRectangle(cornerRadius: 12)
-                                )
+                                .padding(.horizontal, 6)
+                                .background(GameTheme.purple.opacity(0.10))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                     }
                 }
                 .padding(18)
                 .background(
                     RoundedRectangle(cornerRadius: 22)
-                        .fill(.white.opacity(0.96))
-                        .shadow(
-                            color: .black.opacity(0.06),
-                            radius: 10,
-                            x: 0,
-                            y: 5
-                        )
+                        .fill(Color.white.opacity(0.97))
+                        .shadow(color: GameTheme.purple.opacity(0.14), radius: 10, y: 5)
                 )
                 .padding(.horizontal, 22)
 
-                // MARK: - Continuar lección
+                Spacer().frame(height: 16)
 
+                // MARK: - Botón Comenzar Lección
                 Button {
-
                     showLearningPath = true
-
                 } label: {
-
-                    Text("Jugar")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            Color(
-                                red: 0.43,
-                                green: 0.27,
-                                blue: 0.78
-                            )
-                        )
-                        .clipShape(
-                            RoundedRectangle(cornerRadius: 16)
-                        )
-                        .shadow(
-                            color: Color.purple.opacity(0.20),
-                            radius: 7,
-                            x: 0,
-                            y: 5
-                        )
+                    HStack(spacing: 10) {
+                        ZentemiIconView(name: "ic_comenzar_leccion", size: 30)
+                        Text("Comenzar lección")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(GameTheme.purple)
+                    .clipShape(RoundedRectangle(cornerRadius: 28))
+                    .shadow(color: GameTheme.purple.opacity(0.32), radius: 8, y: 4)
                 }
                 .padding(.horizontal, 30)
 
-                Spacer()
+                Spacer().frame(height: 92)
             }
 
-            // MARK: - Información de monedas
-
+            // MARK: - Ventanas Informativas
             if showCoinsInfo {
-
                 infoOverlay(
                     title: "Monedas",
-                    icon: "dollarsign.circle.fill",
-                    text: """
-                    Consigue monedas completando lecciones, retos y actividades.
-
-                    Puedes utilizarlas para obtener objetos y recompensas dentro de Zentemi.
-                    """,
-                    color: .yellow
+                    icon: "ic_moneda",
+                    text: "Consigue monedas completando lecciones, retos y actividades.\n\nPuedes utilizarlas para obtener objetos y recompensas dentro de Zentemi.",
+                    color: coinYellow
                 ) {
                     showCoinsInfo = false
                 }
             }
 
-            // MARK: - Información de racha
-
             if showStreakInfo {
-
                 infoOverlay(
                     title: "Racha",
-                    icon: "flame.fill",
-                    text: """
-                    Tu racha representa los días consecutivos que has practicado Yuhmu.
-
-                    Completa actividades cada día para aumentarla y mantenerla.
-                    """,
-                    color: .red
+                    icon: "ic_racha",
+                    text: "Tu racha representa los días consecutivos que has practicado Yuhmu.\n\nCompleta actividades cada día para aumentarla y mantenerla.",
+                    color: streakRed
                 ) {
                     showStreakInfo = false
                 }
             }
 
-            // NUEVO: Ventana de celebración
             if showStreakCelebration {
                 streakCelebrationOverlay
                     .zIndex(100)
-                    .transition(
-                        .opacity.combined(
-                            with: .scale(scale: 0.85)
-                        )
-                    )
+                    .transition(.opacity.combined(with: .scale(scale: 0.85)))
             }
         }
         .onAppear {
-
-            withAnimation(
-                .easeInOut(duration: 1.6)
-                    .repeatForever(autoreverses: true)
-            ) {
+            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
                 mascotScaleY = 1.06
             }
-
-            withAnimation(
-                .easeInOut(duration: 6)
-                    .repeatForever(autoreverses: true)
-            ) {
+            withAnimation(.easeInOut(duration: 2.6).repeatForever(autoreverses: true)) {
+                glowScale = 1.06
+            }
+            withAnimation(.easeInOut(duration: 6.0).repeatForever(autoreverses: true)) {
                 animateBackground = true
             }
-
-            // NUEVO
             checkStreakCelebration()
         }
         .onChange(of: appState.streak) { _, _ in
             checkStreakCelebration()
         }
-        .fullScreenCover(
-            isPresented: $showLearningPath
-        ) {
+        .fullScreenCover(isPresented: $showLearningPath) {
             LearningPathView()
                 .environmentObject(appState)
         }
-        .fullScreenCover(
-            isPresented: $showFeedingScreen
-        ) {
+        .fullScreenCover(isPresented: $showFeedingScreen) {
             FeedMaicitoView()
                 .environmentObject(appState)
         }
-        .fullScreenCover(isPresented: $showGamesScreen) {
-            MaicitoGamesView()
+        .fullScreenCover(isPresented: $showGamesHub) {
+            GamesHubView()
                 .environmentObject(appState)
         }
     }
 
-    // MARK: - CELEBRACIÓN DE RACHA
+    // MARK: - Componentes de Inicio
 
-    private func checkStreakCelebration() {
-        guard appState.streak > 0 else { return }
+    private func nameBubble(name: String) -> some View {
+        let border = GameTheme.purple.opacity(0.30)
+        return ZStack(alignment: .bottom) {
+            Rectangle()
+                .fill(Color.white)
+                .frame(width: 14, height: 14)
+                .overlay(Rectangle().stroke(border, lineWidth: 2))
+                .rotationEffect(.degrees(45))
+                .offset(y: 6)
 
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(
-            identifier: "America/Mexico_City"
-        )!
-
-        let today = calendar.startOfDay(for: Date())
-
-        let lastDate = Date(
-            timeIntervalSince1970: lastCelebratedStreakDate
-        )
-
-        guard !calendar.isDate(
-            lastDate,
-            inSameDayAs: today
-        ) else {
-            return
-        }
-
-        withAnimation(
-            .spring(
-                response: 0.5,
-                dampingFraction: 0.75
-            )
-        ) {
-            showStreakCelebration = true
+            Text(name)
+                .font(.system(size: 24, weight: .bold))
+                .foregroundStyle(GameTheme.purpleDark)
+                .padding(.horizontal, 26)
+                .padding(.vertical, 6)
+                .background(Color.white)
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(border, lineWidth: 2))
+                .shadow(color: GameTheme.purple.opacity(0.16), radius: 6, y: 2)
         }
     }
-
-    private var streakCelebrationOverlay: some View {
-        ZStack {
-
-            Color.black.opacity(0.65)
-                .ignoresSafeArea()
-
-            VStack(spacing: 18) {
-
-                Image(systemName: "flame.fill")
-                    .font(.system(size: 55))
-                    .foregroundStyle(.orange)
-                    .symbolEffect(
-                        .bounce,
-                        options: .repeating
-                    )
-
-                Text("¡Felicidades!")
-                    .font(
-                        .system(
-                            size: 30,
-                            weight: .heavy
-                        )
-                    )
-                    .foregroundStyle(.purple)
-
-                Text("¡Llevas \(appState.streak) días de racha!")
-                    .font(
-                        .system(
-                            size: 21,
-                            weight: .bold
-                        )
-                    )
-                    .multilineTextAlignment(.center)
-
-                ZStack {
-
-                    ForEach(0..<12, id: \.self) { index in
-                        Image(systemName: "sparkle")
-                            .foregroundStyle(
-                                index.isMultiple(of: 2)
-                                    ? .yellow
-                                    : .orange
-                            )
-                            .offset(
-                                x: CGFloat(
-                                    (index % 4) * 65 - 95
-                                ),
-                                y: CGFloat(
-                                    (index / 4) * 70 - 70
-                                )
-                            )
-                    }
-
-                    PetView(size: 175)
-                        .environmentObject(appState)
-                }
-                .frame(height: 210)
-
-                Text(
-                    "¡Sigue así! \(appState.petName) está orgulloso de ti."
-                )
-                .font(
-                    .system(
-                        size: 16,
-                        weight: .medium
-                    )
-                )
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-
-                Button {
-
-                    var calendar = Calendar(
-                        identifier: .gregorian
-                    )
-                    calendar.timeZone = TimeZone(
-                        identifier: "America/Mexico_City"
-                    )!
-
-                    lastCelebratedStreakDate = calendar
-                        .startOfDay(for: Date())
-                        .timeIntervalSince1970
-
-                    withAnimation(
-                        .easeOut(duration: 0.25)
-                    ) {
-                        showStreakCelebration = false
-                    }
-
-                } label: {
-
-                    Text("¡Continuar!")
-                        .font(
-                            .system(
-                                size: 17,
-                                weight: .bold
-                            )
-                        )
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 15)
-                        .background(.purple)
-                        .clipShape(
-                            RoundedRectangle(
-                                cornerRadius: 15
-                            )
-                        )
-                }
-            }
-            .padding(25)
-            .frame(maxWidth: 340)
-            .background(.white)
-            .clipShape(
-                RoundedRectangle(cornerRadius: 25)
-            )
-            .shadow(radius: 20)
-            .padding(.horizontal, 20)
-        }
-    }
-
-    // MARK: - Indicadores
 
     private func statBadge(
         icon: String,
         value: String,
-        foreground: Color
+        tint: Color,
+        textColor: Color,
+        action: @escaping () -> Void
     ) -> some View {
-
-        HStack(spacing: 6) {
-
-            Image(systemName: icon)
-                .foregroundStyle(foreground)
-
-            Text(value)
-                .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(.primary)
+        Button(action: action) {
+            HStack(spacing: 5) {
+                ZentemiIconView(name: icon, size: 26)
+                Text(value)
+                    .font(.system(size: 16, weight: .heavy))
+                    .foregroundStyle(textColor)
+            }
+            .padding(.leading, 8)
+            .padding(.trailing, 12)
+            .padding(.vertical, 6)
+            .background(tint)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .shadow(color: textColor.opacity(0.18), radius: 3, y: 2)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(.white.opacity(0.85))
-        .clipShape(Capsule())
-        .overlay {
-
-            Capsule()
-                .stroke(
-                    foreground.opacity(0.35),
-                    lineWidth: 1
-                )
-        }
+        .buttonStyle(.plain)
     }
-
-    // MARK: - Ventana informativa
 
     private func infoOverlay(
         title: String,
@@ -500,81 +315,130 @@ struct HomeView: View {
         color: Color,
         close: @escaping () -> Void
     ) -> some View {
-
         ZStack {
-
             Color.black.opacity(0.28)
                 .ignoresSafeArea()
-                .onTapGesture {
-                    close()
-                }
+                .onTapGesture { close() }
 
             VStack(spacing: 14) {
-
                 HStack(spacing: 8) {
-
-                    Image(systemName: icon)
-                        .font(.system(size: 22))
-                        .foregroundStyle(color)
-
+                    ZentemiIconView(name: icon, size: 34)
                     Text(title)
                         .font(.system(size: 23, weight: .bold))
                         .foregroundStyle(color)
                 }
 
                 Text(text)
-                    .font(.system(size: 15))
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(GameTheme.subText)
                     .multilineTextAlignment(.center)
 
-                Button {
-
-                    close()
-
-                } label: {
-
+                Button(action: close) {
                     Text("Entendido")
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(GameTheme.darkText)
                         .padding(.horizontal, 25)
                         .padding(.vertical, 10)
-                        .background(
-                            color.opacity(0.12)
-                        )
-                        .clipShape(
-                            RoundedRectangle(cornerRadius: 12)
-                        )
+                        .background(color.opacity(0.15))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
             }
             .padding(25)
-            .frame(maxWidth: 300)
-            .background(
-                color.opacity(0.12)
-            )
-            .background(.white)
-            .clipShape(
+            .frame(maxWidth: 320)
+            .background(color.opacity(0.12))
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 22))
+            .overlay(
                 RoundedRectangle(cornerRadius: 22)
+                    .stroke(color.opacity(0.40), lineWidth: 2)
             )
-            .overlay {
-
-                RoundedRectangle(cornerRadius: 22)
-                    .stroke(
-                        color.opacity(0.40),
-                        lineWidth: 2
-                    )
-            }
-            .shadow(
-                color: .black.opacity(0.15),
-                radius: 15
-            )
+            .shadow(color: .black.opacity(0.15), radius: 15)
         }
     }
 
-    // MARK: - Fondo
+    private func checkStreakCelebration() {
+        guard appState.streak > 0 else { return }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "America/Mexico_City")!
+        let today = calendar.startOfDay(for: Date())
+        let lastDate = Date(timeIntervalSince1970: lastCelebratedStreakDate)
+        guard !calendar.isDate(lastDate, inSameDayAs: today) else { return }
+
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
+            showStreakCelebration = true
+        }
+    }
+
+    private var streakCelebrationOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.65)
+                .ignoresSafeArea()
+
+            VStack(spacing: 18) {
+                ZentemiIconView(name: "ic_racha", size: 58)
+
+                Text("¡Felicidades!")
+                    .font(.system(size: 30, weight: .heavy))
+                    .foregroundStyle(GameTheme.purple)
+
+                Text("¡Llevas \(appState.streak) días de racha!")
+                    .font(.system(size: 21, weight: .bold))
+                    .multilineTextAlignment(.center)
+
+                ZStack {
+                    ForEach(0..<12, id: \.self) { index in
+                        Image(systemName: "sparkle")
+                            .foregroundStyle(index.isMultiple(of: 2) ? .yellow : .orange)
+                            .offset(
+                                x: CGFloat((index % 4) * 65 - 95),
+                                y: CGFloat((index / 4) * 70 - 70)
+                            )
+                    }
+
+                    PetView(size: 175)
+                        .environmentObject(appState)
+                }
+                .frame(height: 210)
+
+                Text("¡Sigue así! \(appState.petName) está orgulloso de ti.")
+                    .font(.system(size: 16, weight: .medium))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+
+                Button {
+                    var calendar = Calendar(identifier: .gregorian)
+                    calendar.timeZone = TimeZone(identifier: "America/Mexico_City")!
+                    lastCelebratedStreakDate = calendar.startOfDay(for: Date()).timeIntervalSince1970
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        showStreakCelebration = false
+                    }
+                } label: {
+                    Text("¡Continuar!")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 15)
+                        .background(GameTheme.purple)
+                        .clipShape(RoundedRectangle(cornerRadius: 15))
+                }
+            }
+            .padding(25)
+            .frame(maxWidth: 340)
+            .background(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 25))
+            .shadow(radius: 20)
+            .padding(.horizontal, 20)
+        }
+    }
 
     @ViewBuilder
     private var background: some View {
-        if let background = appState.equippedHomeBackground {
+        if let backdrop = appState.equippedBackdrop?.backdrop {
+            MaicitoBackdropView(backdrop: backdrop)
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        } else if let background = appState.equippedHomeBackground {
             GeometryReader { geometry in
                 Image(background.imageName)
                     .resizable()
@@ -593,43 +457,22 @@ struct HomeView: View {
     private var defaultBackground: some View {
 
         ZStack {
-
-            Color(
-                red: 0.97,
-                green: 0.95,
-                blue: 0.99
-            )
+            GameTheme.backgroundLight
 
             Circle()
-                .fill(Color.purple.opacity(0.06))
-                .frame(width: 230, height: 230)
+                .fill(GameTheme.purple.opacity(0.06))
+                .frame(width: 220, height: 220)
                 .offset(
-                    x: animateBackground ? -125 : -165,
-                    y: animateBackground ? -250 : -290
+                    x: animateBackground ? 140 : 170,
+                    y: animateBackground ? -280 : -310
                 )
 
             Circle()
-                .fill(Color.purple.opacity(0.05))
-                .frame(width: 190, height: 190)
+                .fill(GameTheme.turquoise.opacity(0.07))
+                .frame(width: 150, height: 150)
                 .offset(
-                    x: animateBackground ? 145 : 180,
-                    y: animateBackground ? -110 : -65
-                )
-
-            Circle()
-                .fill(Color.cyan.opacity(0.06))
-                .frame(width: 200, height: 200)
-                .offset(
-                    x: animateBackground ? -125 : -165,
-                    y: animateBackground ? 285 : 330
-                )
-
-            Circle()
-                .fill(Color.yellow.opacity(0.08))
-                .frame(width: 140, height: 140)
-                .offset(
-                    x: animateBackground ? 135 : 165,
-                    y: animateBackground ? 300 : 340
+                    x: animateBackground ? -145 : -175,
+                    y: animateBackground ? -40 : -80
                 )
         }
         .ignoresSafeArea()
@@ -637,7 +480,6 @@ struct HomeView: View {
 }
 
 #Preview {
-
     HomeView()
         .environmentObject(AppState())
 }

@@ -821,3 +821,26 @@ Validación: cero incidencias en los diagnósticos del editor de AppState, Store
 - Mochila conserva la vista fija de Maicito, equipamiento y contadores globales. Mensaje vacío para categorías sin objetos adquiridos. Los objetos iniciales también se filtran.
 - Modificados: Zentemi/Views/StoreView.swift, Zentemi/Views/BackpackView.swift y TURNO00.md. ItemCategory e ItemCategoryBar se comparten desde StoreView.swift. No se añadieron assets ni se alteró el guardado.
 - Validación: diagnósticos del editor sin incidencias en ambos archivos. No se compiló, ejecutó ni probó la app o el simulador.
+
+### Resolución de conflictos de integración con v1.1 (26 de noviembre de 2026)
+
+- Diagnóstico: merge pendiente entre HEAD 71861f4 y d5bfa14, con ocho archivos Swift sin fusionar. Se guardó una copia de los archivos conflictivos antes de editarlos en /var/folders/hb/1vff417n2msf6yp92dl4941c0000gn/T/zentemi-merge-hteffi1t.
+- Resueltos PetView, ContentView, AppState, FeedMaicitoView, HomeView, MainTabView, ProfileView y StoreView, conservando Firebase Auth/Firestore, modo invitado y juegos nuevos.
+- Catálogo compartido con 57 identificadores únicos: incorpora playerita roja (100), fondo playa (300) y valle (500) con sus assets y claves locales originales. Compras de estos artículos incluidas en exportación/importación del inventario cloud y persistencia posterior a recibirlo. Comprar no equipa automáticamente; equipamiento por zona excluyente mediante toggleEquip.
+- Mochila restaurada como cuarta pestaña junto a Tienda, Inicio y Perfil; inventario y contadores derivados del catálogo completo, incluidos nuevos accesorios y fondos. Categorías compartidas: Todo, Ropa, Accesorios, Cabellos y Fondos.
+- PetView usa capas del catálogo, incluida la playerita. Home conserva fondos completos de playa/valle y admite los fondos nuevos; el paisaje por defecto no los oculta. Tienda admite vista previa de ambos tipos de fondo.
+- Perfil conserva la cuadrícula de 11 logros ilustrados y sus contadores persistidos. Alimentación registra el logro y aumenta felicidad; recompensas de juegos nuevos cuentan en monedas ganadas. GamesHub ofrece acceso a Laberinto, Memorama y Sopa de letras además de los nuevos juegos.
+- Validación: diagnósticos del editor sin incidencias en 22 archivos Swift revisados; ausencia de marcadores de conflicto; catálogo sin IDs duplicados; 47 referencias de imágenes con archivos presentes; git diff --check limpio.
+- No se compiló ni ejecutó la app o el simulador. El navegador de incidencias conserva 30 mensajes de la compilación anterior (origin: build); la validación de compilación completa, visual, compras y sincronización real queda pendiente de prueba del usuario. No se hizo commit ni push.
+
+### Resolución de conflictos de integración con v1.1 (26 de noviembre de 2026)
+
+- Diagnóstico: merge pendiente entre HEAD 71861f4 y d5bfa14, con ocho archivos Swift sin fusionar. Se guardó una copia de los archivos conflictivos antes de editarlos en /var/folders/hb/1vff417n2msf6yp92dl4941c0000gn/T/zentemi-merge-hteffi1t.
+- Resueltos PetView, ContentView, AppState, FeedMaicitoView, HomeView, MainTabView, ProfileView y StoreView, conservando Firebase Auth/Firestore, modo invitado y juegos nuevos.
+- Catálogo compartido con 57 identificadores únicos: incorpora playerita roja (100), fondo playa (300) y valle (500) con sus assets y claves locales originales. Compras de estos artículos incluidas en exportación/importación del inventario cloud y persistencia posterior a recibirlo. Comprar no equipa automáticamente; equipamiento por zona excluyente mediante toggleEquip.
+- Mochila restaurada como cuarta pestaña junto a Tienda, Inicio y Perfil; inventario y contadores derivados del catálogo completo, incluidos nuevos accesorios y fondos. Categorías compartidas: Todo, Ropa, Accesorios, Cabellos y Fondos.
+- PetView usa capas del catálogo, incluida la playerita. Home conserva fondos completos de playa/valle y admite los fondos nuevos; el paisaje por defecto no los oculta. Tienda admite vista previa de ambos tipos de fondo.
+- Perfil conserva la cuadrícula de 11 logros ilustrados y sus contadores persistidos. Alimentación registra el logro y aumenta felicidad; recompensas de juegos nuevos cuentan en monedas ganadas. GamesHub ofrece acceso a Laberinto, Memorama y Sopa de letras además de los nuevos juegos.
+- Validación: diagnósticos del editor sin incidencias en 22 archivos Swift revisados; ausencia de marcadores de conflicto; catálogo sin IDs duplicados; 47 referencias de imágenes con archivos presentes; git diff --check limpio.
+- No se compiló ni ejecutó la app o el simulador. El navegador de incidencias conserva 30 mensajes de la compilación anterior (origin: build); la validación de compilación completa, visual, compras y sincronización real queda pendiente de prueba del usuario. No se hizo commit ni push.
+- Git: los ocho archivos quedaron marcados como resueltos; sin entradas unmerged. Se limpiaron únicamente espacios finales en doce líneas entrantes de SettingsView para dejar también git diff --cached --check limpio. Merge preparado para su commit, todavía pendiente.

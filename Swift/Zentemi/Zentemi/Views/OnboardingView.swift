@@ -59,7 +59,7 @@ struct OnboardingView: View {
                         pageIndicator
                         
                         if currentPage == 2 {
-                            NavigationLink(destination: LoginView()) {
+                            NavigationLink(destination: NameView()) {
                                 Text("Siguiente")
                                     .font(.system(size: 18, weight: .bold))
                                     .foregroundStyle(
