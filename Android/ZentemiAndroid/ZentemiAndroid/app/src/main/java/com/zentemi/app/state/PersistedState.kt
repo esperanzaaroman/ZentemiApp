@@ -27,10 +27,21 @@ class PersistedState<T>(
     override fun getValue(thisRef: Any?, property: KProperty<*>): T = state.value
 
     override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
-        state.value = value
-        prefs.edit().apply { write(fullKey, value) }.apply()
-        onChange(value)
+        this.value = value
     }
+
+    /** Acceso directo, para valores guardados en listas o mapas (sin `by`). */
+    var value: T
+        get() = state.value
+        set(newValue) {
+            state.value = newValue
+            prefs.edit().apply { write(fullKey, newValue) }.apply()
+            onChange(newValue)
+        }
+
+    /** true si ya hay algo guardado con esta clave en el teléfono. */
+    val isStored: Boolean
+        get() = prefs.contains(fullKey)
 
     /** Vuelve al valor inicial sin tocar SharedPreferences (se borra aparte). */
     fun reset() {

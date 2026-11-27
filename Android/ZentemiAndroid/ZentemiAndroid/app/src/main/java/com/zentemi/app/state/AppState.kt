@@ -26,6 +26,15 @@ import com.zentemi.app.data.NetworkMonitor
 import com.zentemi.app.data.ItemSlot
 import com.zentemi.app.data.ShopCatalog
 import com.zentemi.app.data.ShopItem
+import com.zentemi.app.R
+import com.zentemi.app.data.GAME_POINTS_GOAL
+import com.zentemi.app.data.LEVEL_NAMES
+import com.zentemi.app.data.LessonReward
+import com.zentemi.app.data.MazeReward
+import com.zentemi.app.data.MemoryLevel
+import com.zentemi.app.data.PathLesson
+import com.zentemi.app.data.ProfileAchievement
+import com.zentemi.app.data.WordSearchLevel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
@@ -117,7 +126,7 @@ class AppState @JvmOverloads constructor(
     var unlockedPathLesson by saved(prefs.persistedInt("unlockedPathLesson", 1))
     var greetingsRewardClaimed by saved(prefs.persistedBoolean("greetingsRewardClaimed", false))
     var greetingsExerciseCount by mutableIntStateOf(5)
-    var familyExerciseCount by mutableIntStateOf(6)
+    var familyExerciseCount by mutableIntStateOf(5)
 
     // ── Audio ──
     // Igual que iOS: al cambiar el volumen de música se pausa o reanuda.
@@ -152,6 +161,7 @@ class AppState @JvmOverloads constructor(
             streak = 1
         }
         lastStreakDay = today
+        bestAchievementStreak = maxOf(bestAchievementStreak, streak)
     }
 
     /** La celebración de racha se muestra una vez al día. */
@@ -184,6 +194,7 @@ class AppState @JvmOverloads constructor(
         val recent = recentMealTimes
         if (recent.size >= maxMeals) return false
         mealTimesRaw = (recent + clock.millis()).joinToString(",")
+        totalFeedings += 1
         return true
     }
 
@@ -299,7 +310,7 @@ class AppState @JvmOverloads constructor(
         }
         if (gameRewardsToday >= maxGameRewardsPerDay) return false
         gameRewardsToday += 1
-        coins += coinsEarned
+        addCoins(coinsEarned)
         happiness = minOf(100, happiness + happinessEarned)
         return true
     }
@@ -307,6 +318,268 @@ class AppState @JvmOverloads constructor(
     /** Los juegos repasan lo aprendido, así que se abren al terminar la lección 1. */
     val gamesUnlocked: Boolean
         get() = greetingsRewardClaimed
+
+    // ── Monedas ganadas (para los logros; gastarlas no resta) ──
+    private val lifetimeCoinsSaved = saved(prefs.persistedInt("lifetimeEarnedCoins", 0))
+    var lifetimeEarnedCoins by lifetimeCoinsSaved
+        private set
+
+    /** Suma monedas ganadas en lecciones o juegos (no regalos ni devoluciones). */
+    fun addCoins(amount: Int) {
+        coins += amount
+        if (amount > 0) lifetimeEarnedCoins += amount
+    }
+
+    // ── Logros: comidas y mejor racha ──
+    private val totalFeedingsSaved = saved(prefs.persistedInt("totalFeedings", 0))
+    var totalFeedings by totalFeedingsSaved
+        private set
+    var bestAchievementStreak by saved(prefs.persistedInt("bestAchievementStreak", 0))
+        private set
+
+    // ── Lecciones 2 a 6 (Familia, Números, Colores, Animales, Alimentos) ──
+    // Mismas claves y premios que AppState.swift.
+    private val lessonRewardClaimed = PathLesson.entries.associateWith {
+        saved(prefs.persistedBoolean("${it.key}RewardClaimed", false))
+    }
+    private val lessonBestCorrect = PathLesson.entries.associateWith {
+        saved(prefs.persistedInt("${it.key}BestCorrectAnswers", 0))
+    }
+    private val lessonBestSeconds = PathLesson.entries.associateWith {
+        saved(prefs.persistedFloat("${it.key}BestSeconds", 0f))
+    }
+
+    /**
+     * Ya terminó la lección. Además del valor guardado en el teléfono se
+     * revisa el camino (que sí viaja por Firestore), para que en otro
+     * teléfono con la misma cuenta la lección aparezca terminada.
+     */
+    fun isLessonCompleted(lesson: PathLesson): Boolean =
+        lessonRewardClaimed.getValue(lesson).value || pathLessonsCompleted >= lesson.number
+
+    /** Se puede abrir: la lección anterior está terminada. */
+    fun isLessonUnlocked(lesson: PathLesson): Boolean {
+        val previous = lesson.previous
+        return if (previous == null) greetingsRewardClaimed || pathLessonsCompleted >= 1
+        else isLessonCompleted(previous)
+    }
+
+    fun lessonBestCorrectAnswers(lesson: PathLesson): Int = lessonBestCorrect.getValue(lesson).value
+    fun lessonBestSecondsOf(lesson: PathLesson): Double = lessonBestSeconds.getValue(lesson).value.toDouble()
+
+    /**
+     * Se llama al terminar los cinco ejercicios (no al mostrar resultados).
+     * La primera vez entrega monedas y XP y abre la siguiente lección.
+     * Devuelve null si los datos no son válidos o la lección sigue bloqueada.
+     */
+    fun completeLesson(lesson: PathLesson, correctAnswers: Int, seconds: Double): LessonReward? {
+        if (!isLessonUnlocked(lesson) || correctAnswers !in 0..lesson.exerciseCount ||
+            !seconds.isFinite() || seconds < 0
+        ) return null
+
+        val best = lessonBestCorrect.getValue(lesson)
+        best.value = maxOf(best.value, correctAnswers)
+        val bestTime = lessonBestSeconds.getValue(lesson)
+        if (bestTime.value == 0f || seconds < bestTime.value) {
+            bestTime.value = maxOf(0.01f, seconds.toFloat())
+        }
+
+        val startingXP = totalXP
+        // Si otro teléfono ya la terminó (camino sincronizado), no se paga dos veces.
+        val firstCompletion = !isLessonCompleted(lesson)
+        lessonRewardClaimed.getValue(lesson).value = true
+        if (firstCompletion) {
+            addCoins(lesson.coins)
+            addXP(lesson.xp)
+            lessonsCompleted += 1
+        }
+        pathLessonsCompleted = maxOf(pathLessonsCompleted, lesson.number)
+        unlockedPathLesson = maxOf(unlockedPathLesson, lesson.number + 1)
+
+        saveLessonProgressToCloud(
+            lessonId = lesson.key,
+            correctAnswers = correctAnswers,
+            totalAnswers = lesson.exerciseCount,
+            elapsedSeconds = seconds.toInt()
+        )
+        return LessonReward(
+            coins = if (firstCompletion) lesson.coins else 0,
+            xp = if (firstCompletion) lesson.xp else 0,
+            startingXP = startingXP
+        )
+    }
+
+    // ── Puntos de los juegos (Memorama, Sopa de letras y Laberinto) ──
+    var gamePoints by saved(prefs.persistedInt("gamePoints", 0))
+        private set
+    val gamePointsGoal = GAME_POINTS_GOAL
+
+    // ── Memorama por niveles ──
+    private val memoryCompletedState = MemoryLevel.entries.associateWith {
+        saved(prefs.persistedBoolean("${it.key}Completed", false))
+    }
+    private val memoryBestState = MemoryLevel.entries.associateWith {
+        saved(prefs.persistedFloat("${it.key}BestSeconds", 0f))
+    }
+
+    fun memoryCompleted(level: MemoryLevel): Boolean = memoryCompletedState.getValue(level).value
+    fun memoryUnlocked(level: MemoryLevel): Boolean =
+        level == MemoryLevel.ONE || memoryCompleted(MemoryLevel.entries[level.ordinal - 1])
+    fun memoryBestSeconds(level: MemoryLevel): Double = memoryBestState.getValue(level).value.toDouble()
+
+    /** Devuelve si esta victoria entregó el premio (solo la primera vez). */
+    fun completeMemory(level: MemoryLevel, seconds: Double): Boolean {
+        if (!memoryUnlocked(level) || !seconds.isFinite() || seconds < 0) return false
+        val best = memoryBestState.getValue(level)
+        if (best.value == 0f || seconds < best.value) best.value = maxOf(0.01f, seconds.toFloat())
+        val completed = memoryCompletedState.getValue(level)
+        if (completed.value) return false
+        completed.value = true
+        addCoins(level.coins)
+        gamePoints += level.points
+        return true
+    }
+
+    // ── Sopa de letras por niveles ──
+    private val wordSearchCompletedState = WordSearchLevel.entries.associateWith {
+        saved(prefs.persistedBoolean("${it.key}Completed", false))
+    }
+    private val wordSearchBestState = WordSearchLevel.entries.associateWith {
+        saved(prefs.persistedFloat("${it.key}BestSeconds", 0f))
+    }
+
+    fun wordSearchCompleted(level: WordSearchLevel): Boolean = wordSearchCompletedState.getValue(level).value
+    fun wordSearchUnlocked(level: WordSearchLevel): Boolean =
+        level == WordSearchLevel.ONE || wordSearchCompleted(WordSearchLevel.entries[level.ordinal - 1])
+    fun wordSearchBestSeconds(level: WordSearchLevel): Double =
+        wordSearchBestState.getValue(level).value.toDouble()
+
+    fun completeWordSearch(level: WordSearchLevel, seconds: Double): Boolean {
+        if (!wordSearchUnlocked(level) || !seconds.isFinite() || seconds < 0) return false
+        val best = wordSearchBestState.getValue(level)
+        if (best.value == 0f || seconds < best.value) best.value = maxOf(0.01f, seconds.toFloat())
+        val completed = wordSearchCompletedState.getValue(level)
+        if (completed.value) return false
+        completed.value = true
+        addCoins(level.coins)
+        gamePoints += level.points
+        return true
+    }
+
+    // ── Laberinto, 5 niveles ──
+    /** Monedas y puntos del primer triunfo de cada nivel (iOS: mazeLevelOneCoins...). */
+    val mazeLevelCoins = listOf(300, 450, 600, 800, 1_000)
+    val mazeLevelPoints = listOf(500, 1_400, 2_000, 2_800, 3_500)
+    /** Cada moneda recogida en el laberinto vale 10. */
+    val mazeCoinValue = 10
+
+    private val mazeCompletedState = (1..5).map {
+        saved(prefs.persistedBoolean("mazeLevel${LEVEL_NAMES[it - 1]}Completed", false))
+    }
+    private val mazeBestState = (1..5).map {
+        saved(prefs.persistedFloat("mazeLevel${LEVEL_NAMES[it - 1]}BestSeconds", 0f))
+    }
+    /** Un bit por moneda ya cobrada (el nivel 1 no tiene monedas). */
+    private val mazeCoinMaskState = (1..5).map {
+        saved(prefs.persistedInt("mazeLevel${LEVEL_NAMES[it - 1]}ClaimedCoinMask", 0))
+    }
+
+    fun mazeCompleted(level: Int): Boolean = mazeCompletedState.getOrNull(level - 1)?.value ?: false
+    fun mazeUnlocked(level: Int): Boolean = level == 1 || mazeCompleted(level - 1)
+    fun mazeBestSeconds(level: Int): Double = mazeBestState.getOrNull(level - 1)?.value?.toDouble() ?: 0.0
+    fun mazeClaimedCoinMask(level: Int): Int =
+        if (level <= 1) 0 else mazeCoinMaskState.getOrNull(level - 1)?.value ?: 0
+
+    /** Se llama al llegar a la salida correcta. Las monedas solo se cobran una vez cada una. */
+    fun completeMaze(level: Int, seconds: Double, collectedCoinIds: Set<Int>, coinCount: Int): MazeReward {
+        if (level !in 1..5 || !mazeUnlocked(level) || !seconds.isFinite() || seconds < 0) return MazeReward.NONE
+        val index = level - 1
+        val best = mazeBestState[index]
+        if (best.value == 0f || seconds < best.value) best.value = maxOf(0.01f, seconds.toFloat())
+
+        val firstWin = !mazeCompletedState[index].value
+        val baseCoins = if (firstWin) mazeLevelCoins[index] else 0
+        val points = if (firstWin) mazeLevelPoints[index] else 0
+        var collected = 0
+        if (level > 1) {
+            var mask = mazeCoinMaskState[index].value
+            for (id in collectedCoinIds) {
+                if (id !in 0 until coinCount) continue
+                val bit = 1 shl id
+                if (mask and bit == 0) {
+                    mask = mask or bit
+                    collected += mazeCoinValue
+                }
+            }
+            mazeCoinMaskState[index].value = mask
+        }
+        mazeCompletedState[index].value = true
+        addCoins(baseCoins + collected)
+        gamePoints += points
+        return MazeReward(baseCoins, collected, points)
+    }
+
+    // ── Logros del perfil (ProfileAchievement.swift) ──
+    val profileAchievements: List<ProfileAchievement>
+        get() {
+            val completedGames = listOf(
+                (1..5).all { mazeCompleted(it) },
+                MemoryLevel.entries.all { memoryCompleted(it) },
+                WordSearchLevel.entries.all { wordSearchCompleted(it) }
+            ).count { it }
+            val completedLessons = (if (greetingsRewardClaimed) 1 else 0) +
+                PathLesson.entries.count { isLessonCompleted(it) }
+            return listOf(
+                ProfileAchievement("games", "Todos los juegos",
+                    "Completa todos los niveles de Laberinto, Memorama y Sopa de letras.",
+                    R.drawable.achievement_games, completedGames, 3),
+                ProfileAchievement("lessons", "Todas las lecciones",
+                    "Completa las seis lecciones disponibles, de Primeras frases a Alimentos.",
+                    R.drawable.achievement_lessons, completedLessons, 6),
+                ProfileAchievement("feed10", "10 comidas", "Dale de comer a $petName 10 veces.",
+                    R.drawable.achievement_feed_10, totalFeedings, 10),
+                ProfileAchievement("feed50", "50 comidas", "Dale de comer a $petName 50 veces.",
+                    R.drawable.achievement_feed_50, totalFeedings, 50),
+                ProfileAchievement("feed100", "100 comidas", "Dale de comer a $petName 100 veces.",
+                    R.drawable.achievement_feed_100, totalFeedings, 100),
+                ProfileAchievement("coins1000", "1,000 monedas",
+                    "Gana 1,000 monedas en juegos y lecciones. Gastarlas no resta avance.",
+                    R.drawable.achievement_coins_1000, lifetimeEarnedCoins, 1_000),
+                ProfileAchievement("coins5000", "5,000 monedas",
+                    "Gana 5,000 monedas en juegos y lecciones. Gastarlas no resta avance.",
+                    R.drawable.achievement_coins_5000, lifetimeEarnedCoins, 5_000),
+                ProfileAchievement("coins10000", "10,000 monedas",
+                    "Gana 10,000 monedas en juegos y lecciones. Gastarlas no resta avance.",
+                    R.drawable.achievement_coins_10000, lifetimeEarnedCoins, 10_000),
+                ProfileAchievement("streak5", "Racha de 5 días",
+                    "Entra 5 días consecutivos. El logro se conserva aunque termine la racha.",
+                    R.drawable.achievement_streak_5, bestAchievementStreak, 5),
+                ProfileAchievement("streak10", "Racha de 10 días",
+                    "Entra 10 días consecutivos. El logro se conserva aunque termine la racha.",
+                    R.drawable.achievement_streak_10, bestAchievementStreak, 10),
+                ProfileAchievement("streak20", "Racha de 20 días",
+                    "Entra 20 días consecutivos. El logro se conserva aunque termine la racha.",
+                    R.drawable.achievement_streak_20, bestAchievementStreak, 20)
+            )
+        }
+
+    init {
+        // Versiones anteriores no contaban esto: se reconstruye una sola vez
+        // con lo que ya se ganó (igual que loadAchievementProgress en iOS).
+        if (!totalFeedingsSaved.isStored) totalFeedings = recentMealTimes.size
+        bestAchievementStreak = maxOf(bestAchievementStreak, streak)
+        if (!lifetimeCoinsSaved.isStored) {
+            var recovered = if (greetingsRewardClaimed) 700 else 0
+            PathLesson.entries.forEach { if (lessonRewardClaimed.getValue(it).value) recovered += it.coins }
+            MemoryLevel.entries.forEach { if (memoryCompleted(it)) recovered += it.coins }
+            WordSearchLevel.entries.forEach { if (wordSearchCompleted(it)) recovered += it.coins }
+            (1..5).forEach {
+                if (mazeCompleted(it)) recovered += mazeLevelCoins[it - 1]
+                recovered += Integer.bitCount(mazeClaimedCoinMask(it)) * mazeCoinValue
+            }
+            lifetimeEarnedCoins = recovered
+        }
+    }
 
     init {
         MusicManager.init(application, musicVolume)
@@ -391,7 +664,7 @@ class AppState @JvmOverloads constructor(
     ) {
         if (!greetingsRewardClaimed) {
             greetingsRewardClaimed = true
-            coins += 700
+            addCoins(700)
             addXP(140)
             lessonsCompleted += 1
             if (pathLessonsCompleted < 1) {
@@ -399,26 +672,34 @@ class AppState @JvmOverloads constructor(
                 unlockedPathLesson = maxOf(unlockedPathLesson, 2)
             }
 
-            val parentUID = activeParentUID
-            val childId = activeChildId
-            if (parentUID != null && childId != null) {
-                viewModelScope.launch {
-                    runCatching {
-                        FirestoreService.saveLessonProgress(
-                            parentUID = parentUID,
-                            childId = childId,
-                            progress = LessonProgressRecord(
-                                lessonId = "greetings",
-                                completed = true,
-                                rewardClaimed = true,
-                                correctAnswers = correctAnswers,
-                                totalAnswers = totalAnswers,
-                                elapsedSeconds = elapsedSeconds
-                            )
-                        )
-                    }.onFailure { Log.w(TAG, "No se pudo guardar el progreso", it) }
-                }
-            }
+            saveLessonProgressToCloud("greetings", correctAnswers, totalAnswers, elapsedSeconds)
+        }
+    }
+
+    /** Con sesión iniciada, guarda el resultado de una lección en Firestore. */
+    private fun saveLessonProgressToCloud(
+        lessonId: String,
+        correctAnswers: Int,
+        totalAnswers: Int,
+        elapsedSeconds: Int
+    ) {
+        val parentUID = activeParentUID ?: return
+        val childId = activeChildId ?: return
+        viewModelScope.launch {
+            runCatching {
+                FirestoreService.saveLessonProgress(
+                    parentUID = parentUID,
+                    childId = childId,
+                    progress = LessonProgressRecord(
+                        lessonId = lessonId,
+                        completed = true,
+                        rewardClaimed = true,
+                        correctAnswers = correctAnswers,
+                        totalAnswers = totalAnswers,
+                        elapsedSeconds = elapsedSeconds
+                    )
+                )
+            }.onFailure { Log.w(TAG, "No se pudo guardar el progreso", it) }
         }
     }
 
