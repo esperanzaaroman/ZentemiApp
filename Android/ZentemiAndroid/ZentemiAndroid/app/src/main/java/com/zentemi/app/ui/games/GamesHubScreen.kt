@@ -1,5 +1,8 @@
 package com.zentemi.app.ui.games
 
+import com.zentemi.app.ui.components.pressable
+import com.zentemi.app.ui.components.zentemiCardSurface
+
 import androidx.annotation.DrawableRes
 import com.zentemi.app.ui.components.ZentemiIcon
 import com.zentemi.app.R
@@ -188,10 +191,8 @@ private fun GameCard(game: MaicitoGame, unlocked: Boolean, onClick: () -> Unit) 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(3.dp, RoundedCornerShape(20.dp))
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color.White)
-            .clickable(enabled = unlocked, onClick = onClick)
+            .pressable(enabled = unlocked, pressedScale = 0.97f, onClick = onClick)
+            .zentemiCardSurface()
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -220,8 +221,9 @@ private fun GameCard(game: MaicitoGame, unlocked: Boolean, onClick: () -> Unit) 
             )
             Text(
                 game.description,
-                fontSize = 13.sp,
-                color = if (unlocked) SubText else SubText.copy(alpha = 0.5f)
+                fontSize = 14.sp,
+                lineHeight = 19.sp,
+                color = if (unlocked) MutedText else MutedText.copy(alpha = 0.6f)
             )
         }
 

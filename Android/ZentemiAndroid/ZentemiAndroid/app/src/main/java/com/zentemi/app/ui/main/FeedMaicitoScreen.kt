@@ -50,6 +50,12 @@ import com.zentemi.app.audio.SoundManager
 import com.zentemi.app.state.AppState
 import com.zentemi.app.ui.components.PetView
 import com.zentemi.app.ui.theme.Purple
+import com.zentemi.app.ui.theme.DarkText
+import com.zentemi.app.ui.theme.MutedText
+import com.zentemi.app.ui.theme.Radius
+import com.zentemi.app.ui.components.ChunkyButton
+import androidx.compose.animation.scaleIn
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import com.zentemi.app.ui.theme.Turquoise
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -99,6 +105,8 @@ fun FeedMaicitoScreen(
     val scope = rememberCoroutineScope()
 
     var selectedFood by remember { mutableStateOf<Food?>(null) }
+    // Comida tocada que espera confirmación antes de gastar monedas
+    var pendingFood by remember { mutableStateOf<Food?>(null) }
     var foodDragOffset by remember { mutableStateOf(Offset.Zero) }
     val returnAnimation = remember { Animatable(Offset.Zero, Offset.VectorConverter) }
     var isFeeding by remember { mutableStateOf(false) }
@@ -116,7 +124,7 @@ fun FeedMaicitoScreen(
     val isFull = happiness >= 100
     val canChooseFood = !isFull && availableMeals > 0 && !isFeeding
 
-    BackHandler { onBack() }
+    BackHandler { if (pendingFood != null) pendingFood = null else onBack() }
 
     fun showMessage(text: String) {
         messageJob?.cancel()
@@ -133,13 +141,9 @@ fun FeedMaicitoScreen(
             showMessage("No tienes suficientes monedas.")
             return
         }
-        selectedFood = food
-        foodDragOffset = Offset.Zero
+        // Primero se confirma el gasto; al aceptar, Maicito come directo.
+        pendingFood = food
         SoundManager.play(context, R.raw.audioseleccion, appState.soundVolume)
-        if (!tutorialShownThisSession) {
-            showTutorial = true
-            tutorialShownThisSession = true
-        }
     }
 
     fun snapFoodBack() {
@@ -455,7 +459,7 @@ fun FeedMaicitoScreen(
                 items(foods, key = { it.id }) { food ->
                     val canAfford = appState.coins >= food.price
                     val enabled = canChooseFood && canAfford
-                    val isSelected = selectedFood?.id == food.id
+                    val isSelected = pendingFood?.id == food.id
                     Box {
                         Column(
                             modifier = Modifier
@@ -537,6 +541,103 @@ fun FeedMaicitoScreen(
                     .background(Purple.copy(alpha = 0.95f))
                     .padding(horizontal = 20.dp, vertical = 12.dp)
             )
+        }
+
+        // ── Confirmar la compra de comida ──
+        AnimatedVisibility(
+            visible = pendingFood != null,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Guarda la última comida para que no desaparezca durante el fundido de salida
+            var shown by remember { mutableStateOf<Food?>(null) }
+            pendingFood?.let { shown = it }
+            val food = shown ?: return@AnimatedVisibility
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.35f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { pendingFood = null },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 28.dp)
+                        .widthIn(max = 380.dp)
+                        .fillMaxWidth()
+                        .animateEnterExit(enter = scaleIn(initialScale = 0.9f))
+                        .shadow(16.dp, RoundedCornerShape(Radius.lg))
+                        .clip(RoundedCornerShape(Radius.lg))
+                        .background(Color.White)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {}
+                        .padding(22.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Image(
+                        painter = painterResource(food.image),
+                        contentDescription = null,
+                        modifier = Modifier.size(84.dp)
+                    )
+                    Text(
+                        "¿Darle ${food.name.lowercase()} a ${appState.petName}?",
+                        fontSize = 20.sp,
+                        lineHeight = 26.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DarkText,
+                        textAlign = TextAlign.Center
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Cuesta ", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MutedText)
+                            CoinLabel(food.price, 15)
+                        }
+                        Text(
+                            "+${food.happiness}% felicidad",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E9A8A)
+                        )
+                    }
+                    Text(
+                        "Te quedarán ${appState.coins - food.price} monedas",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MutedText
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    ChunkyButton(
+                        text = "Dar de comer",
+                        onClick = {
+                            pendingFood = null
+                            feedMaicito(food)
+                        },
+                        height = 50.dp,
+                        textSize = 17.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        "Cancelar",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MutedText,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(Radius.sm))
+                            .clickable { pendingFood = null }
+                            .padding(horizontal = 20.dp, vertical = 12.dp)
+                    )
+                }
+            }
         }
     }
 }

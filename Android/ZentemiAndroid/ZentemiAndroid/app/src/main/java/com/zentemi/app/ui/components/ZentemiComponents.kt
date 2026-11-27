@@ -27,6 +27,11 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.foundation.border
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.Role
 import com.zentemi.app.ui.theme.*
 
 /** Rectangle whose bottom edge is a gentle wave (low on the left, rising to the right). */
@@ -113,14 +118,24 @@ fun CoinPill(coins: Int, modifier: Modifier = Modifier) {
 /** Header title + subtitle in white. */
 @Composable
 fun HeaderTitle(title: String, subtitle: String? = null) {
-    Column {
-        Text(text = title, fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+    // Mismas medidas que ScreenTitle; con nombres largos baja a un segundo renglón sin encimarse
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            text = title,
+            fontSize = ScreenHeaderDefaults.titleSize,
+            lineHeight = 31.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            maxLines = 2,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+        )
         if (subtitle != null) {
             Text(
                 text = subtitle,
-                fontSize = 15.sp,
+                fontSize = ScreenHeaderDefaults.subtitleSize,
+                lineHeight = 20.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color.White.copy(alpha = 0.82f)
+                color = Color.White.copy(alpha = 0.85f)
             )
         }
     }
@@ -139,20 +154,25 @@ fun ChunkyButton(
     textColor: Color = Color.White,
     enabled: Boolean = true,
     height: Dp = 44.dp,
+    textSize: TextUnit = 15.sp,
     leading: (@Composable () -> Unit)? = null
 ) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val lip = 4.dp
     val press by animateDpAsState(if (pressed && enabled) lip else 0.dp, label = "press")
-    val shape = RoundedCornerShape(14.dp)
+    val shape = RoundedCornerShape(Radius.md)
+    val haptics = LocalHapticFeedback.current
     val face = if (enabled) color else Color(0xFFCFCBD8)
     val under = if (enabled) lipColor else Color(0xFFB4AFC0)
 
     Box(
         modifier = modifier
             .height(height + lip)
-            .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick)
+            .clickable(interactionSource = interaction, indication = null, enabled = enabled, role = Role.Button) {
+                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                onClick()
+            }
     ) {
         Box(
             modifier = Modifier
@@ -174,9 +194,9 @@ fun ChunkyButton(
         ) {
             if (leading != null) {
                 leading()
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(8.dp))
             }
-            Text(text = text, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = textColor)
+            Text(text = text, fontSize = textSize, fontWeight = FontWeight.Bold, color = textColor)
         }
     }
 }
@@ -187,18 +207,27 @@ private fun Color.lighten(amount: Float) = lerp(this, Color.White, amount)
 @Composable
 fun ZentemiCard(
     modifier: Modifier = Modifier,
-    padding: Dp = 14.dp,
+    padding: Dp = 16.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
         modifier = modifier
-            .shadow(8.dp, RoundedCornerShape(20.dp), ambientColor = Purple.copy(alpha = 0.18f), spotColor = Purple.copy(alpha = 0.18f))
-            .clip(RoundedCornerShape(20.dp))
+            .zentemiCardSurface()
             .background(Color.White)
             .padding(padding),
         content = content
     )
 }
+
+/**
+ * La superficie de tarjeta única de la app: blanca, esquina [Radius.lg], sombra
+ * morada suave y un filo fino para que no se pierda sobre fondos claros.
+ */
+fun Modifier.zentemiCardSurface(shape: Shape = RoundedCornerShape(Radius.lg)): Modifier = this
+    .shadow(6.dp, shape, ambientColor = Purple.copy(alpha = 0.14f), spotColor = Purple.copy(alpha = 0.16f))
+    .clip(shape)
+    .background(Color.White)
+    .border(1.dp, Hairline.copy(alpha = 0.7f), shape)
 
 /** Small colored tag such as NUEVO / RARO. */
 @Composable

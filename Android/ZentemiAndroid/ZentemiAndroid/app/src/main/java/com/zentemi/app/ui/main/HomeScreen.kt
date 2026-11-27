@@ -41,6 +41,14 @@ import com.zentemi.app.state.AppState
 import com.zentemi.app.ui.components.LightAuthBackground
 import com.zentemi.app.ui.components.PetView
 import com.zentemi.app.ui.components.HomeScene
+import com.zentemi.app.ui.components.ChunkyButton
+import com.zentemi.app.ui.components.enterOnce
+import com.zentemi.app.ui.components.pressable
+import com.zentemi.app.ui.components.CoinBadge
+import com.zentemi.app.ui.components.ScreenHeaderDefaults
+import com.zentemi.app.ui.components.ScreenTitle
+import com.zentemi.app.ui.components.StatBadge
+import com.zentemi.app.ui.components.zentemiCardSurface
 import androidx.compose.ui.text.style.TextOverflow
 import com.zentemi.app.ui.theme.*
 
@@ -97,40 +105,24 @@ fun HomeScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 22.dp, end = 18.dp, top = 12.dp, bottom = 4.dp),
+                    .padding(start = Spacing.screen, end = Spacing.screen, top = ScreenHeaderDefaults.top, bottom = 4.dp)
+                    .enterOnce(0),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "¡Hola, ${appState.userName}!",
-                        fontFamily = Quicksand,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PurpleDark,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = "Qué gusto verte hoy",
-                        fontFamily = Quicksand,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = SubText.copy(alpha = 0.8f)
-                    )
-                }
-                StatBadge(
-                    icon = R.drawable.ic_moneda,
-                    value = "${appState.coins}",
-                    tint = Color(0xFFFFF1C7),
-                    textColor = CoinGoldDark,
-                    onClick = { showCoinsInfo = true }
+                ScreenTitle(
+                    title = "¡Hola, ${appState.userName}!",
+                    subtitle = "Qué gusto verte hoy",
+                    modifier = Modifier.weight(1f)
                 )
+                Spacer(modifier = Modifier.width(8.dp))
+                CoinBadge(coins = appState.coins, onClick = { showCoinsInfo = true })
                 Spacer(modifier = Modifier.width(8.dp))
                 StatBadge(
                     icon = R.drawable.ic_racha,
                     value = "${appState.streak}",
                     tint = Color(0xFFFFE2DD),
                     textColor = Color(0xFFC2362C),
+                    contentDescription = "Racha",
                     onClick = { showStreakInfo = true }
                 )
             }
@@ -139,7 +131,8 @@ fun HomeScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    .enterOnce(1, distance = 8),
                 contentAlignment = Alignment.Center
             ) {
                 HomeScene(modifier = Modifier.matchParentSize())
@@ -203,10 +196,9 @@ fun HomeScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 22.dp)
-                    .shadow(10.dp, RoundedCornerShape(22.dp), ambientColor = Purple.copy(alpha = 0.18f), spotColor = Purple.copy(alpha = 0.18f))
-                    .clip(RoundedCornerShape(22.dp))
-                    .background(Color.White.copy(alpha = 0.97f))
+                    .padding(horizontal = Spacing.screen)
+                    .enterOnce(2)
+                    .zentemiCardSurface()
                     .padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
@@ -228,28 +220,38 @@ fun HomeScreen(
                     )
                 }
 
+                // La barra se llena al entrar y cuando cambia la felicidad
+                val happinessShown by animateFloatAsState(
+                    targetValue = appState.happiness / 100f,
+                    animationSpec = tween(900, delayMillis = 250, easing = EaseOutCubic),
+                    label = "happiness"
+                )
                 LinearProgressIndicator(
-                    progress = { appState.happiness / 100f },
+                    progress = { happinessShown },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp)),
+                        .height(10.dp)
+                        .clip(CircleShape),
                     color = Turquoise,
                     trackColor = Turquoise.copy(alpha = 0.15f),
                     gapSize = 0.dp,
                     drawStopIndicator = {}
                 )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                // Los dos botones miden lo mismo aunque uno ocupe dos renglones
+                Row(
+                    modifier = Modifier.height(IntrinsicSize.Min),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     PetActionButton(
                         text = "Alimentar a ${appState.petName}",
                         onClick = onFeedPressed,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).fillMaxHeight()
                     )
                     PetActionButton(
                         text = "Jugar con ${appState.petName}",
                         onClick = onPlayWithPressed,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).fillMaxHeight()
                     )
                 }
             }
@@ -257,28 +259,20 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(18.dp))
 
             // Ir a las lecciones (el camino de aprendizaje)
-            Button(
+            ChunkyButton(
+                text = "Comenzar lección",
                 onClick = onPlayPressed,
-                colors = ButtonDefaults.buttonColors(containerColor = Purple),
-                shape = RoundedCornerShape(28.dp),
+                height = 56.dp,
+                textSize = 18.sp,
+                leading = { ZentemiIcon(R.drawable.ic_comenzar_leccion, size = 30.dp) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 30.dp)
-                    .shadow(8.dp, RoundedCornerShape(28.dp), ambientColor = Purple.copy(alpha = 0.35f), spotColor = Purple.copy(alpha = 0.35f))
-                    .height(56.dp)
-            ) {
-                ZentemiIcon(R.drawable.ic_comenzar_leccion, size = 30.dp)
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = "Comenzar lección",
-                    fontFamily = Quicksand,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
+                    .padding(horizontal = Spacing.screen)
+                    .enterOnce(3)
+            )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // Aire entre el botón y la barra de pestañas
+            Spacer(modifier = Modifier.height(30.dp))
         }
 
         // Info windows
@@ -306,36 +300,6 @@ fun HomeScreen(
                 appState.markStreakCelebrated()
                 showStreakCelebration = false
             }
-        )
-    }
-}
-
-/** Monedas o racha: fondo de color suave, sin contorno, con el ícono grande. */
-@Composable
-private fun StatBadge(
-    @DrawableRes icon: Int,
-    value: String,
-    tint: Color,
-    textColor: Color,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .shadow(3.dp, RoundedCornerShape(16.dp), ambientColor = textColor.copy(alpha = 0.25f), spotColor = textColor.copy(alpha = 0.25f))
-            .clip(RoundedCornerShape(16.dp))
-            .background(tint)
-            .clickable(onClick = onClick)
-            .padding(start = 8.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp)
-    ) {
-        ZentemiIcon(icon, size = 28.dp)
-        Text(
-            text = value,
-            fontFamily = Quicksand,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = textColor
         )
     }
 }
@@ -378,9 +342,10 @@ private fun PetActionButton(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(Purple.copy(alpha = 0.10f))
-            .clickable(onClick = onClick)
+            .pressable(onClick = onClick)
+            .clip(RoundedCornerShape(Radius.sm))
+            .background(PurpleTint)
+            .heightIn(min = 48.dp)
             .padding(vertical = 12.dp, horizontal = 6.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -390,7 +355,9 @@ private fun PetActionButton(
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             color = PurpleDark,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
@@ -423,11 +390,11 @@ private fun InfoOverlay(
                     .widthIn(max = 460.dp)
                     .padding(horizontal = 20.dp)
                     .animateEnterExit(enter = scaleIn(initialScale = 0.9f))
-                    .shadow(15.dp, RoundedCornerShape(22.dp))
-                    .clip(RoundedCornerShape(22.dp))
+                    .shadow(15.dp, RoundedCornerShape(Radius.lg))
+                    .clip(RoundedCornerShape(Radius.lg))
                     .background(Color.White)
                     .background(color.copy(alpha = 0.12f))
-                    .border(2.dp, color.copy(alpha = 0.4f), RoundedCornerShape(22.dp))
+                    .border(2.dp, color.copy(alpha = 0.4f), RoundedCornerShape(Radius.lg))
                     // Swallow taps on the card so they don't close it
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
@@ -460,7 +427,7 @@ private fun InfoOverlay(
                 )
                 OutlinedButton(
                     onClick = onClose,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(Radius.sm),
                     border = BorderStroke(0.dp, Color.Transparent),
                     colors = ButtonDefaults.outlinedButtonColors(containerColor = color.copy(alpha = 0.15f))
                 ) {

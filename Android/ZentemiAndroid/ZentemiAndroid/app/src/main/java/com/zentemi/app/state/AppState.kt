@@ -16,6 +16,9 @@ import com.zentemi.app.data.ShopItem
 import java.time.LocalDate
 import java.time.ZoneId
 
+/** Largo máximo del nombre de Maicito, para que quepa en botones y burbujas. */
+const val PET_NAME_MAX = 12
+
 /**
  * Estado global de la app. Igual que AppState.swift, casi todo se guarda en
  * el teléfono (SharedPreferences) y se recupera al abrir la app.
@@ -36,6 +39,11 @@ class AppState(application: Application) : AndroidViewModel(application) {
     // ── Pet ──
     var petName by saved(prefs.persistedString("petName", "Maicito"))
     var happiness by saved(prefs.persistedInt("happiness", 50))
+
+    init {
+        // Nombres guardados antes del límite: se recortan para que quepan en los botones.
+        if (petName.length > PET_NAME_MAX) petName = petName.take(PET_NAME_MAX).trim()
+    }
 
     // ── Profile ──
     var coins by saved(prefs.persistedInt("coins", 1500))

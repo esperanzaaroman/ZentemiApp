@@ -2,6 +2,13 @@ package com.zentemi.app.ui.main
 
 import androidx.annotation.DrawableRes
 import com.zentemi.app.ui.components.ZentemiIcon
+import com.zentemi.app.ui.components.pressable
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import com.zentemi.app.R
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -104,37 +111,53 @@ fun MainScreen(
             tabs.forEachIndexed { index, tab ->
                 val isSelected = selectedTab == index
 
+                // Píldora de la pestaña activa, icono y texto se animan juntos
+                val pillAlpha by animateFloatAsState(if (isSelected) 1f else 0f, tween(220), label = "pill")
+                val iconSize by animateDpAsState(
+                    if (isSelected) 30.dp else 26.dp,
+                    spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium),
+                    label = "iconSize"
+                )
+                val labelColor by animateColorAsState(
+                    if (isSelected) PurpleDark else MutedText,
+                    tween(220),
+                    label = "labelColor"
+                )
+
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            selectedTab = index
-                        }
-                        .padding(vertical = 4.dp),
+                        .pressable(pressedScale = 0.9f, role = Role.Tab) { selectedTab = index }
+                        .semantics { selected = isSelected }
+                        .padding(vertical = 2.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    ZentemiIcon(
-                        icon = tab.icon,
-                        contentDescription = tab.label,
-                        // La pestaña activa a color y un poco más grande; las demás apagadas
-                        size = if (isSelected) 32.dp else 28.dp,
-                        muted = !isSelected,
-                        modifier = Modifier
-                            .then(
-                                if (index == 0) Modifier.scale(backpackScale.value)
-                                else Modifier
-                            )
-                    )
+                    Box(
+                        modifier = Modifier.size(width = 60.dp, height = 36.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .graphicsLayer { alpha = pillAlpha }
+                                .clip(CircleShape)
+                                .background(PurpleTint)
+                        )
+                        ZentemiIcon(
+                            icon = tab.icon,
+                            contentDescription = tab.label,
+                            size = iconSize,
+                            muted = !isSelected,
+                            modifier = if (index == 0) Modifier.scale(backpackScale.value) else Modifier
+                        )
+                    }
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = tab.label,
                         fontFamily = Quicksand,
-                        fontSize = 11.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) Purple else Color.Gray.copy(alpha = 0.5f)
+                        fontSize = 12.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                        color = labelColor
                     )
                 }
             }

@@ -35,6 +35,7 @@ import com.zentemi.app.ui.components.BackCircleButton
 import com.zentemi.app.ui.components.ChunkyButton
 import com.zentemi.app.ui.components.HeaderTitle
 import com.zentemi.app.ui.components.WaveHeader
+import com.zentemi.app.ui.components.pressable
 import com.zentemi.app.ui.theme.*
 
 private data class LessonInfo(
@@ -165,7 +166,7 @@ fun LearningPathScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .offset(x = lesson.xOffset.dp)
-                            .clickable {
+                            .pressable(pressedScale = 0.94f) {
                                 if (isUnlocked && (lesson.number == 1 || lesson.number == 2)) {
                                     onLessonSelected(lesson.number)
                                 } else if (!isUnlocked) {
@@ -189,7 +190,7 @@ fun LearningPathScreen(
                             }
                             Box(
                                 modifier = Modifier
-                                    .size(84.dp)
+                                    .size(118.dp)
                                     .then(
                                         if (isCurrent) Modifier
                                             .scale(ringPulse)
@@ -200,14 +201,14 @@ fun LearningPathScreen(
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(66.dp)
-                                        .offset(y = 3.dp)
+                                        .size(94.dp)
+                                        .offset(y = 5.dp)
                                         .clip(CircleShape)
                                         .background(lip)
                                 )
                                 Box(
                                     modifier = Modifier
-                                        .size(66.dp)
+                                        .size(94.dp)
                                         .offset(y = (-2).dp)
                                         .clip(CircleShape)
                                         .background(Brush.verticalGradient(listOf(lerp(face, Color.White, 0.15f), face))),
@@ -216,14 +217,14 @@ fun LearningPathScreen(
                                     // Bloqueada: candado; disponible o terminada: el dibujo de la lección
                                     ZentemiIcon(
                                         if (isUnlocked) lesson.icon else R.drawable.ic_leccion_bloqueada,
-                                        size = if (isUnlocked) 46.dp else 36.dp
+                                        size = if (isUnlocked) 66.dp else 50.dp
                                     )
                                 }
                                 // Palomita de "terminada" en la esquina
                                 if (isCompleted) {
                                     ZentemiIcon(
                                         R.drawable.ic_leccion_completa,
-                                        size = 28.dp,
+                                        size = 36.dp,
                                         modifier = Modifier
                                             .align(Alignment.TopEnd)
                                             .offset(x = (-2).dp, y = 2.dp)
@@ -231,7 +232,7 @@ fun LearningPathScreen(
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(7.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
 
                             // Label
                             Surface(
@@ -242,10 +243,10 @@ fun LearningPathScreen(
                             ) {
                                 Text(
                                     text = lesson.name,
-                                    fontSize = 14.sp,
+                                    fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isUnlocked) DarkText else SubText.copy(alpha = 0.6f),
-                                    modifier = Modifier.padding(horizontal = 11.dp, vertical = 5.dp)
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
                                 )
                             }
                         }
@@ -276,11 +277,11 @@ private fun PathDots(goesRight: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(72.dp),
+            .height(96.dp),
         contentAlignment = Alignment.Center
     ) {
-        val startX = if (goesRight) -70f else 70f
-        val endX = if (goesRight) 70f else -70f
+        val startX = if (goesRight) -72f else 72f
+        val endX = if (goesRight) 72f else -72f
 
         repeat(6) { index ->
             val progress = index / 5f
@@ -288,9 +289,9 @@ private fun PathDots(goesRight: Boolean) {
                 modifier = Modifier
                     .offset(
                         x = (startX + (endX - startX) * progress).dp,
-                        y = (index * 12 - 30).dp
+                        y = (index * 16 - 40).dp
                     )
-                    .size(9.dp)
+                    .size(11.dp)
                     .clip(CircleShape)
                     .background(Purple.copy(alpha = 0.22f))
             )

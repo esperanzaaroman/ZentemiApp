@@ -1,5 +1,10 @@
 package com.zentemi.app.ui.main
 
+import com.zentemi.app.ui.components.pressable
+import com.zentemi.app.ui.components.CoinBadge
+import com.zentemi.app.ui.components.ScreenHeaderDefaults
+import com.zentemi.app.ui.components.ScreenTitle
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
@@ -238,48 +243,17 @@ private fun StoreHero(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 14.dp)
+                .padding(start = Spacing.screen, end = Spacing.screen, top = ScreenHeaderDefaults.top, bottom = 14.dp)
         ) {
-            // Arriba: nombre de la sección a la izquierda y monedas a la derecha
+            // Arriba: título a la izquierda y monedas a la derecha (igual que en Inicio)
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Row(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.92f))
-                        .border(1.dp, Purple.copy(alpha = 0.25f), CircleShape)
-                        .padding(start = 8.dp, end = 16.dp, top = 6.dp, bottom = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ZentemiIcon(R.drawable.ic_tienda, size = 28.dp)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
-                        Text(text = "Tienda", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = PurpleDark)
-                        Text(
-                            text = "Viste a ${appState.petName}",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = SubText.copy(alpha = 0.8f)
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                Row(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.92f))
-                        .border(1.5.dp, SplashDotActive.copy(alpha = 0.6f), CircleShape)
-                        .padding(start = 10.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ZentemiIcon(R.drawable.ic_moneda, size = 28.dp, contentDescription = "Monedas")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "%,d".format(appState.coins),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = DarkText
-                    )
-                }
+                ScreenTitle(
+                    title = "Tienda",
+                    subtitle = "Viste a ${appState.petName}",
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                CoinBadge(coins = appState.coins)
             }
 
             // Maicito, con el botón de quitar a la izquierda
@@ -498,12 +472,12 @@ private fun StoreItemCard(
     Box(
         modifier = Modifier
             .scale(bounce.value)
+            .pressable(pressedScale = 0.95f, onClick = onClick)
             .fillMaxWidth()
             .aspectRatio(if (tall) 0.66f else 1f)
             .clip(shape)
             .background(Brush.verticalGradient(listOf(CardTop, CardBottom)))
             .border(if (previewing || equipped) 3.5.dp else 2.dp, borderColor, shape)
-            .clickable(onClick = onClick)
     ) {
         val image = item.image
         val backdrop = item.backdrop

@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -27,6 +28,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.zentemi.app.ui.components.MaicitoBackdrop
 import com.zentemi.app.ui.components.PetView
 import com.zentemi.app.ui.components.WaveHeader
+import com.zentemi.app.ui.components.ScreenTitle
+import com.zentemi.app.state.PET_NAME_MAX
 import com.zentemi.app.ui.components.avatarBackgroundColor
 import com.zentemi.app.ui.components.profileHeaderColors
 import com.zentemi.app.ui.theme.*
@@ -74,21 +77,23 @@ fun ProfileScreen(
             ) {
                 // Title + settings button
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Perfil",
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                    ScreenTitle(
+                        title = "Perfil",
+                        subtitle = "Tu avance en Yuhmu",
+                        onColor = true,
+                        modifier = Modifier.weight(1f)
                     )
-                    Spacer(modifier = Modifier.weight(1f))
+                    Spacer(modifier = Modifier.width(8.dp))
                     IconButton(
                         onClick = onSettingsPressed,
+                        // Círculo blanco sólido: el ícono morado ya no se pierde en el encabezado
                         modifier = Modifier
-                            .size(42.dp)
+                            .size(48.dp)
+                            .shadow(6.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.25f), spotColor = Color.Black.copy(alpha = 0.25f))
                             .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.18f))
+                            .background(Color.White)
                     ) {
-                        ZentemiIcon(R.drawable.ic_ajustes, size = 28.dp, contentDescription = "Ajustes")
+                        ZentemiIcon(R.drawable.ic_ajustes, size = 30.dp, contentDescription = "Ajustes")
                     }
                 }
 
@@ -362,7 +367,12 @@ fun ProfileScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(100.dp)) // bottom tab bar space
+        // Espacio para la barra de pestañas (y la barra de gestos del sistema) + aire
+        Spacer(
+            modifier = Modifier
+                .navigationBarsPadding()
+                .height(108.dp)
+        )
     }
 
     // Editor bottom sheet
@@ -544,8 +554,9 @@ private fun AvatarEditorDialog(
                 // Pet name
                 OutlinedTextField(
                     value = petNameInput,
-                    onValueChange = { petNameInput = it },
+                    onValueChange = { petNameInput = it.take(PET_NAME_MAX) },
                     label = { Text("Nombre de mascota") },
+                    supportingText = { Text("${petNameInput.length} / $PET_NAME_MAX") },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -573,7 +584,7 @@ private fun AvatarEditorDialog(
         },
         confirmButton = {
             TextButton(onClick = {
-                appState.petName = petNameInput.trim().ifEmpty { "Maicito" }
+                appState.petName = petNameInput.trim().take(PET_NAME_MAX).ifEmpty { "Maicito" }
                 val newName = userNameInput.trim()
                 if (appState.canChangeUserName && newName.isNotEmpty() && newName != appState.userName) {
                     appState.userName = newName

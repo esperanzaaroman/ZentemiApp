@@ -59,3 +59,11 @@ val LevelColors = listOf(
     Color(0xFFFF9800),  // 9 - Guardián
     Color(0xFFF44336),  // 10 - Maestro Zentemi
 )
+
+// ── Tonos de apoyo (pulido de UI) ──
+/** Morado muy suave para fondos de botones secundarios y la pestaña activa. */
+val PurpleTint = Color(0xFFEFE7FB)
+/** Línea fina para bordes y divisores. */
+val Hairline = Color(0xFFE6E0F0)
+/** Texto apagado que aún se lee bien sobre blanco (contraste ≥ 4.5:1). */
+val MutedText = Color(0xFF6E6680)
