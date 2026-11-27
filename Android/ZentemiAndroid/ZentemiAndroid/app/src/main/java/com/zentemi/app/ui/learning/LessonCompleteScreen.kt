@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zentemi.app.state.AppState
+import com.zentemi.app.data.LessonReward
 import androidx.compose.ui.graphics.Brush
 import com.zentemi.app.ui.components.ChunkyButton
 import com.zentemi.app.ui.components.PetView
@@ -39,10 +40,18 @@ fun LessonCompleteScreen(
     correctAnswers: Int,
     totalAnswers: Int,
     elapsedSeconds: Int,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
+    /**
+     * Recibo de las lecciones 2 a 6: el premio ya se entregó al terminar el
+     * último ejercicio y aquí solo se anima. Si es null es "Primeras frases",
+     * que entrega su premio al llegar a esta pantalla.
+     */
+    lessonReward: LessonReward? = null
 ) {
-    val rewardCoins = 700
-    val rewardXP = 140
+    // Se recuerda el valor del inicio: al entregar el premio cambia a "ya cobrado".
+    val firstGreetings = remember { lessonReward == null && !appState.greetingsRewardClaimed }
+    val rewardCoins = lessonReward?.coins ?: if (firstGreetings) 700 else 0
+    val rewardXP = lessonReward?.xp ?: 140
 
     // Igual que iOS: siempre 3 estrellas; las no ganadas se muestran grises.
     val maxStars = 3
@@ -64,10 +73,17 @@ fun LessonCompleteScreen(
     var showXPCard by remember { mutableStateOf(false) }
     var showContinueButton by remember { mutableStateOf(false) }
 
-    var displayedXP by remember { mutableIntStateOf(appState.totalXP) }
-    var displayedLevel by remember { mutableIntStateOf(appState.currentLevel) }
-    var displayedXPRemaining by remember { mutableIntStateOf(appState.xpRemaining) }
-    var xpBarProgress by remember { mutableFloatStateOf(appState.levelProgress) }
+    val initialXP = lessonReward?.startingXP ?: appState.totalXP
+    var displayedXP by remember { mutableIntStateOf(initialXP) }
+    var displayedLevel by remember {
+        mutableIntStateOf(minOf(initialXP / appState.xpRequiredPerLevel + 1, appState.maxLevel))
+    }
+    var displayedXPRemaining by remember {
+        mutableIntStateOf(appState.xpRequiredPerLevel - initialXP % appState.xpRequiredPerLevel)
+    }
+    var xpBarProgress by remember {
+        mutableFloatStateOf((initialXP % appState.xpRequiredPerLevel).toFloat() / appState.xpRequiredPerLevel)
+    }
 
     var rewardApplied by remember { mutableStateOf(false) }
 
@@ -75,7 +91,7 @@ fun LessonCompleteScreen(
 
     // Run the staggered animation sequence
     LaunchedEffect(Unit) {
-        val startingXP = appState.totalXP
+        val startingXP = initialXP
 
         // Show mascot
         showMascot = true
@@ -103,12 +119,17 @@ fun LessonCompleteScreen(
         delay(500)
         if (!rewardApplied) {
             rewardApplied = true
-            val wasAlreadyClaimed = appState.greetingsRewardClaimed
-            appState.completeGreetingsLesson(
-                correctAnswers = correctAnswers,
-                totalAnswers = totalAnswers,
-                elapsedSeconds = elapsedSeconds
-            )
+            val wasAlreadyClaimed = if (lessonReward != null) {
+                lessonReward.xp <= 0
+            } else {
+                val claimed = appState.greetingsRewardClaimed
+                appState.completeGreetingsLesson(
+                    correctAnswers = correctAnswers,
+                    totalAnswers = totalAnswers,
+                    elapsedSeconds = elapsedSeconds
+                )
+                claimed
+            }
 
             if (!wasAlreadyClaimed) {
                 // Animate XP counting up
