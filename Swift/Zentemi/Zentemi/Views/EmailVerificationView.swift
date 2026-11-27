@@ -5,6 +5,7 @@ import FirebaseAuth
 /// Garantiza el consentimiento informado del tutor legal conforme a LFPDPPP y LGDNNA
 public struct EmailVerificationView: View {
 
+    @Environment(\.dismiss) private var dismiss
     @ObservedObject private var authService = AuthService.shared
 
     @State private var isChecking = false
@@ -29,6 +30,22 @@ public struct EmailVerificationView: View {
             .ignoresSafeArea()
 
             VStack(spacing: 24) {
+
+                HStack {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 42, height: 42)
+                            .background(Color.white.opacity(0.16))
+                            .clipShape(Circle())
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 22)
+                .padding(.top, 8)
 
                 Spacer()
 
@@ -79,7 +96,7 @@ public struct EmailVerificationView: View {
                             .foregroundStyle(.white)
                     }
 
-                    Text("Por protección de datos de los menores, el padre o tutor debe validar su identidad antes de que el alumno comience sus lecciones de Yuhmu.")
+                    Text("Por protección de datos de los menores, pedimos al padre o tutor confirmar su correo. Mientras tanto, el alumno puede seguir aprendiendo Yuhmu y su progreso se guarda igual.")
                         .font(.system(size: 12))
                         .foregroundStyle(.white.opacity(0.85))
                         .multilineTextAlignment(.center)
@@ -148,13 +165,13 @@ public struct EmailVerificationView: View {
                     }
                     .disabled(isResending)
 
-                    // 3. Botón "Cerrar sesión"
+                    // 3. Botón "Más tarde" (no bloquea el uso de la app)
                     Button {
-                        try? authService.signOut()
+                        dismiss()
                     } label: {
-                        Text("Iniciar con otra cuenta")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.white.opacity(0.7))
+                        Text("Más tarde")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.75))
                             .padding(.top, 4)
                     }
                 }
@@ -162,6 +179,7 @@ public struct EmailVerificationView: View {
                 .padding(.bottom, 20)
             }
         }
+        .navigationBarBackButtonHidden(true)
         .onAppear {
             // Comprobación pasiva al entrar a la pantalla
             checkVerificationStatus()
@@ -178,8 +196,11 @@ public struct EmailVerificationView: View {
                 await MainActor.run {
                     isChecking = false
                     if verified {
-                        statusMessage = "¡Correo verificado con éxito! Entrando..."
+                        statusMessage = "¡Correo verificado con éxito!"
                         isSuccessMessage = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                            dismiss()
+                        }
                     } else {
                         statusMessage = "Aún no se ha verificado. Haz clic en el enlace que enviamos a tu correo."
                         isSuccessMessage = false

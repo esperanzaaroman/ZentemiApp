@@ -62,9 +62,12 @@ public final class FirestoreService: ObservableObject {
 
     // MARK: - Gestión de Perfiles Infantiles (`users/{uid}/children/{childId}`)
 
-    /// Obtiene la lista de perfiles infantiles asociados a la cuenta del tutor
-    public func fetchChildren(parentUID: String) async throws -> [ChildProfile] {
-        let snapshot = try await childrenCollection(parentUID: parentUID).getDocuments()
+    /// Obtiene la lista de perfiles infantiles asociados a la cuenta del tutor.
+    /// Con `fromServer = true` consulta al servidor sin aceptar caché vacía, evitando
+    /// confundir falta de red con cuenta nueva al iniciar sesión en otro dispositivo.
+    public func fetchChildren(parentUID: String, fromServer: Bool = false) async throws -> [ChildProfile] {
+        let source: FirestoreSource = fromServer ? .server : .default
+        let snapshot = try await childrenCollection(parentUID: parentUID).getDocuments(source: source)
         return snapshot.documents.compactMap { doc -> ChildProfile? in
             try? doc.data(as: ChildProfile.self)
         }
@@ -75,14 +78,23 @@ public final class FirestoreService: ObservableObject {
         parentUID: String,
         userName: String
     ) async throws -> ChildProfile {
-        let childRef = childrenCollection(parentUID: parentUID).document()
-        var newProfile = ChildProfile(
+        let defaultProfile = ChildProfile(
             userName: userName,
             petName: "Maicito",
             coins: 1500,
             currentLevel: 1,
             streak: 1
         )
+        return try await createChildProfile(parentUID: parentUID, profile: defaultProfile)
+    }
+
+    /// Crea un nuevo perfil infantil usando un modelo completo (compatible con Android v1.1)
+    public func createChildProfile(
+        parentUID: String,
+        profile: ChildProfile
+    ) async throws -> ChildProfile {
+        let childRef = childrenCollection(parentUID: parentUID).document()
+        var newProfile = profile
         newProfile.id = childRef.documentID
         try childRef.setData(from: newProfile)
         return newProfile

@@ -273,21 +273,16 @@ public final class AuthService: ObservableObject {
         }
     }
 
-    // MARK: - Monitoreo de Sesión Inactiva (30 minutos)
+    // MARK: - Monitoreo de Actividad
+    // Con el modo invitado (igual que Android v1.1), la cuenta es opcional y no cerramos
+    // sesión silenciosamente por inactividad para evitar dejar al alumno sin sincronizar sin avisar.
 
     public func registerUserActivity() {
-        resetInactivityTimer()
+        stopInactivityTimer()
     }
 
     private func resetInactivityTimer() {
-        inactivityTimer?.invalidate()
-        // 30 minutos de inactividad
-        inactivityTimer = Timer.scheduledTimer(withTimeInterval: 30 * 60, repeats: false) { [weak self] _ in
-            DispatchQueue.main.async {
-                print("[AuthService] Sesión cerrada automáticamente por 30 minutos de inactividad.")
-                try? self?.signOut()
-            }
-        }
+        stopInactivityTimer()
     }
 
     private func stopInactivityTimer() {

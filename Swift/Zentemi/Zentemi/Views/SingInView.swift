@@ -194,7 +194,11 @@ struct SignInView: View {
         Task {
             do {
                 _ = try await authService.signInParent(email: email, password: password)
-                // Al autenticar, ContentView detecta authService.isAuthenticated automáticamente
+                await MainActor.run {
+                    appState.hasCompletedOnboarding = true
+                    isLoading = false
+                    dismiss()
+                }
             } catch let error as ZentemiAuthError {
                 await MainActor.run {
                     errorMessage = error.errorDescription

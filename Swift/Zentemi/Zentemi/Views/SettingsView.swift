@@ -344,32 +344,35 @@ struct SettingsView: View {
                 
                 VStack(spacing: 9) {
                     
-                    Button {
-                        
-                        showLogoutConfirmation = true
-                        
-                    } label: {
-                        
-                        Text("Cerrar sesión")
-                            .font(
-                                .system(
-                                    size: 13,
-                                    weight: .semibold
+                    // En modo invitado no hay sesión que cerrar
+                    if !appState.isGuest {
+                        Button {
+                            
+                            showLogoutConfirmation = true
+                            
+                        } label: {
+                            
+                            Text("Cerrar sesión")
+                                .font(
+                                    .system(
+                                        size: 13,
+                                        weight: .semibold
+                                    )
                                 )
-                            )
-                            .foregroundStyle(.white)
-                            .padding(
-                                .horizontal,
-                                22
-                            )
-                            .padding(
-                                .vertical,
-                                11
-                            )
-                            .background(
-                                Color.red.opacity(0.65)
-                            )
-                            .clipShape(Capsule())
+                                .foregroundStyle(.white)
+                                .padding(
+                                    .horizontal,
+                                    22
+                                )
+                                .padding(
+                                    .vertical,
+                                    11
+                                )
+                                .background(
+                                    Color.red.opacity(0.65)
+                                )
+                                .clipShape(Capsule())
+                        }
                     }
                     
                     #if DEBUG
@@ -465,23 +468,13 @@ struct SettingsView: View {
                 "Cerrar sesión",
                 role: .destructive
             ) {
-
-                if appState.musicVolume > 0 {
-
-                    MusicManager.shared.playMusic(
-                        named: "musicaInicio",
-                        volume: Float(appState.musicVolume)
-                    )
-                }
-
                 try? AuthService.shared.signOut()
-                goToLogin = true
             }
             
         } message: {
             
             Text(
-                "Tendrás que iniciar sesión nuevamente con la cuenta del tutor para acceder."
+                "Tu progreso se queda en este teléfono y puedes seguir jugando. Para volver a guardarlo en la nube, inicia sesión otra vez."
             )
         }
         

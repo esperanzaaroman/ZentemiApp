@@ -1,45 +1,28 @@
 import SwiftUI
 
+/// Pantalla inicial de nombre del aprendiz (Modo Invitado sin cuenta obligatoria, igual que Android v1.1).
 struct NameView: View {
 
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject private var authService = AuthService.shared
 
     @State private var childName = ""
-    @State private var email = ""
-    @State private var password = ""
-    @State private var confirmPassword = ""
-    @State private var acceptedPrivacyConsent = false
-
-    @State private var isLoading = false
-    @State private var errorMessage: String? = nil
+    @State private var mascotScaleY: CGFloat = 1.0
 
     private let purple = Color(red: 0.43, green: 0.27, blue: 0.78)
+    private let successGreen = Color(red: 0.18, green: 0.72, blue: 0.44)
 
     private var isValidChildName: Bool {
         childName.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3
     }
 
-    private var isValidEmail: Bool {
-        let clean = email.trimmingCharacters(in: .whitespacesAndNewlines)
-        return clean.contains("@") && clean.contains(".") && clean.count >= 6
-    }
-
-    private var isValidPassword: Bool {
-        password.count >= 6 && password == confirmPassword
-    }
-
-    private var canCreateAccount: Bool {
-        isValidChildName && isValidEmail && isValidPassword && acceptedPrivacyConsent && !isLoading
-    }
-
     var body: some View {
         ZStack {
-            background
+            Color(red: 0.97, green: 0.95, blue: 0.99)
+                .ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 22) {
 
                     HStack {
                         Button {
@@ -51,148 +34,104 @@ struct NameView: View {
                                 .frame(width: 42, height: 42)
                                 .background(.white)
                                 .clipShape(Circle())
+                                .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
                         }
 
                         Spacer()
                     }
                     .padding(.horizontal, 22)
 
+                    Spacer(minLength: 8)
+
                     Image("mascota")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 90, height: 90)
+                        .frame(width: 110, height: 110)
+                        .scaleEffect(x: 1.0, y: mascotScaleY, anchor: .bottom)
 
-                    VStack(spacing: 6) {
-                        Text("Registro Familiar")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundStyle(purple)
+                    VStack(spacing: 8) {
+                        Text("¿Cómo te llamas?")
+                            .font(.system(size: 30, weight: .bold))
+                            .foregroundStyle(.primary)
 
-                        Text("Supervisado por un adulto responsable")
-                            .font(.system(size: 14))
+                        Text("Maicito quiere saber tu nombre para\nempezar la aventura.")
+                            .font(.system(size: 15))
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                     }
+                    .padding(.horizontal, 24)
 
-                    if let errorMessage = errorMessage {
-                        HStack(spacing: 8) {
-                            Image(systemName: "exclamationmark.circle.fill")
-                                .foregroundStyle(.red)
-                            Text(errorMessage)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(.red)
-                            Spacer()
-                        }
-                        .padding(10)
-                        .background(Color.red.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                        .padding(.horizontal, 22)
-                    }
+                    // Tarjeta de nombre
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("Tu nombre")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.secondary)
 
-                    VStack(alignment: .leading, spacing: 16) {
+                        TextField("Escribe tu nombre", text: $childName)
+                            .textInputAutocapitalization(.words)
+                            .autocorrectionDisabled()
+                            .padding()
+                            .background(Color.gray.opacity(0.07))
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
 
-                        // Nombre del Niño
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Nombre del menor / aprendiz")
-                                .font(.system(size: 14, weight: .semibold))
+                        HStack(spacing: 10) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(
+                                        isValidChildName
+                                            ? successGreen.opacity(0.15)
+                                            : Color.gray.opacity(0.12)
+                                    )
+                                    .frame(width: 24, height: 24)
 
-                            TextField("¿Cómo te llamas?", text: $childName)
-                                .textInputAutocapitalization(.words)
-                                .autocorrectionDisabled()
-                                .padding()
-                                .background(Color.gray.opacity(0.07))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
-
-                        // Correo del Tutor
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Correo del tutor legal")
-                                .font(.system(size: 14, weight: .semibold))
-
-                            TextField("tutor@ejemplo.com", text: $email)
-                                .textInputAutocapitalization(.never)
-                                .autocorrectionDisabled()
-                                .keyboardType(.emailAddress)
-                                .padding()
-                                .background(Color.gray.opacity(0.07))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
-
-                        // Contraseña
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Contraseña del tutor (mínimo 6 caracteres)")
-                                .font(.system(size: 14, weight: .semibold))
-
-                            SecureField("Contraseña", text: $password)
-                                .padding()
-                                .background(Color.gray.opacity(0.07))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
-
-                        // Confirmar Contraseña
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Confirmar contraseña")
-                                .font(.system(size: 14, weight: .semibold))
-
-                            SecureField("Repite la contraseña", text: $confirmPassword)
-                                .padding()
-                                .background(Color.gray.opacity(0.07))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-
-                            if !confirmPassword.isEmpty {
-                                Label(
-                                    isValidPassword ? "Las contraseñas coinciden" : "Las contraseñas no coinciden",
-                                    systemImage: isValidPassword ? "checkmark.circle.fill" : "xmark.circle.fill"
-                                )
-                                .font(.system(size: 12))
-                                .foregroundStyle(isValidPassword ? .green : .red)
+                                if isValidChildName {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 13, weight: .bold))
+                                        .foregroundStyle(successGreen)
+                                }
                             }
-                        }
 
-                        // Consentimiento Parental (LFPDPPP Art. 8 / LGDNNA Art. 76)
-                        Button {
-                            acceptedPrivacyConsent.toggle()
-                        } label: {
-                            HStack(alignment: .top, spacing: 12) {
-                                Image(systemName: acceptedPrivacyConsent ? "checkmark.square.fill" : "square")
-                                    .font(.system(size: 20))
-                                    .foregroundStyle(acceptedPrivacyConsent ? purple : .gray)
-
-                                Text("Soy mayor de edad y autorizo como tutor el tratamiento de datos para el aprendizaje del menor en Zentemi (cumplimiento LFPDPPP y LGDNNA).")
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(.primary.opacity(0.8))
-                                    .multilineTextAlignment(.leading)
-                            }
+                            Text(isValidChildName ? "Se ve muy bien" : "Escribe al menos 3 caracteres")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(.secondary)
                         }
-                        .buttonStyle(.plain)
-                        .padding(.top, 4)
                     }
-                    .padding(20)
+                    .padding(22)
                     .background(Color.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 22))
-                    .shadow(color: .black.opacity(0.05), radius: 10, y: 5)
+                    .clipShape(RoundedRectangle(cornerRadius: 24))
+                    .shadow(color: purple.opacity(0.09), radius: 12, y: 6)
                     .padding(.horizontal, 22)
 
-                    // Botón de Registro
+                    Text("Podrás cambiarlo después en tu perfil")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.secondary.opacity(0.75))
+
+                    // Botón ¡Empezar! (entra directo en modo invitado)
                     Button {
-                        executeRegister()
+                        let cleanName = childName.trimmingCharacters(in: .whitespacesAndNewlines)
+                        appState.userName = cleanName
+                        appState.hasCompletedOnboarding = true
                     } label: {
-                        HStack(spacing: 10) {
-                            if isLoading {
-                                ProgressView().tint(.white)
-                            }
-                            Text(isLoading ? "Creando cuenta..." : "Crear cuenta supervisada")
-                                .font(.system(size: 17, weight: .bold))
-                                .foregroundStyle(.white)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 55)
-                        .background(
-                            canCreateAccount ? purple : Color.gray.opacity(0.45)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 17))
+                        Text("¡Empezar!")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(
+                                isValidChildName ? purple : Color.gray.opacity(0.40)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 24))
                     }
-                    .disabled(!canCreateAccount)
+                    .disabled(!isValidChildName)
                     .padding(.horizontal, 28)
+
+                    // Opción para tutores que ya tienen cuenta previa
+                    NavigationLink(destination: SignInView()) {
+                        Text("Ya tengo una cuenta")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(purple)
+                            .padding(.top, 4)
+                    }
 
                     Spacer(minLength: 25)
                 }
@@ -201,42 +140,14 @@ struct NameView: View {
             .scrollDismissesKeyboard(.interactively)
         }
         .navigationBarBackButtonHidden(true)
-    }
-
-    private func executeRegister() {
-        guard canCreateAccount else { return }
-        isLoading = true
-        errorMessage = nil
-
-        Task {
-            do {
-                _ = try await authService.registerParent(
-                    email: email,
-                    password: password,
-                    acceptedPrivacyConsent: acceptedPrivacyConsent
-                )
-                await MainActor.run {
-                    appState.userName = childName.trimmingCharacters(in: .whitespacesAndNewlines)
-                    isLoading = false
-                    // Al quedar autenticado, ContentView automáticamente carga MainTabView
-                }
-            } catch let error as ZentemiAuthError {
-                await MainActor.run {
-                    errorMessage = error.errorDescription
-                    isLoading = false
-                }
-            } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                    isLoading = false
-                }
+        .onAppear {
+            withAnimation(
+                .easeInOut(duration: 1.6)
+                .repeatForever(autoreverses: true)
+            ) {
+                mascotScaleY = 1.06
             }
         }
-    }
-
-    private var background: some View {
-        Color(red: 0.97, green: 0.95, blue: 0.99)
-            .ignoresSafeArea()
     }
 }
 

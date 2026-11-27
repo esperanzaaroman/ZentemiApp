@@ -29,7 +29,7 @@ public struct ParentProfile: Codable, Identifiable {
 // MARK: - Perfil del Menor (`users/{uid}/children/{childId}`)
 
 /// Modelo documental para el perfil infantil subordinado a la cuenta del tutor
-public struct ChildProfile: Codable, Identifiable {
+public struct ChildProfile: Codable, Identifiable, Equatable {
     @DocumentID public var id: String?
     public var userName: String
     public var lastUserNameChange: Date?
@@ -45,6 +45,13 @@ public struct ChildProfile: Codable, Identifiable {
     public var settings: ChildAppSettings
     public var createdAt: Date
 
+    // Campos compartidos con Android v1.1 (opcionales para compatibilidad con perfiles viejos)
+    public var pathLessonsCompleted: Int?
+    public var unlockedPathLesson: Int?
+    public var greetingsRewardClaimed: Bool?
+    public var ownedItems: [String]?
+    public var equippedItems: [String]?
+
     public init(
         id: String? = nil,
         userName: String = "Jugador",
@@ -59,7 +66,12 @@ public struct ChildProfile: Codable, Identifiable {
         lessonsCompleted: Int = 0,
         avatar: ChildAvatarSettings = ChildAvatarSettings(),
         settings: ChildAppSettings = ChildAppSettings(),
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        pathLessonsCompleted: Int? = nil,
+        unlockedPathLesson: Int? = nil,
+        greetingsRewardClaimed: Bool? = nil,
+        ownedItems: [String]? = nil,
+        equippedItems: [String]? = nil
     ) {
         self.id = id
         self.userName = userName
@@ -75,12 +87,39 @@ public struct ChildProfile: Codable, Identifiable {
         self.avatar = avatar
         self.settings = settings
         self.createdAt = createdAt
+        self.pathLessonsCompleted = pathLessonsCompleted
+        self.unlockedPathLesson = unlockedPathLesson
+        self.greetingsRewardClaimed = greetingsRewardClaimed
+        self.ownedItems = ownedItems
+        self.equippedItems = equippedItems
+    }
+
+    public static func == (lhs: ChildProfile, rhs: ChildProfile) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.userName == rhs.userName &&
+        lhs.lastUserNameChange == rhs.lastUserNameChange &&
+        lhs.petName == rhs.petName &&
+        lhs.happiness == rhs.happiness &&
+        lhs.coins == rhs.coins &&
+        lhs.totalXP == rhs.totalXP &&
+        lhs.currentLevel == rhs.currentLevel &&
+        lhs.streak == rhs.streak &&
+        lhs.lastPracticeDate == rhs.lastPracticeDate &&
+        lhs.lessonsCompleted == rhs.lessonsCompleted &&
+        lhs.avatar == rhs.avatar &&
+        lhs.settings == rhs.settings &&
+        lhs.createdAt == rhs.createdAt &&
+        lhs.pathLessonsCompleted == rhs.pathLessonsCompleted &&
+        lhs.unlockedPathLesson == rhs.unlockedPathLesson &&
+        lhs.greetingsRewardClaimed == rhs.greetingsRewardClaimed &&
+        lhs.ownedItems == rhs.ownedItems &&
+        lhs.equippedItems == rhs.equippedItems
     }
 }
 
 // MARK: - Configuraciones de Avatar
 
-public struct ChildAvatarSettings: Codable {
+public struct ChildAvatarSettings: Codable, Equatable {
     public var avatarBackgroundHue: Double
     public var mascotHue: Double
     public var profileBackgroundHue: Double
@@ -98,7 +137,7 @@ public struct ChildAvatarSettings: Codable {
 
 // MARK: - Configuraciones de la App
 
-public struct ChildAppSettings: Codable {
+public struct ChildAppSettings: Codable, Equatable {
     public var musicVolume: Double
     public var soundVolume: Double
 
