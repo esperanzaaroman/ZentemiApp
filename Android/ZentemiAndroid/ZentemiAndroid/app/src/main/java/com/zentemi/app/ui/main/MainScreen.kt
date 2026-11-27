@@ -45,6 +45,9 @@ fun MainScreen(
     onFeedPressed: () -> Unit,
     onPlayWithPressed: () -> Unit,
     onSettingsPressed: () -> Unit,
+    onCreateAccount: () -> Unit,
+    onSignIn: () -> Unit,
+    onVerifyEmail: () -> Unit,
     onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(1) } // Inicio es la pestaña por defecto
@@ -92,6 +95,9 @@ fun MainScreen(
             2 -> ProfileScreen(
                 appState = appState,
                 onSettingsPressed = onSettingsPressed,
+                onCreateAccount = onCreateAccount,
+                onSignIn = onSignIn,
+                onVerifyEmail = onVerifyEmail,
                 onLogout = onLogout
             )
         }

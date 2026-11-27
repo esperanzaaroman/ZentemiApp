@@ -170,14 +170,19 @@ fun GlassCard(content: @Composable ColumnScope.() -> Unit) {
     )
 }
 
-/** White rounded input field. With [pin] it only accepts 4 digits and hides them. */
+/**
+ * White rounded input field. With [pin] it only accepts 4 digits and hides them;
+ * with [password] it hides the text; with [email] it shows the e-mail keyboard.
+ */
 @Composable
 fun AuthTextField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
     pin: Boolean = false,
-    bordered: Boolean = false
+    bordered: Boolean = false,
+    password: Boolean = false,
+    email: Boolean = false
 ) {
     OutlinedTextField(
         value = value,
@@ -186,8 +191,13 @@ fun AuthTextField(
             Text(placeholder, fontFamily = Quicksand, fontWeight = FontWeight.Medium, color = SubText.copy(alpha = 0.55f))
         },
         textStyle = TextStyle(fontFamily = Quicksand, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = DarkText),
-        visualTransformation = if (pin) PasswordVisualTransformation() else VisualTransformation.None,
-        keyboardOptions = if (pin) KeyboardOptions(keyboardType = KeyboardType.NumberPassword) else KeyboardOptions.Default,
+        visualTransformation = if (pin || password) PasswordVisualTransformation() else VisualTransformation.None,
+        keyboardOptions = when {
+            pin -> KeyboardOptions(keyboardType = KeyboardType.NumberPassword)
+            password -> KeyboardOptions(keyboardType = KeyboardType.Password)
+            email -> KeyboardOptions(keyboardType = KeyboardType.Email)
+            else -> KeyboardOptions.Default
+        },
         shape = RoundedCornerShape(14.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = Color.White,
@@ -201,9 +211,33 @@ fun AuthTextField(
     )
 }
 
+/** Red/green rounded banner for error or success messages on the account screens. */
+@Composable
+fun AuthMessage(text: String, success: Boolean = false) {
+    Text(
+        text = text,
+        fontFamily = Quicksand,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = Color.White,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 25.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background((if (success) SuccessGreen else ErrorRed).copy(alpha = 0.85f))
+            .padding(12.dp)
+    )
+}
+
 /** Check / cross row telling whether both PINs match. */
 @Composable
-fun PinMatchRow(matches: Boolean, textColor: Color = Color.White.copy(alpha = 0.88f)) {
+fun PinMatchRow(
+    matches: Boolean,
+    textColor: Color = Color.White.copy(alpha = 0.88f),
+    matchText: String = "Los PIN coinciden",
+    mismatchText: String = "Los PIN no coinciden"
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             imageVector = if (matches) Icons.Filled.CheckCircle else Icons.Filled.Cancel,
@@ -213,7 +247,7 @@ fun PinMatchRow(matches: Boolean, textColor: Color = Color.White.copy(alpha = 0.
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = if (matches) "Los PIN coinciden" else "Los PIN no coinciden",
+            text = if (matches) matchText else mismatchText,
             fontFamily = Quicksand,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,

@@ -6,6 +6,10 @@
     <!-- El ejercicio se puede omitir, así que el micrófono no es obligatorio -->
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
+    <!-- Firebase Auth y Firestore -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
