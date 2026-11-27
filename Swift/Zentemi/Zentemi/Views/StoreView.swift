@@ -6,6 +6,7 @@ struct StoreView: View {
     
     // Objeto que está esperando confirmación
     @State private var confirmingItem: StoreItem?
+    @State private var selectedCategory: ItemCategory = .all
     
     // Alerta monedas insuficientes
     @State private var showInsufficientCoins = false
@@ -43,6 +44,11 @@ struct StoreView: View {
                 // MARK: - ENCABEZADO FIJO
                 
                 header
+
+                ItemCategoryBar(selection: selectedCategory) { category in
+                    confirmingItem = nil
+                    selectedCategory = category
+                }
                 
                 
                 // MARK: - OBJETOS
@@ -67,9 +73,20 @@ struct StoreView: View {
                         spacing: 12
                     ) {
                         
+                        if selectedCategory.includes(.clothing) && !appState.redShirtPurchased {
+                            storeCard(item: StoreItem(
+                                id: "redShirt",
+                                image: "playeritaRoja",
+                                name: "Playerita roja",
+                                price: appState.redShirtPrice,
+                                rarity: "NUEVO",
+                                rarityColor: turquoise
+                            ))
+                        }
+
                         // MARK: Objetos NO comprados
                         
-                        if !appState.sunglassesPurchased {
+                        if selectedCategory.includes(.accessories) && !appState.sunglassesPurchased {
                             
                             storeCard(
                                 item: StoreItem(
@@ -84,7 +101,7 @@ struct StoreView: View {
                         }
                         
                         
-                        if !appState.pinkHairPurchased {
+                        if selectedCategory.includes(.hair) && !appState.pinkHairPurchased {
                             
                             storeCard(
                                 item: StoreItem(
@@ -99,7 +116,7 @@ struct StoreView: View {
                         }
                         
                         
-                        if !appState.swordPurchased {
+                        if selectedCategory.includes(.accessories) && !appState.swordPurchased {
                             
                             storeCard(
                                 item: StoreItem(
@@ -112,7 +129,7 @@ struct StoreView: View {
                                 )
                             )
                         }
-                        if !appState.suitPurchased {
+                        if selectedCategory.includes(.clothing) && !appState.suitPurchased {
                             storeCard(
                                 item: StoreItem(
                                     id: "suit",
@@ -126,10 +143,45 @@ struct StoreView: View {
                         }
                         
                         
+                        ForEach(HomeBackground.allCases) { background in
+                            if selectedCategory.includes(.backgrounds) && !appState.purchasedHomeBackgrounds.contains(background) {
+                                storeCard(item: StoreItem(
+                                    id: background.id,
+                                    image: background.imageName,
+                                    name: background.title,
+                                    price: background.price,
+                                    rarity: "FONDO",
+                                    rarityColor: turquoise
+                                ))
+                            }
+                        }
+
                         // MARK: Objetos comprados
                         // Siempre aparecen hasta abajo
+
+                        ForEach(HomeBackground.allCases) { background in
+                            if selectedCategory.includes(.backgrounds) && appState.purchasedHomeBackgrounds.contains(background) {
+                                purchasedCard(
+                                    image: background.imageName,
+                                    name: background.title,
+                                    price: background.price,
+                                    rarity: "FONDO",
+                                    rarityColor: turquoise
+                                )
+                            }
+                        }
+
+                        if selectedCategory.includes(.clothing) && appState.redShirtPurchased {
+                            purchasedCard(
+                                image: "playeritaRoja",
+                                name: "Playerita roja",
+                                price: appState.redShirtPrice,
+                                rarity: "NUEVO",
+                                rarityColor: turquoise
+                            )
+                        }
                         
-                        if appState.sunglassesPurchased {
+                        if selectedCategory.includes(.accessories) && appState.sunglassesPurchased {
                             
                             purchasedCard(
                                 image: "lentesdesol",
@@ -141,7 +193,7 @@ struct StoreView: View {
                         }
                         
                         
-                        if appState.pinkHairPurchased {
+                        if selectedCategory.includes(.hair) && appState.pinkHairPurchased {
                             
                             purchasedCard(
                                 image: "cabellorosa",
@@ -153,7 +205,7 @@ struct StoreView: View {
                         }
                         
                         
-                        if appState.swordPurchased {
+                        if selectedCategory.includes(.accessories) && appState.swordPurchased {
                             
                             purchasedCard(
                                 image: "espada",
@@ -163,7 +215,7 @@ struct StoreView: View {
                                 rarityColor: .purple
                             )
                         }
-                        if appState.suitPurchased {
+                        if selectedCategory.includes(.clothing) && appState.suitPurchased {
                             purchasedCard(
                                 image: "traje1k",
                                 name: "Traje elegante",
@@ -738,6 +790,18 @@ struct StoreView: View {
         _ item: StoreItem
     ) {
         
+        // Ignore a repeated confirmation after this item has already been bought.
+        if item.id == "redShirt", appState.redShirtPurchased {
+            confirmingItem = nil
+            return
+        }
+
+        if let background = HomeBackground(rawValue: item.id),
+           appState.purchasedHomeBackgrounds.contains(background) {
+            confirmingItem = nil
+            return
+        }
+
         // No tiene suficientes monedas
         
         guard appState.coins >= item.price
@@ -751,7 +815,19 @@ struct StoreView: View {
         
         // Restar monedas
         
-        appState.coins -= item.price
+        if let background = HomeBackground(rawValue: item.id) {
+            guard appState.purchaseHomeBackground(background) else {
+                confirmingItem = nil
+                return
+            }
+        } else if item.id == "redShirt" {
+            guard appState.purchaseRedShirt() else {
+                confirmingItem = nil
+                return
+            }
+        } else {
+            appState.coins -= item.price
+        }
         
         
         // Marcar objeto comprado
@@ -792,6 +868,70 @@ struct StoreView: View {
     }
 }
 
+
+
+// MARK: - Categorías compartidas de tienda y mochila
+
+enum ItemCategory: String, CaseIterable, Identifiable {
+    case all, clothing, accessories, hair, backgrounds
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .all: return "Todo"
+        case .clothing: return "Ropa"
+        case .accessories: return "Accesorios"
+        case .hair: return "Cabellos"
+        case .backgrounds: return "Fondos"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .all: return "square.grid.2x2.fill"
+        case .clothing: return "tshirt.fill"
+        case .accessories: return "eyeglasses"
+        case .hair: return "comb.fill"
+        case .backgrounds: return "photo"
+        }
+    }
+
+    func includes(_ category: ItemCategory) -> Bool {
+        self == .all || self == category
+    }
+}
+
+struct ItemCategoryBar: View {
+    let selection: ItemCategory
+    let select: (ItemCategory) -> Void
+
+    private let purple = Color(red: 0.48, green: 0.29, blue: 0.79)
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(ItemCategory.allCases) { category in
+                    Button {
+                        select(category)
+                    } label: {
+                        Label(category.title, systemImage: category.icon)
+                            .font(.subheadline.weight(.semibold))
+                            .padding(.horizontal, 14)
+                            .frame(minHeight: 44)
+                            .foregroundStyle(selection == category ? Color.white : purple)
+                            .background(selection == category ? purple : purple.opacity(0.08), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(selection == category ? .isSelected : [])
+                }
+            }
+            .padding(.horizontal, 18)
+        }
+        .padding(.vertical, 10)
+        .background(.white)
+    }
+}
 
 // MARK: - MODELO ITEM TIENDA
 

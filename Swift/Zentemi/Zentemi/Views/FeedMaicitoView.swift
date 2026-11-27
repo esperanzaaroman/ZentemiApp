@@ -672,6 +672,7 @@ struct FeedMaicitoView: View {
         with food: Food
     ) {
 
+        appState.updateHappinessDecay()
         guard !isFeeding,
               happiness < 100,
               availableMeals > 0,
@@ -697,6 +698,7 @@ struct FeedMaicitoView: View {
         )
 
         // Registrar comida
+        appState.recordFeeding()
         mealDates.append(Date())
         saveFeedingHistory()
 

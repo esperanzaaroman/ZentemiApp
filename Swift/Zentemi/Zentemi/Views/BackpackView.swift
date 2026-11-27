@@ -7,6 +7,7 @@ struct BackpackView: View {
     // MARK: - Animación mascota
     
     @State private var mascotScaleY: CGFloat = 1.0
+    @State private var selectedCategory: ItemCategory = .all
     
     private let purple = Color(
         red: 0.48,
@@ -36,6 +37,8 @@ struct BackpackView: View {
         + (appState.pinkHairPurchased ? 1 : 0)
         + (appState.swordPurchased ? 1 : 0)
         + (appState.suitPurchased ? 1 : 0)
+        + (appState.redShirtPurchased ? 1 : 0)
+        + appState.purchasedHomeBackgrounds.count
     }
     
     
@@ -48,13 +51,25 @@ struct BackpackView: View {
             appState.sunglassesEquipped,
             appState.pinkHairEquipped,
             appState.swordEquipped,
-            appState.suitEquipped
+            appState.suitEquipped,
+            appState.redShirtEquipped
         ]
         .filter { $0 }
-        .count
+        .count + (appState.equippedHomeBackground == nil ? 0 : 1)
     }
     
     
+    private var categoryIsEmpty: Bool {
+        switch selectedCategory {
+        case .all, .accessories, .hair:
+            return false // These categories include the starter items.
+        case .clothing:
+            return !appState.redShirtPurchased && !appState.suitPurchased
+        case .backgrounds:
+            return appState.purchasedHomeBackgrounds.isEmpty
+        }
+    }
+
     var body: some View {
         
         ZStack {
@@ -73,6 +88,10 @@ struct BackpackView: View {
                 // MARK: - MASCOTA FIJA
                 
                 petPreview
+
+                ItemCategoryBar(selection: selectedCategory) { category in
+                    selectedCategory = category
+                }
                 
                 
                 // MARK: - INVENTARIO
@@ -81,6 +100,22 @@ struct BackpackView: View {
                     showsIndicators: false
                 ) {
                     
+                    if categoryIsEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: selectedCategory.icon)
+                                .font(.largeTitle)
+                                .foregroundStyle(purple)
+                            Text("Aún no tienes objetos de esta categoría")
+                                .font(.headline)
+                                .multilineTextAlignment(.center)
+                            Text("Encuéntralos en la tienda.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(24)
+                    }
+
                     LazyVGrid(
                         columns: [
                             
@@ -99,60 +134,93 @@ struct BackpackView: View {
                         
                         // MARK: Objetos iniciales
                         
-                        itemCard(
-                            image: "lentes",
-                            name: "Lentes",
-                            isEquipped:
-                                appState.glassesEquipped
-                        ) {
-                            
-                            withAnimation(
-                                .easeInOut(
-                                    duration: 0.2
-                                )
+                        if selectedCategory.includes(.accessories) {
+                            itemCard(
+                                image: "lentes",
+                                name: "Lentes",
+                                isEquipped:
+                                    appState.glassesEquipped
                             ) {
-                                appState.toggleGlasses()
+
+                                withAnimation(
+                                    .easeInOut(
+                                        duration: 0.2
+                                    )
+                                ) {
+                                    appState.toggleGlasses()
+                                }
                             }
                         }
                         
                         
-                        itemCard(
-                            image: "cabello",
-                            name: "Cabello",
-                            isEquipped:
-                                appState.hairEquipped
-                        ) {
-                            
-                            withAnimation(
-                                .easeInOut(
-                                    duration: 0.2
-                                )
+                        if selectedCategory.includes(.hair) {
+                            itemCard(
+                                image: "cabello",
+                                name: "Cabello",
+                                isEquipped:
+                                    appState.hairEquipped
                             ) {
-                                appState.toggleHair()
+
+                                withAnimation(
+                                    .easeInOut(
+                                        duration: 0.2
+                                    )
+                                ) {
+                                    appState.toggleHair()
+                                }
                             }
                         }
                         
                         
-                        itemCard(
-                            image: "bufanda",
-                            name: "Bufanda",
-                            isEquipped:
-                                appState.scarfEquipped
-                        ) {
-                            
-                            withAnimation(
-                                .easeInOut(
-                                    duration: 0.2
-                                )
+                        if selectedCategory.includes(.accessories) {
+                            itemCard(
+                                image: "bufanda",
+                                name: "Bufanda",
+                                isEquipped:
+                                    appState.scarfEquipped
                             ) {
-                                appState.toggleScarf()
+
+                                withAnimation(
+                                    .easeInOut(
+                                        duration: 0.2
+                                    )
+                                ) {
+                                    appState.toggleScarf()
+                                }
                             }
                         }
                         
                         
+                        ForEach(HomeBackground.allCases) { background in
+                            if selectedCategory.includes(.backgrounds) && appState.purchasedHomeBackgrounds.contains(background) {
+                                itemCard(
+                                    image: background.imageName,
+                                    name: background.title,
+                                    isEquipped: appState.equippedHomeBackground == background,
+                                    isBackground: true
+                                ) {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        appState.toggleHomeBackground(background)
+                                    }
+                                }
+                            }
+                        }
+
                         // MARK: Objetos comprados
+
+                        if selectedCategory.includes(.clothing) && appState.redShirtPurchased {
+                            itemCard(
+                                image: "playeritaRoja",
+                                name: "Playerita roja",
+                                isEquipped: appState.redShirtEquipped
+                            ) {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    appState.toggleRedShirt()
+                                }
+                            }
+                        }
                         
-                        if appState.sunglassesPurchased {
+                        if selectedCategory.includes(.accessories) && appState.sunglassesPurchased {
                             
                             itemCard(
                                 image: "lentesdesol",
@@ -160,7 +228,7 @@ struct BackpackView: View {
                                 isEquipped:
                                     appState.sunglassesEquipped
                             ) {
-                                
+
                                 withAnimation(
                                     .easeInOut(
                                         duration: 0.2
@@ -172,7 +240,7 @@ struct BackpackView: View {
                         }
                         
                         
-                        if appState.pinkHairPurchased {
+                        if selectedCategory.includes(.hair) && appState.pinkHairPurchased {
                             
                             itemCard(
                                 image: "cabellorosa",
@@ -180,7 +248,7 @@ struct BackpackView: View {
                                 isEquipped:
                                     appState.pinkHairEquipped
                             ) {
-                                
+
                                 withAnimation(
                                     .easeInOut(
                                         duration: 0.2
@@ -192,7 +260,7 @@ struct BackpackView: View {
                         }
                         
                         
-                        if appState.swordPurchased {
+                        if selectedCategory.includes(.accessories) && appState.swordPurchased {
                             
                             itemCard(
                                 image: "espada",
@@ -200,7 +268,7 @@ struct BackpackView: View {
                                 isEquipped:
                                     appState.swordEquipped
                             ) {
-                                
+
                                 withAnimation(
                                     .easeInOut(
                                         duration: 0.2
@@ -211,7 +279,7 @@ struct BackpackView: View {
                             }
                         }
                         
-                        if appState.suitPurchased {
+                        if selectedCategory.includes(.clothing) && appState.suitPurchased {
                             itemCard(
                                 image: "traje1k",
                                 name: "Traje elegante",
@@ -392,6 +460,7 @@ struct BackpackView: View {
         image: String,
         name: String,
         isEquipped: Bool,
+        isBackground: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         
@@ -487,8 +556,8 @@ struct BackpackView: View {
                 
                 Text(
                     isEquipped
-                    ? "Quitar"
-                    : "Equipar"
+                    ? (isBackground ? "Quitar fondo" : "Quitar")
+                    : (isBackground ? "Equipar fondo" : "Equipar")
                 )
                 .font(
                     .system(

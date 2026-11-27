@@ -32,7 +32,6 @@ struct MainTabView: View {
                     TabView(
                         selection: $selectedTab
                     ) {
-
                         // 0 - Tienda
 
                         StoreView()
@@ -115,6 +114,7 @@ struct MainTabView: View {
                 )
             }
         }
+      
         .navigationBarBackButtonHidden(true)
         .ignoresSafeArea(
             edges: .bottom

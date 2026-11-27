@@ -12,6 +12,7 @@ struct HomeView: View {
     @State private var showLearningPath = false
 
     @State private var showFeedingScreen = false
+    @State private var showGamesScreen = false
 
     // NUEVO: Celebración de racha
     @State private var showStreakCelebration = false
@@ -147,7 +148,7 @@ struct HomeView: View {
 
                         Button {
 
-                            print("Jugar con \(appState.petName)")
+                            showGamesScreen = true
 
                         } label: {
 
@@ -298,6 +299,10 @@ struct HomeView: View {
             isPresented: $showFeedingScreen
         ) {
             FeedMaicitoView()
+                .environmentObject(appState)
+        }
+        .fullScreenCover(isPresented: $showGamesScreen) {
+            MaicitoGamesView()
                 .environmentObject(appState)
         }
     }
@@ -567,7 +572,25 @@ struct HomeView: View {
 
     // MARK: - Fondo
 
+    @ViewBuilder
     private var background: some View {
+        if let background = appState.equippedHomeBackground {
+            GeometryReader { geometry in
+                Image(background.imageName)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .clipped()
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        } else {
+            defaultBackground
+        }
+    }
+
+    private var defaultBackground: some View {
 
         ZStack {
 

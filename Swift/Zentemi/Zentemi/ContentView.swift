@@ -12,7 +12,9 @@ struct ContentView: View {
             //OnboardingView()
             MainTabView()
         }
+        
         .environmentObject(appState)
+        
         .onAppear {
             if appState.musicVolume > 0 {
                 MusicManager.shared.playMusic(
@@ -20,6 +22,19 @@ struct ContentView: View {
                     volume: Float(appState.musicVolume)
                 )
             }
+        }
+         
+        .task(id: scenePhase) {
+            guard scenePhase == .active else { return }
+            appState.updateHappinessDecay()
+            do {
+                while !Task.isCancelled {
+                    try await Task.sleep(for: .seconds(30))
+                    try Task.checkCancellation()
+                    guard scenePhase == .active else { return }
+                    appState.updateHappinessDecay()
+                }
+            } catch { }
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {

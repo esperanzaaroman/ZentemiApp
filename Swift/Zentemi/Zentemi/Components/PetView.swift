@@ -61,6 +61,11 @@ struct PetView: View {
     private let suitY: CGFloat = 1
 
 
+    // Matches the transparent canvas registration of the suit accessory.
+    private let redShirtWidth: CGFloat = 135
+    private let redShirtX: CGFloat = 1
+    private let redShirtY: CGFloat = 1
+
     var body: some View {
 
         ZStack {
@@ -97,6 +102,18 @@ struct PetView: View {
                     )
             }
 
+
+            if appState.redShirtEquipped {
+                Image("playeritaRoja")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: redShirtWidth * size / 115)
+                    .fixedSize()
+                    .offset(
+                        x: redShirtX * size / 115,
+                        y: redShirtY * size / 115
+                    )
+            }
 
             // MARK: Cabello normal
 

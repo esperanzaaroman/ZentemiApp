@@ -220,7 +220,84 @@ struct LearningPathView: View {
                         "Conoce las palabras en Yuhmu para identificar y hablar sobre los integrantes de la familia.",
                     exercises: appState.familyExerciseCount,
                     estimatedMinutes: 5,
-                    reward: 900
+                    reward: appState.familyRewardCoins
+                ) {
+                    var transaction = Transaction()
+                    transaction.disablesAnimations = true
+
+                    withTransaction(transaction) {
+                        showLessonIntro = false
+                    }
+                }
+                .environmentObject(appState)
+
+            } else if selectedLesson == 3 {
+
+                LessonIntroView(
+                    lessonNumber: 3,
+                    title: "Los números",
+                    description:
+                        "Cuenta, forma cantidades y conecta los números del 1 al 5 en Yuhmu.",
+                    exercises: appState.numbersExerciseCount,
+                    estimatedMinutes: 5,
+                    reward: appState.numbersRewardCoins
+                ) {
+                    var transaction = Transaction()
+                    transaction.disablesAnimations = true
+
+                    withTransaction(transaction) {
+                        showLessonIntro = false
+                    }
+                }
+                .environmentObject(appState)
+            } else if selectedLesson == 4 {
+
+                LessonIntroView(
+                    lessonNumber: 4,
+                    title: "Los colores",
+                    description:
+                        "Descubre cuatro colores en Yuhmu y pinta los pedidos del taller de Maicito.",
+                    exercises: appState.colorsExerciseCount,
+                    estimatedMinutes: 5,
+                    reward: appState.colorsRewardCoins
+                ) {
+                    var transaction = Transaction()
+                    transaction.disablesAnimations = true
+
+                    withTransaction(transaction) {
+                        showLessonIntro = false
+                    }
+                }
+                .environmentObject(appState)
+            } else if selectedLesson == 5 {
+
+                LessonIntroView(
+                    lessonNumber: 5,
+                    title: "Los animales",
+                    description:
+                        "Descubre cuatro animales en Yuhmu y explora sus senderos con Maicito.",
+                    exercises: appState.animalsExerciseCount,
+                    estimatedMinutes: 5,
+                    reward: appState.animalsRewardCoins
+                ) {
+                    var transaction = Transaction()
+                    transaction.disablesAnimations = true
+
+                    withTransaction(transaction) {
+                        showLessonIntro = false
+                    }
+                }
+                .environmentObject(appState)
+            } else if selectedLesson == 6 {
+
+                LessonIntroView(
+                    lessonNumber: 6,
+                    title: "Los alimentos",
+                    description:
+                        "Aprende los nombres de alimentos y una bebida en Yuhmu, y prepara las canastas de Maicito.",
+                    exercises: appState.foodExerciseCount,
+                    estimatedMinutes: 5,
+                    reward: appState.foodRewardCoins
                 ) {
                     var transaction = Transaction()
                     transaction.disablesAnimations = true
@@ -344,7 +421,8 @@ struct LearningPathView: View {
     ) -> some View {
 
         let isUnlocked =
-            number <= appState.unlockedPathLesson
+            number == 1 || (number == 2 && appState.greetingsRewardClaimed) || (number == 3 && appState.familyRewardClaimed) || (number == 4 && appState.numbersRewardClaimed) || (number == 5 && appState.colorsRewardClaimed) || (number == 6 && appState.animalsRewardClaimed)
+        let isComingSoon = number == 7 && appState.foodRewardClaimed
 
         let isCompleted =
             number <= appState.pathLessonsCompleted
@@ -353,7 +431,7 @@ struct LearningPathView: View {
 
             if isUnlocked {
 
-                if number == 1 || number == 2 {
+                if (1...6).contains(number) {
                     selectedLesson = number
                     showLessonIntro = true
                 }
@@ -448,6 +526,12 @@ struct LearningPathView: View {
                         )
                     )
                     .clipShape(Capsule())
+                if isComingSoon {
+                    Text("Próximamente")
+                        .font(.caption2.bold()).foregroundStyle(.teal)
+                        .padding(.horizontal, 10).padding(.vertical, 4)
+                        .background(.white, in: Capsule())
+                }
             }
 
             // IMPORTANTE:
@@ -549,7 +633,7 @@ struct LearningPathView: View {
                 )
                 .foregroundStyle(purple)
 
-                Text("Lección bloqueada")
+                Text(appState.foodRewardClaimed && lessonName == lessons[6] ? "Próximamente" : "Lección bloqueada")
                     .font(
                         .system(
                             size: 19,
@@ -619,6 +703,9 @@ struct LearningPathView: View {
     private func lockedMessage(
         for lessonName: String
     ) -> String {
+        if appState.foodRewardClaimed && lessonName == lessons[6] {
+            return "¡Completaste Alimentos! La siguiente lección estará disponible próximamente."
+        }
 
         guard
             let index =
