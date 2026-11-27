@@ -47,24 +47,7 @@ fun ProfileScreen(
     var showLogoutConfirmation by remember { mutableStateOf(false) }
     var showLevelList by remember { mutableStateOf(false) }
 
-    // Artículos de la tienda comprados (sin contar los que vienen de regalo)
-    val boughtItems = ShopCatalog.items.count { it.price > 0 && appState.isOwned(it) }
 
-    val achievements = listOf(
-        Triple(R.drawable.ic_primera_leccion, "Primera lección", appState.pathLessonsCompleted >= 1),
-        Triple(R.drawable.ic_logro_racha, "Racha de 3 días", appState.streak >= 3),
-        Triple(R.drawable.ic_ahorrador, "Ahorrador: 500 monedas", appState.coins >= 500),
-        Triple(R.drawable.ic_nivel_5, "Nivel 5", appState.currentLevel >= 5),
-        Triple(R.drawable.ic_maestro_zentemi, "Maestro Zentemi", appState.currentLevel >= 10),
-        Triple(R.drawable.ic_racha, "Racha de 7 días", appState.streak >= 7),
-        Triple(R.drawable.ic_comenzar_leccion, "10 lecciones", appState.lessonsCompleted >= 10),
-        Triple(R.drawable.ic_tienda, "Primera compra", boughtItems >= 1),
-        Triple(R.drawable.ic_mochila, "Coleccionista: 10 objetos", boughtItems >= 10),
-        Triple(R.drawable.ic_felicidad, "${appState.petName} muy feliz", appState.happiness >= 100),
-        Triple(R.drawable.ic_regalo, "Ahorrador: 2000 monedas", appState.coins >= 2000),
-        Triple(R.drawable.ic_estrella, "Nivel 3", appState.currentLevel >= 3),
-    )
-    val unlockedCount = achievements.count { it.third }
 
     Column(
         modifier = Modifier
@@ -339,48 +322,8 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Logros: galería hacia abajo (3 por fila)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 18.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Logros",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = DarkText
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = "$unlockedCount de ${achievements.size}",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = Purple,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(Purple.copy(alpha = 0.10f))
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        Column(
-            modifier = Modifier.padding(horizontal = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            achievements.chunked(3).forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    row.forEach { (icon, title, unlocked) ->
-                        AchievementCard(icon, title, unlocked, Modifier.weight(1f))
-                    }
-                    // Rellena la última fila para que las tarjetas no se estiren
-                    repeat(3 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
-                }
-            }
-        }
+        // Logros (iguales a iOS): juegos, lecciones, comidas, monedas ganadas y rachas
+        ProfileAchievementsSection(appState)
 
         Spacer(modifier = Modifier.height(100.dp)) // bottom tab bar space
     }
@@ -597,52 +540,6 @@ fun LogoutConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     )
 }
 
-@Composable
-private fun AchievementCard(
-    @DrawableRes icon: Int,
-    title: String,
-    unlocked: Boolean,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = Color.White,
-        shadowElevation = 3.dp,
-        modifier = modifier.height(132.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(if (unlocked) SplashDotActive.copy(alpha = 0.2f) else LockedNode.copy(alpha = 0.6f)),
-                contentAlignment = Alignment.Center
-            ) {
-                ZentemiIcon(icon, size = 40.dp, muted = !unlocked)
-            }
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = title,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = if (unlocked) DarkText else SubText,
-                textAlign = TextAlign.Center,
-                lineHeight = 14.sp,
-                maxLines = 2,
-                modifier = Modifier.weight(1f)
-            )
-            Icon(
-                if (unlocked) Icons.Filled.CheckCircle else Icons.Filled.Lock,
-                contentDescription = if (unlocked) "Desbloqueado" else "Bloqueado",
-                tint = if (unlocked) Turquoise else Color.Gray.copy(alpha = 0.3f),
-                modifier = Modifier.size(14.dp)
-            )
-        }
-    }
-}
 
 @Composable
 private fun StatCard(

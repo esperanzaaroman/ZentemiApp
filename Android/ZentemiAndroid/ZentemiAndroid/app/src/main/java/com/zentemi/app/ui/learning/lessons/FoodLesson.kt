@@ -228,7 +228,7 @@ fun FoodLessonScreen(
 
 /** Las canastas: preparar tres pedidos con cantidades exactas (FoodBasketGameView). */
 @Composable
-private fun FoodBaskets(appState: AppState, enabled: Boolean, sounds: LessonSounds, onCompleted: (Int) -> Unit) {
+internal fun FoodBaskets(appState: AppState, enabled: Boolean, sounds: LessonSounds, onCompleted: (Int) -> Unit) {
     val orders = listOf(
         mapOf(LessonFood.TORTILLA to 2, LessonFood.WATER to 1),
         mapOf(LessonFood.AVOCADO to 1, LessonFood.POTATO to 2),

@@ -266,7 +266,7 @@ private fun NumbersDiscovery(appState: AppState, sounds: LessonSounds, onContinu
 
 /** Unir palabras con cantidades, tocando o arrastrando (NumbersConnectionsView). */
 @Composable
-private fun NumbersConnections(enabled: Boolean, sounds: LessonSounds, onCompleted: (Int) -> Unit) {
+internal fun NumbersConnections(enabled: Boolean, sounds: LessonSounds, onCompleted: (Int) -> Unit) {
     val targets = listOf(3, 5, 1, 4, 2)
     var matched by remember { mutableStateOf(setOf<Int>()) }
     var selected by remember { mutableStateOf<Int?>(null) }

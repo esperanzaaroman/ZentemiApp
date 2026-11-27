@@ -30,6 +30,11 @@ import com.zentemi.app.ui.games.MaicitoGame
 import com.zentemi.app.ui.games.MaicitoPideGame
 import com.zentemi.app.ui.games.MemoramaGame
 import com.zentemi.app.ui.games.MercadoGame
+import com.zentemi.app.ui.games.levels.LevelGame
+import com.zentemi.app.ui.games.levels.MaicitoGamesScreen
+import com.zentemi.app.ui.games.levels.MazeLevelsFlow
+import com.zentemi.app.ui.games.levels.MemoryLevelsFlow
+import com.zentemi.app.ui.games.levels.WordSearchLevelsFlow
 import com.zentemi.app.ui.main.FeedMaicitoScreen
 import com.zentemi.app.ui.main.MainScreen
 import com.zentemi.app.ui.onboarding.CreateAccountScreen
@@ -57,6 +62,10 @@ object Routes {
     const val GAME_MAICITO_PIDE = "game_maicito_pide"
     const val GAME_MEMORAMA = "game_memorama"
     const val GAME_MERCADO = "game_mercado"
+    const val LEVEL_GAMES = "level_games"
+    const val GAME_MEMORY_LEVELS = "game_memory_levels"
+    const val GAME_MAZE_LEVELS = "game_maze_levels"
+    const val GAME_WORD_SEARCH_LEVELS = "game_word_search_levels"
 
     /** Pantallas para entrar a una cuenta; al iniciar sesión se regresa solo a la app. */
     val accountRoutes = setOf(CREATE_ACCOUNT, SIGN_IN)
@@ -300,8 +309,38 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
                             MaicitoGame.MERCADO -> Routes.GAME_MERCADO
                         }
                     )
+                },
+                onLevelGames = { navController.navigate(Routes.LEVEL_GAMES) }
+            )
+        }
+
+        // Laberinto, Memorama y Sopa de letras por niveles (MaicitoGamesView.swift)
+        composable(Routes.LEVEL_GAMES) {
+            MaicitoGamesScreen(
+                appState = appState,
+                onBack = { navController.popBackStack() },
+                onGameSelected = { game ->
+                    navController.navigate(
+                        when (game) {
+                            LevelGame.MEMORY -> Routes.GAME_MEMORY_LEVELS
+                            LevelGame.MAZE -> Routes.GAME_MAZE_LEVELS
+                            LevelGame.WORD_SEARCH -> Routes.GAME_WORD_SEARCH_LEVELS
+                        }
+                    )
                 }
             )
+        }
+
+        composable(Routes.GAME_MEMORY_LEVELS) {
+            MemoryLevelsFlow(appState = appState, onBack = { navController.popBackStack() })
+        }
+
+        composable(Routes.GAME_MAZE_LEVELS) {
+            MazeLevelsFlow(appState = appState, onBack = { navController.popBackStack() })
+        }
+
+        composable(Routes.GAME_WORD_SEARCH_LEVELS) {
+            WordSearchLevelsFlow(appState = appState, onBack = { navController.popBackStack() })
         }
 
         composable(Routes.GAME_MAICITO_PIDE) {
@@ -328,7 +367,9 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
 
 private fun musicFor(route: String): MusicTrack? = when {
     route == Routes.MAIN || route == Routes.SETTINGS || route == Routes.FEED_MAICITO ||
-        route == Routes.GAMES -> MusicTrack.LOBBY
+        route == Routes.GAMES || route == Routes.LEVEL_GAMES ||
+        route == Routes.GAME_MEMORY_LEVELS || route == Routes.GAME_MAZE_LEVELS ||
+        route == Routes.GAME_WORD_SEARCH_LEVELS -> MusicTrack.LOBBY
     // En los juegos se escuchan frases en Yuhmu, así que la música se pausa.
     route == Routes.GAME_MAICITO_PIDE || route == Routes.GAME_MEMORAMA ||
         route == Routes.GAME_MERCADO -> null

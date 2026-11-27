@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.Style
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -79,7 +80,9 @@ enum class MaicitoGame(
 fun GamesHubScreen(
     appState: AppState,
     onBack: () -> Unit,
-    onGameSelected: (MaicitoGame) -> Unit
+    onGameSelected: (MaicitoGame) -> Unit,
+    /** Abre Laberinto, Memorama y Sopa de letras (por niveles), igual que iOS. */
+    onLevelGames: () -> Unit = {}
 ) {
     BackHandler { onBack() }
 
@@ -170,6 +173,30 @@ fun GamesHubScreen(
                         )
                     }
                 }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(20.dp))
+                    .background(Color.White)
+                    .clickable(onClick = onLevelGames)
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    androidx.compose.material.icons.Icons.Filled.SportsEsports,
+                    contentDescription = null,
+                    tint = Purple
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Laberinto, Memorama y Sopa de letras",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Purple
+                )
             }
 
             MaicitoGame.entries.forEach { game ->

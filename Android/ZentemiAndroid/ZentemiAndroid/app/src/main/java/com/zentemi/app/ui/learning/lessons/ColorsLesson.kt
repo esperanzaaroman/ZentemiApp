@@ -277,7 +277,7 @@ private fun PaintedDrawing(icon: ImageVector, paint: LessonPaint?, modifier: Mod
 
 /** Cuatro pedidos de pintura sin límite de tiempo (ColorsWorkshopView). */
 @Composable
-private fun ColorsWorkshop(appState: AppState, enabled: Boolean, sounds: LessonSounds, onCompleted: (Int) -> Unit) {
+internal fun ColorsWorkshop(appState: AppState, enabled: Boolean, sounds: LessonSounds, onCompleted: (Int) -> Unit) {
     val orders = listOf(LessonPaint.YELLOW, LessonPaint.GREEN, LessonPaint.BLACK, LessonPaint.WHITE)
     val icons = listOf(Icons.Filled.WbSunny, Icons.Filled.Park, Icons.Filled.Pets, Icons.Filled.Cloud)
     var order by remember { mutableIntStateOf(0) }

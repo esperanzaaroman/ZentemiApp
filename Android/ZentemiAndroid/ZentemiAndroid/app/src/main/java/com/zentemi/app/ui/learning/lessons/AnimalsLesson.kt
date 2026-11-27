@@ -229,7 +229,7 @@ private fun RabbitSilhouette() {
 
 /** El sendero: llevar a Maicito al animal del letrero (AnimalsTrailView). */
 @Composable
-private fun AnimalsTrail(appState: AppState, enabled: Boolean, sounds: LessonSounds, onCompleted: (Int) -> Unit) {
+internal fun AnimalsTrail(appState: AppState, enabled: Boolean, sounds: LessonSounds, onCompleted: (Int) -> Unit) {
     val trail = listOf(LessonAnimal.DUCK, LessonAnimal.BEE, LessonAnimal.RABBIT, LessonAnimal.DOG)
     val candidates = listOf(
         listOf(LessonAnimal.RABBIT, LessonAnimal.DUCK, LessonAnimal.DOG),

@@ -478,7 +478,7 @@ private class FamilyReviewState {
 }
 
 @Composable
-private fun FamilyReviewGame(
+internal fun FamilyReviewGame(
     appState: AppState,
     paused: Boolean,
     sounds: LessonSounds,
