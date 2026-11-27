@@ -1,5 +1,11 @@
 package com.zentemi.app.ui.settings
 
+import androidx.compose.ui.window.DialogProperties
+
+import androidx.annotation.DrawableRes
+import com.zentemi.app.ui.components.ZentemiIcon
+import android.content.pm.ApplicationInfo
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -28,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zentemi.app.state.AppState
+import com.zentemi.app.ui.main.LogoutConfirmationDialog
 import com.zentemi.app.ui.theme.*
 
 @Composable
@@ -36,9 +43,15 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onLogout: () -> Unit
 ) {
-    var showLanguageSelector by remember { mutableStateOf(false) }
     var showAboutZentemi by remember { mutableStateOf(false) }
     var showLogoutConfirmation by remember { mutableStateOf(false) }
+    var showResetConfirmation by remember { mutableStateOf(false) }
+
+    // "Reiniciar progreso" solo aparece en compilaciones de prueba (como #if DEBUG en iOS).
+    val context = LocalContext.current
+    val isDebugBuild = remember {
+        (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    }
 
     Box(
         modifier = Modifier
@@ -61,7 +74,7 @@ fun SettingsScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp)
-                    .padding(top = 4.dp)
+                    .padding(top = 16.dp)
             ) {
                 // Main settings card
                 Surface(
@@ -72,7 +85,7 @@ fun SettingsScreen(
                     Column {
                         // Music volume
                         VolumeRow(
-                            icon = Icons.Filled.MusicNote,
+                            icon = R.drawable.ic_musica,
                             iconColor = Purple,
                             title = "Música",
                             volume = appState.musicVolume,
@@ -83,7 +96,7 @@ fun SettingsScreen(
 
                         // Sound volume
                         VolumeRow(
-                            icon = Icons.Filled.VolumeUp,
+                            icon = R.drawable.ic_sonido,
                             iconColor = Purple,
                             title = "Sonido",
                             volume = appState.soundVolume,
@@ -94,7 +107,7 @@ fun SettingsScreen(
 
                         // Notifications
                         ToggleRow(
-                            icon = Icons.Filled.Notifications,
+                            icon = R.drawable.ic_notificaciones,
                             iconColor = Color.Red.copy(alpha = 0.65f),
                             iconBackground = Color.Red.copy(alpha = 0.09f),
                             title = "Notificaciones",
@@ -104,21 +117,9 @@ fun SettingsScreen(
 
                         HorizontalDivider(modifier = Modifier.padding(start = 61.dp), color = LockedNode.copy(alpha = 0.6f))
 
-                        // Language
-                        NavigationRow(
-                            icon = Icons.Filled.Language,
-                            iconColor = Turquoise,
-                            iconBackground = Turquoise.copy(alpha = 0.10f),
-                            title = "Idioma de la app",
-                            trailingText = appState.selectedLanguage,
-                            onClick = { showLanguageSelector = true }
-                        )
-
-                        HorizontalDivider(modifier = Modifier.padding(start = 61.dp), color = LockedNode.copy(alpha = 0.6f))
-
                         // About
                         NavigationRow(
-                            icon = Icons.Filled.Info,
+                            icon = R.drawable.ic_sobre_zentemi,
                             iconColor = Color(0xFFFF9800),
                             iconBackground = Color.Yellow.copy(alpha = 0.14f),
                             title = "Sobre Zentemi",
@@ -185,73 +186,51 @@ fun SettingsScreen(
                     .padding(bottom = 22.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                ChunkyButton(
-                    text = "Cerrar sesión",
-                    onClick = { showLogoutConfirmation = true },
-                    color = ErrorRed,
-                    lipColor = Color(0xFFD94848),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 60.dp),
-                    leading = {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Logout,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                )
+                // En modo invitado no hay sesión que cerrar
+                if (!appState.isGuest) {
+                    ChunkyButton(
+                        text = "Cerrar sesión",
+                        onClick = { showLogoutConfirmation = true },
+                        color = ErrorRed,
+                        lipColor = Color(0xFFD94848),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 60.dp),
+                        leading = {
+                            Icon(
+                                Icons.AutoMirrored.Filled.Logout,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    )
 
-                Spacer(modifier = Modifier.height(9.dp))
+                    Spacer(modifier = Modifier.height(9.dp))
+                }
 
                 Text(
-                    text = "Versión 1.0",
+                    text = "Versión 1.1",
                     fontSize = 12.sp,
                     color = SubText.copy(alpha = 0.55f)
                 )
+
+                if (isDebugBuild) {
+                    Spacer(modifier = Modifier.height(9.dp))
+                    Text(
+                        text = "Reiniciar progreso",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(Color.Red)
+                            .clickable { showResetConfirmation = true }
+                            .padding(horizontal = 22.dp, vertical = 11.dp)
+                    )
+                }
             }
         }
-    }
-
-    // Language selector dialog
-    if (showLanguageSelector) {
-        AlertDialog(
-            onDismissRequest = { showLanguageSelector = false },
-            title = { Text("Idioma de la app", fontWeight = FontWeight.Bold) },
-            text = {
-                Column {
-                    listOf("Español", "English", "Yuhmu").forEach { lang ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    appState.selectedLanguage = lang
-                                    showLanguageSelector = false
-                                }
-                                .padding(vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = appState.selectedLanguage == lang,
-                                onClick = {
-                                    appState.selectedLanguage = lang
-                                    showLanguageSelector = false
-                                },
-                                colors = RadioButtonDefaults.colors(selectedColor = Purple)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = lang, fontSize = 15.sp)
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showLanguageSelector = false }) {
-                    Text("Cancelar", color = Purple)
-                }
-            }
-        )
     }
 
     // About Zentemi dialog
@@ -261,24 +240,35 @@ fun SettingsScreen(
 
     // Logout confirmation
     if (showLogoutConfirmation) {
+        LogoutConfirmationDialog(
+            onConfirm = {
+                showLogoutConfirmation = false
+                onLogout()
+            },
+            onDismiss = { showLogoutConfirmation = false }
+        )
+    }
+
+    // Reiniciar progreso (solo pruebas)
+    if (showResetConfirmation) {
         AlertDialog(
-            onDismissRequest = { showLogoutConfirmation = false },
-            title = { Text("¿Cerrar sesión?", fontWeight = FontWeight.Bold) },
+            onDismissRequest = { showResetConfirmation = false },
+            title = { Text("¿Reiniciar todo el progreso?", fontWeight = FontWeight.Bold) },
             text = {
-                Text("Tendrás que ingresar nuevamente tu nombre de usuario y PIN para entrar a tu cuenta.")
+                Text("Se eliminarán las monedas, niveles, compras, accesorios, lecciones y demás datos guardados de Zentemi. Esta acción no se puede deshacer.")
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        showLogoutConfirmation = false
-                        onLogout()
+                        showResetConfirmation = false
+                        appState.resetDevelopmentProgress()
                     }
                 ) {
-                    Text("Cerrar sesión", color = Color.Red, fontWeight = FontWeight.Bold)
+                    Text("Reiniciar", color = Color.Red, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutConfirmation = false }) {
+                TextButton(onClick = { showResetConfirmation = false }) {
                     Text("Cancelar")
                 }
             }
@@ -288,7 +278,7 @@ fun SettingsScreen(
 
 @Composable
 private fun VolumeRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    @DrawableRes icon: Int,
     iconColor: Color,
     title: String,
     volume: Float,
@@ -307,15 +297,10 @@ private fun VolumeRow(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(iconColor.copy(alpha = 0.10f)),
+                    .background(BackgroundLight),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = iconColor,
-                    modifier = Modifier.size(20.dp)
-                )
+                ZentemiIcon(icon, size = 30.dp)
             }
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -353,7 +338,7 @@ private fun VolumeRow(
 
 @Composable
 private fun ToggleRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    @DrawableRes icon: Int,
     iconColor: Color,
     iconBackground: Color,
     title: String,
@@ -371,15 +356,10 @@ private fun ToggleRow(
             modifier = Modifier
                 .size(36.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(iconBackground),
+                .background(BackgroundLight),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = iconColor,
-                modifier = Modifier.size(20.dp)
-            )
+            ZentemiIcon(icon, size = 30.dp)
         }
 
         Spacer(modifier = Modifier.width(12.dp))
@@ -406,7 +386,7 @@ private fun ToggleRow(
 
 @Composable
 private fun NavigationRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    @DrawableRes icon: Int,
     iconColor: Color,
     iconBackground: Color,
     title: String,
@@ -425,15 +405,10 @@ private fun NavigationRow(
             modifier = Modifier
                 .size(36.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(iconBackground),
+                .background(BackgroundLight),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = iconColor,
-                modifier = Modifier.size(20.dp)
-            )
+            ZentemiIcon(icon, size = 30.dp)
         }
 
         Spacer(modifier = Modifier.width(12.dp))
@@ -469,8 +444,14 @@ private fun NavigationRow(
 private fun AboutZentemiDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        // Más ancha que la ventana estándar: casi todo el ancho de la pantalla
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier
+            .fillMaxWidth()
+            .widthIn(max = 520.dp)
+            .padding(horizontal = 20.dp),
         title = {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Image(
                     painter = painterResource(id = R.drawable.mascota),
                     contentDescription = null,

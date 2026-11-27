@@ -13,6 +13,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.zentemi.app.R
+import com.zentemi.app.data.ItemSlot
+import com.zentemi.app.data.ShopCatalog
+import com.zentemi.app.data.ShopItem
 import com.zentemi.app.state.AppState
 import kotlin.math.cos
 import kotlin.math.sin
@@ -27,8 +30,17 @@ import kotlin.math.sin
 fun PetView(
     appState: AppState,
     size: Dp = 115.dp,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Artículo que se está probando en la tienda: reemplaza lo que haya en su zona. */
+    preview: ShopItem? = null
 ) {
+    val accessories = if (preview == null || !preview.isAccessory) {
+        appState.equippedAccessories
+    } else {
+        (appState.equippedAccessories.filter { it.slot != preview.slot } + preview)
+            .sortedBy { it.slot.ordinal }
+    }
+
     val scale = size / 115.dp
 
     val hueFilter = remember(appState.mascotHue) {
@@ -47,13 +59,25 @@ fun PetView(
             modifier = Modifier.size(size)
         )
 
-        if (appState.suitEquipped) Accessory(R.drawable.traje1k, 135f, 1f, 1f, scale)
-        if (appState.hairEquipped) Accessory(R.drawable.cabello, 100f, 0f, -30f, scale)
-        if (appState.pinkHairEquipped) Accessory(R.drawable.cabellorosa, 105f, 0f, -25f, scale)
-        if (appState.glassesEquipped) Accessory(R.drawable.lentes, 70f, 1f, 0f, scale)
-        if (appState.sunglassesEquipped) Accessory(R.drawable.lentesdesol, 70f, 0f, 0f, scale)
-        if (appState.scarfEquipped) Accessory(R.drawable.bufanda, 110f, -2f, 40f, scale)
-        if (appState.swordEquipped) Accessory(R.drawable.espada, 70f, 45f, 9f, scale)
+        // Los moños y flores se acomodan según el peinado que trae puesto
+        val hairId = accessories.firstOrNull { it.slot == ItemSlot.HAIR }?.id
+        val (shiftX, shiftY) = ShopCatalog.adornmentShiftForHair[hairId] ?: (0f to 0f)
+
+        // Accesorios puestos, en orden de zona (ver ShopCatalog / ItemSlot).
+        accessories.forEach { item ->
+            val image = item.image
+            val layout = item.layout
+            if (image != null && layout != null) {
+                val adornment = item.slot == ItemSlot.ADORNMENT
+                Accessory(
+                    image,
+                    layout.width,
+                    layout.x + if (adornment) shiftX else 0f,
+                    layout.y + if (adornment) shiftY else 0f,
+                    scale
+                )
+            }
+        }
     }
 }
 

@@ -1,5 +1,7 @@
 package com.zentemi.app.ui.components
 
+import com.zentemi.app.R
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,20 +29,20 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import com.zentemi.app.ui.theme.*
 
-/** Rectangle whose bottom edge is a soft double wave. */
-class WaveBottomShape(private val waveHeight: Dp = 22.dp) : Shape {
+/** Rectangle whose bottom edge is a gentle wave (low on the left, rising to the right). */
+class WaveBottomShape(private val waveHeight: Dp = 14.dp) : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
         val wave = with(density) { waveHeight.toPx() }
         val w = size.width
         val h = size.height
-        val base = h - wave
+        val top = h - wave
         val path = Path().apply {
             moveTo(0f, 0f)
             lineTo(w, 0f)
-            lineTo(w, base + wave * 0.35f)
-            // right crest -> trough -> left crest
-            cubicTo(w * 0.85f, base - wave * 0.55f, w * 0.68f, base - wave * 0.4f, w * 0.52f, base + wave * 0.45f)
-            cubicTo(w * 0.38f, h + wave * 0.15f, w * 0.16f, h, 0f, base + wave * 0.1f)
+            lineTo(w, top)
+            // right edge high -> soft dip in the middle -> small rise on the left
+            cubicTo(w * 0.72f, top - wave * 0.2f, w * 0.55f, h, w * 0.32f, h - wave * 0.15f)
+            cubicTo(w * 0.16f, h - wave * 0.3f, w * 0.06f, top + wave * 0.25f, 0f, top + wave * 0.4f)
             close()
         }
         return Outline.Generic(path)
@@ -48,67 +50,41 @@ class WaveBottomShape(private val waveHeight: Dp = 22.dp) : Shape {
 }
 
 /**
- * Purple gradient header with a wavy bottom edge and decorative circles.
- * A lighter wave sits behind it for depth. Content is laid out inside the
- * status bar padding.
+ * Encabezado morado con degradado y un círculo decorativo. El borde de abajo
+ * es recto (antes era ondulado; [waveHeight] se conserva solo para no romper
+ * a quien lo pasa, y ya no se usa). El contenido va debajo de la barra de estado.
  */
 @Composable
 fun WaveHeader(
     modifier: Modifier = Modifier,
-    waveHeight: Dp = 24.dp,
+    @Suppress("UNUSED_PARAMETER") waveHeight: Dp = 14.dp,
+    /** Colores del degradado (el perfil usa el color que eligió el usuario). */
+    colors: List<Color> = listOf(HeaderTop, HeaderBottom),
     content: @Composable BoxScope.() -> Unit
 ) {
-    val anim = rememberInfiniteTransition(label = "waveHeader")
-    val drift by anim.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(7000, easing = EaseInOut), RepeatMode.Reverse),
-        label = "drift"
-    )
-
-    Box(modifier = modifier.fillMaxWidth()) {
-        // Back wave (lighter), slightly lower than the main one
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clipToBounds()
+            .background(Brush.linearGradient(colors))
+    ) {
+        // Decorative circle (top-right)
         Box(
             modifier = Modifier
-                .matchParentSize()
-                .padding(top = 10.dp)
-                .offset(y = 8.dp)
-                .clip(WaveBottomShape(waveHeight))
-                .background(SplashBottom.copy(alpha = 0.35f))
+                .align(Alignment.TopEnd)
+                .offset(x = 50.dp, y = (-40).dp)
+                .size(190.dp)
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.09f))
         )
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(WaveBottomShape(waveHeight))
-                .background(Brush.linearGradient(listOf(SplashTop, Purple, SplashBottom)))
-        ) {
-            // Decorative circles
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = 60.dp + (drift * 10).dp, y = (-50).dp + (drift * 8).dp)
-                    .size(180.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.08f))
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .offset(x = (-40).dp - (drift * 8).dp, y = 30.dp)
-                    .size(110.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.06f))
-            )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 18.dp + waveHeight),
-                content = content
-            )
-        }
+                .statusBarsPadding()
+                .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 14.dp),
+            content = content
+        )
     }
 }
 
@@ -124,7 +100,7 @@ fun CoinPill(coins: Int, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Icon(Icons.Filled.MonetizationOn, contentDescription = "Monedas", tint = CoinGoldDark, modifier = Modifier.size(18.dp))
+        ZentemiIcon(R.drawable.ic_moneda, size = 22.dp, contentDescription = "Monedas")
         Text(
             text = "%,d".format(coins),
             fontSize = 15.sp,
@@ -240,3 +216,15 @@ fun TagChip(text: String, color: Color) {
 }
 
 private fun Color.darkenForText() = lerp(this, Color.Black, 0.25f)
+
+// ── Colores personalizables del perfil (mismas fórmulas que ProfileView.swift) ──
+
+/** Degradado del encabezado del perfil para un tono de 0 a 1. */
+fun profileHeaderColors(hue: Float): List<Color> = listOf(
+    Color.hsv(hue.coerceIn(0f, 1f) * 360f, 0.72f, 0.72f),
+    Color.hsv(hue.coerceIn(0f, 1f) * 360f, 0.64f, 0.84f)
+)
+
+/** Fondo pastel detrás de Maicito en el avatar, para un tono de 0 a 1. */
+fun avatarBackgroundColor(hue: Float): Color =
+    Color.hsv(hue.coerceIn(0f, 1f) * 360f, 0.22f, 1f)
