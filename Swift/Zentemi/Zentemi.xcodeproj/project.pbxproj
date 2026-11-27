@@ -9,28 +9,16 @@
 /* Begin PBXBuildFile section */
 		46C41B583058A45900398940 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 46C41B573058A45900398940 /* FirebaseCore */; };
 		46C41B5A3058A62700398940 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 46C41B593058A62700398940 /* FirebaseAuth */; };
+		46C41B5C3058A70100398940 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 46C41B5B3058A70100398940 /* FirebaseFirestore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		46C41B0B305863D700398940 /* Zentemi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zentemi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		B03B3286308F2963003F4A22 /* Exceptions for "Zentemi" folder in "Zentemi" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Views/Untitled.swift,
-			);
-			target = 46C41B0A305863D700398940 /* Zentemi */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		46C41B0D305863D700398940 /* Zentemi */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				B03B3286308F2963003F4A22 /* Exceptions for "Zentemi" folder in "Zentemi" target */,
-			);
 			path = Zentemi;
 			sourceTree = "<group>";
 		};
@@ -43,6 +31,7 @@
 			files = (
 				46C41B583058A45900398940 /* FirebaseCore in Frameworks */,
 				46C41B5A3058A62700398940 /* FirebaseAuth in Frameworks */,
+				46C41B5C3058A70100398940 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,6 +84,7 @@
 			packageProductDependencies = (
 				46C41B573058A45900398940 /* FirebaseCore */,
 				46C41B593058A62700398940 /* FirebaseAuth */,
+				46C41B5B3058A70100398940 /* FirebaseFirestore */,
 			);
 			productName = Zentemi;
 			productReference = 46C41B0B305863D700398940 /* Zentemi.app */;
@@ -389,6 +379,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 46C41B553058A36700398940 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAuth;
+		};
+		46C41B5B3058A70100398940 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 46C41B553058A36700398940 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
