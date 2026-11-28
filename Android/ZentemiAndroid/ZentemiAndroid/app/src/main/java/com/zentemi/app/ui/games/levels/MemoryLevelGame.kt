@@ -2,7 +2,11 @@ package com.zentemi.app.ui.games.levels
 
 import androidx.activity.compose.BackHandler
 import com.zentemi.app.audio.rememberPhrasePlayer
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -165,42 +169,63 @@ internal fun MemoryGame(appState: AppState, level: MemoryLevel, onExit: () -> Un
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            LevelGameHeader("Memorama · Nivel ${level.number}", clock.doubleValue, onExit) {
-                Text("${matched.size}/${level.words.size} pares", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = GameTeal)
-            }
-            Text("Une la imagen con su palabra", fontWeight = FontWeight.Bold, color = GameDarkPurple, fontSize = 17.sp)
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                cards.chunked(columns).forEach { row ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        row.forEach { card ->
-                            val faceUp = card.word.id in matched || card.id in selected
-                            MemoryCardView(
-                                card = card,
-                                faceUp = faceUp,
-                                matched = card.word.id in matched,
-                                modifier = Modifier.weight(1f),
-                                onClick = { if (active) select(card) }
-                            )
+            // El tablero se desliza; el botón de abajo se queda fijo.
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                LevelGameHeader("Memorama · Nivel ${level.number}", clock.doubleValue, onExit) {
+                    Text("${matched.size}/${level.words.size} pares", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = GameTeal)
+                }
+                Text("Une la imagen con su palabra", fontWeight = FontWeight.Bold, color = GameDarkPurple, fontSize = 17.sp)
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    cards.chunked(columns).forEach { row ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            row.forEach { card ->
+                                val faceUp = card.word.id in matched || card.id in selected
+                                MemoryCardView(
+                                    card = card,
+                                    faceUp = faceUp,
+                                    matched = card.word.id in matched,
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { if (active) select(card) }
+                                )
+                            }
+                            repeat(columns - row.size) { Spacer(modifier = Modifier.weight(1f)) }
                         }
-                        repeat(columns - row.size) { Spacer(modifier = Modifier.weight(1f)) }
                     }
                 }
+                if (!finished) {
+                    Text(feedback, fontWeight = FontWeight.Bold, color = Purple, textAlign = TextAlign.Center, fontSize = 15.sp)
+                }
             }
-            Text(feedback, fontWeight = FontWeight.Bold, color = Purple, textAlign = TextAlign.Center, fontSize = 15.sp)
-            if (finished) {
-                com.zentemi.app.ui.components.ChunkyButton(
-                    text = "Siguiente",
-                    onClick = {
-                        phase = if (level == MemoryLevel.THREE && rewardGiven) MemoryPhase.CELEBRATION else MemoryPhase.RESULTS
-                    },
-                    height = 52.dp,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            AnimatedVisibility(
+                visible = finished,
+                enter = slideInVertically(spring(dampingRatio = 0.7f)) { it } + fadeIn()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp, top = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(feedback, fontWeight = FontWeight.Bold, color = Purple, textAlign = TextAlign.Center, fontSize = 15.sp)
+                    com.zentemi.app.ui.components.ChunkyButton(
+                        text = "Siguiente",
+                        onClick = {
+                            phase = if (level == MemoryLevel.THREE && rewardGiven) MemoryPhase.CELEBRATION else MemoryPhase.RESULTS
+                        },
+                        height = 52.dp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }
