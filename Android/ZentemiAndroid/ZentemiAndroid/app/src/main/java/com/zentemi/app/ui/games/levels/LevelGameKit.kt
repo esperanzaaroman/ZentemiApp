@@ -120,8 +120,11 @@ fun GamePointsCard(points: Int, goal: Int) {
     }
 }
 
-/** Los tres juegos por niveles (MaicitoGamesView.swift). */
-enum class LevelGame { MEMORY, MAZE, WORD_SEARCH }
+/**
+ * Juegos del catálogo "Jugar con Maicito": los tres por niveles
+ * (MaicitoGamesView.swift) más Maicito pide y El mercado de Ixtenco.
+ */
+enum class LevelGame { MEMORY, MAZE, WORD_SEARCH, MAICITO_PIDE, MERCADO }
 
 @Composable
 fun MaicitoGamesScreen(
@@ -168,6 +171,26 @@ fun MaicitoGamesScreen(
                     modifier = Modifier.weight(1f)
                 ) { onGameSelected(LevelGame.WORD_SEARCH) }
             }
+            // Estos dos usan las frases de la lección 1: se abren al terminarla.
+            val phrasesUnlocked = appState.gamesUnlocked
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                LevelGameCard(
+                    title = "Maicito pide",
+                    image = R.drawable.ic_maicito_pide,
+                    color = Purple,
+                    completed = false,
+                    locked = !phrasesUnlocked,
+                    modifier = Modifier.weight(1f)
+                ) { onGameSelected(LevelGame.MAICITO_PIDE) }
+                LevelGameCard(
+                    title = "El mercado de Ixtenco",
+                    image = R.drawable.ic_mercado,
+                    color = Color(0xFFFF9500),
+                    completed = false,
+                    locked = !phrasesUnlocked,
+                    modifier = Modifier.weight(1f)
+                ) { onGameSelected(LevelGame.MERCADO) }
+            }
         }
     }
 }
@@ -179,6 +202,8 @@ private fun LevelGameCard(
     color: Color,
     completed: Boolean,
     modifier: Modifier,
+    /** true si todavía no se puede jugar (falta terminar «Primeras frases»). */
+    locked: Boolean = false,
     onClick: () -> Unit
 ) {
     val interaction = remember { MutableInteractionSource() }
@@ -191,7 +216,7 @@ private fun LevelGameCard(
             .clip(RoundedCornerShape(24.dp))
             .background(if (completed) GameDoneBackground else Color.White.copy(alpha = 0.96f))
             .border(if (completed) 3.dp else 1.dp, if (completed) SuccessGreen else color.copy(alpha = 0.18f), RoundedCornerShape(24.dp))
-            .clickable(interactionSource = interaction, indication = null, onClick = onClick)
+            .clickable(enabled = !locked, interactionSource = interaction, indication = null, onClick = onClick)
             .heightIn(min = 200.dp)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -201,15 +226,28 @@ private fun LevelGameCard(
             painter = painterResource(image),
             contentDescription = null,
             contentScale = ContentScale.Fit,
-            modifier = Modifier.height(if (completed) 110.dp else 130.dp)
+            modifier = Modifier
+                .height(if (completed) 110.dp else 130.dp)
+                .graphicsLayer { alpha = if (locked) 0.35f else 1f }
         )
         Text(
             title,
             fontSize = 19.sp,
             fontWeight = FontWeight.Bold,
-            color = if (completed) GameDoneGreen else GameDarkPurple,
+            color = when {
+                locked -> GameDarkPurple.copy(alpha = 0.5f)
+                completed -> GameDoneGreen
+                else -> GameDarkPurple
+            },
             textAlign = TextAlign.Center
         )
+        if (locked) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Lock, contentDescription = null, tint = SubText, modifier = Modifier.size(14.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Termina «Primeras frases»", fontSize = 11.sp, color = SubText, textAlign = TextAlign.Center)
+            }
+        }
         if (completed) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.Verified, contentDescription = null, tint = GameDoneGreen, modifier = Modifier.size(16.dp))

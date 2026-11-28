@@ -156,7 +156,7 @@ fun MaicitoPideGame(
                 title = "Maicito pide",
                 progress = "${roundIndex + 1}/${rounds.size}",
                 onClose = onExit,
-                titleIcon = MaicitoGame.MAICITO_PIDE.icon
+                titleIcon = R.drawable.ic_maicito_pide
             )
 
             // Maicito y su globo; Maicito queda parado en el piso de la plaza
