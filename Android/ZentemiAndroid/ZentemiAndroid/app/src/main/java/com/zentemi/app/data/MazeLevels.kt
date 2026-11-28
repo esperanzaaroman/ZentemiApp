@@ -33,11 +33,15 @@ data class MazeCoin(val id: Int, val position: Offset)
 enum class MazeTheme { GRASS, STONE, BRICK, ICE, LAVA }
 
 /**
- * Los cinco niveles del laberinto, copiados de MazeLevel.swift.
+ * Los cinco niveles del laberinto (mapas de MazeLevel.swift).
  * "#" es pared y "." camino; las coordenadas van en casillas.
- * Nota: los niveles 2 a 5 aún tienen textos provisionales en iOS
- * ("*yuhmu*", "salidaBuena", "palabraX"...); se dejan iguales para que
- * ambas apps cambien a la vez cuando tengan la traducción.
+ *
+ * Textos: el nivel 1 es igual a iOS. Los niveles 2 a 5 usan palabras del
+ * vocabulario del socio formador (Vocabulario.xlsx: hojas "clima" y
+ * "Objetos"), escritas tal cual vienen ahí, en lugar de los textos
+ * provisionales de iOS ("*yuhmu*", "salidaBuena", "palabraX"...). Las frases
+ * completas (como "Necesito ayuda") solo existen en audio, sin escritura
+ * confirmada, por eso aquí se usan palabras sueltas.
  */
 data class MazeLevel(
     val id: Int,
@@ -109,7 +113,7 @@ data class MazeLevel(
         )
 
         val TWO = MazeLevel(
-            id = 2, phrase = "Necesito ayuda", background = R.drawable.maze_stone_background, theme = MazeTheme.STONE,
+            id = 2, phrase = "Piedra", background = R.drawable.maze_stone_background, theme = MazeTheme.STONE,
             map = listOf(
                 "###.#######.###",
                 "#...#.....#...#",
@@ -131,17 +135,16 @@ data class MazeLevel(
             ),
             start = Offset(7.5f, 16.5f),
             exits = listOf(
-                MazeExit(0, 3, translation = "Nzengwa", isCorrect = false),
-                MazeExit(1, 11, translation = "Té xki hats’i", isCorrect = false),
-                MazeExit(2, 0, 5, MazeExitSide.LEFT, "Ra hyadi", false),
-                // Texto provisional (igual que iOS), pendiente de traducción definitiva.
-                MazeExit(3, 14, 11, MazeExitSide.RIGHT, "*yuhmu*", true)
+                MazeExit(0, 3, translation = "Hyádi", isCorrect = false), // sol
+                MazeExit(1, 11, translation = "Güi", isCorrect = false), // nube
+                MazeExit(2, 0, 5, MazeExitSide.LEFT, "Tsó̱", false), // estrella
+                MazeExit(3, 14, 11, MazeExitSide.RIGHT, "Dó", true) // piedra
             ),
             coins = coins(1.5f to 1.5f, 13.5f to 3.5f, 1.5f to 13.5f, 9.5f to 15.5f, 7.5f to 9.5f)
         )
 
         val THREE = MazeLevel(
-            id = 3, phrase = "palabraX", background = R.drawable.maze_stone_background, theme = MazeTheme.BRICK,
+            id = 3, phrase = "Casa", background = R.drawable.maze_stone_background, theme = MazeTheme.BRICK,
             map = listOf(
                 "#.#######.#",
                 "#...#.....#",
@@ -179,10 +182,10 @@ data class MazeLevel(
             ),
             start = Offset(5.5f, 32.5f),
             exits = listOf(
-                MazeExit(0, 1, translation = "salidaMal1", isCorrect = false),
-                MazeExit(1, 9, translation = "salidaBuena", isCorrect = true),
-                MazeExit(2, 0, 9, MazeExitSide.LEFT, "salidaMal2", false),
-                MazeExit(3, 10, 23, MazeExitSide.RIGHT, "salidaMal3", false)
+                MazeExit(0, 1, translation = "Níkhä", isCorrect = false), // iglesia
+                MazeExit(1, 9, translation = "Ngǘ", isCorrect = true), // casa
+                MazeExit(2, 0, 9, MazeExitSide.LEFT, "Hníni", false), // pueblo
+                MazeExit(3, 10, 23, MazeExitSide.RIGHT, "’Yǘ", false) // camino
             ),
             coins = coins(
                 1.5f to 31.5f, 9.5f to 29.5f, 3.5f to 25.5f, 7.5f to 23.5f, 1.5f to 21.5f,
@@ -192,7 +195,7 @@ data class MazeLevel(
         )
 
         val FOUR = MazeLevel(
-            id = 4, phrase = "palabraHielo", background = R.drawable.maze_ice_background, theme = MazeTheme.ICE,
+            id = 4, phrase = "Hielo", background = R.drawable.maze_ice_background, theme = MazeTheme.ICE,
             map = listOf(
                 "#.#######.#",
                 "#.#.......#",
@@ -238,11 +241,11 @@ data class MazeLevel(
             ),
             start = Offset(5.5f, 21.5f),
             exits = listOf(
-                MazeExit(0, 1, translation = "salidaMal1", isCorrect = false),
-                MazeExit(1, 9, translation = "salidaMal2", isCorrect = false),
-                MazeExit(2, 0, 11, MazeExitSide.LEFT, "salidaMal3", false),
-                MazeExit(3, 10, 29, MazeExitSide.RIGHT, "salidaMal4", false),
-                MazeExit(4, 9, 40, MazeExitSide.BOTTOM, "salidaBuena", true)
+                MazeExit(0, 1, translation = "’Yè", isCorrect = false), // lluvia
+                MazeExit(1, 9, translation = "Ndáhi", isCorrect = false), // viento
+                MazeExit(2, 0, 11, MazeExitSide.LEFT, "Güi", false), // nube
+                MazeExit(3, 10, 29, MazeExitSide.RIGHT, "Pá", false), // caliente
+                MazeExit(4, 9, 40, MazeExitSide.BOTTOM, "Tsé̱", true) // frío, nieve, hielo
             ),
             coins = coins(
                 9.5f to 3.5f, 9.5f to 5.5f, 9.5f to 7.5f, 3.5f to 9.5f, 1.5f to 13.5f,
@@ -254,7 +257,7 @@ data class MazeLevel(
         )
 
         val FIVE = MazeLevel(
-            id = 5, phrase = "palabraLava", background = R.drawable.maze_lava_background, theme = MazeTheme.LAVA,
+            id = 5, phrase = "Lumbre", background = R.drawable.maze_lava_background, theme = MazeTheme.LAVA,
             map = listOf(
                 "#.#######.#",
                 "#.......#.#",
@@ -320,12 +323,12 @@ data class MazeLevel(
             ),
             start = Offset(5.5f, 31.5f),
             exits = listOf(
-                MazeExit(0, 1, translation = "salidaMal1", isCorrect = false),
-                MazeExit(1, 9, translation = "salidaMal2", isCorrect = false),
-                MazeExit(2, 0, 13, MazeExitSide.LEFT, "salidaMal3", false),
-                MazeExit(3, 10, 43, MazeExitSide.RIGHT, "salidaMal4", false),
-                MazeExit(4, 1, 60, MazeExitSide.BOTTOM, "salidaMal5", false),
-                MazeExit(5, 9, 60, MazeExitSide.BOTTOM, "salidaBuena", true)
+                MazeExit(0, 1, translation = "’Mòspi", isCorrect = false), // ceniza
+                MazeExit(1, 9, translation = "Hòi", isCorrect = false), // tierra
+                MazeExit(2, 0, 13, MazeExitSide.LEFT, "Tsé̱", false), // hielo
+                MazeExit(3, 10, 43, MazeExitSide.RIGHT, "Dó", false), // piedra
+                MazeExit(4, 1, 60, MazeExitSide.BOTTOM, "Hyádi", false), // sol
+                MazeExit(5, 9, 60, MazeExitSide.BOTTOM, "Tsìbi", true) // lumbre
             ),
             coins = coins(
                 7.5f to 3.5f, 9.5f to 5.5f, 7.5f to 9.5f, 7.5f to 11.5f, 9.5f to 15.5f,

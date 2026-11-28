@@ -138,6 +138,18 @@ class LessonsAndGamesTest {
     }
 
     @Test
+    fun mazeHasNoPlaceholderTexts() {
+        val placeholder = Regex("salida|palabra|\\*", RegexOption.IGNORE_CASE)
+        MazeLevel.ALL.forEach { level ->
+            assertFalse("Nivel ${level.id}: ${level.phrase}", placeholder.containsMatchIn(level.phrase))
+            level.exits.forEach { exit ->
+                assertFalse("Nivel ${level.id}: ${exit.translation}", placeholder.containsMatchIn(exit.translation))
+            }
+            assertEquals("Nivel ${level.id}: salidas sin repetir", level.exits.size, level.exits.map { it.translation }.toSet().size)
+        }
+    }
+
+    @Test
     fun wordSearchWordsFitTheirPaths() {
         WordSearchLevel.entries.forEach { level ->
             val cells = level.paths.flatten()

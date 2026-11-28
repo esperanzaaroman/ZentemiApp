@@ -301,7 +301,7 @@ internal fun MazeGame(appState: AppState, level: MazeLevel, onExit: () -> Unit) 
 private fun MazeBoard(appState: AppState, session: MazeSession, modifier: Modifier) {
     val level = session.level
     val density = LocalDensity.current
-    BoxWithConstraints(modifier = modifier.clipToBounds()) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize().clipToBounds()) {
         val viewportWidth = maxWidth
         val viewportHeight = maxHeight
         val sidePadding = if (level.exits.any { it.side == MazeExitSide.LEFT || it.side == MazeExitSide.RIGHT }) 30.dp else 0.dp
@@ -349,31 +349,41 @@ private fun MazeBoard(appState: AppState, session: MazeSession, modifier: Modifi
                 MazeExitSide.LEFT -> DpOffsetPx(left + sidePadding / 2, topPadding + tile * exit.center.y - cameraOffset)
                 MazeExitSide.RIGHT -> DpOffsetPx(left + sidePadding + boardWidth + sidePadding / 2, topPadding + tile * exit.center.y - cameraOffset)
             }
-            Column(
+            // Los letreros laterales ocupan su espacio ya vertical (28 × 100) y solo
+            // el contenido se gira: así no quedan fuera de la pantalla antes de girar.
+            val boxWidth = if (horizontalEdge) signWidth else signHeight
+            val boxHeight = if (horizontalEdge) signHeight else signWidth
+            Box(
                 modifier = Modifier
-                    .offset(center.x - signWidth / 2, center.y - signHeight / 2)
-                    .size(signWidth, signHeight)
-                    .rotate(if (horizontalEdge) 0f else if (exit.side == MazeExitSide.LEFT) -90f else 90f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .offset(center.x - boxWidth / 2, center.y - boxHeight / 2)
+                    .size(boxWidth, boxHeight),
+                contentAlignment = Alignment.Center
             ) {
-                if (exit.side == MazeExitSide.BOTTOM) Icon(Icons.Filled.ArrowDropUp, null, tint = GameDarkPurple, modifier = Modifier.size(14.dp))
-                Text(
-                    exit.translation,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = GameDarkPurple,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    lineHeight = 13.sp,
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.White)
-                        .padding(horizontal = 2.dp, vertical = 2.dp)
-                )
-                if (exit.side != MazeExitSide.BOTTOM) Icon(Icons.Filled.ArrowDropDown, null, tint = GameDarkPurple, modifier = Modifier.size(14.dp))
+                        .requiredSize(signWidth, signHeight)
+                        .rotate(if (horizontalEdge) 0f else if (exit.side == MazeExitSide.LEFT) -90f else 90f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    if (exit.side == MazeExitSide.BOTTOM) Icon(Icons.Filled.ArrowDropUp, null, tint = GameDarkPurple, modifier = Modifier.size(14.dp))
+                    Text(
+                        exit.translation,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = GameDarkPurple,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 13.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White)
+                            .padding(horizontal = 2.dp, vertical = 2.dp)
+                    )
+                    if (exit.side != MazeExitSide.BOTTOM) Icon(Icons.Filled.ArrowDropDown, null, tint = GameDarkPurple, modifier = Modifier.size(14.dp))
+                }
             }
         }
 
