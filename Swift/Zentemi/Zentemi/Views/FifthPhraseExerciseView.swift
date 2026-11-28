@@ -13,6 +13,13 @@ struct FifthPhraseExerciseView: View {
     let lessonStartDate: Date
     let onExerciseCompleted: (Int) -> Void
 
+    @AppStorage("zentemi.hasSeenPhraseGameInstructions")
+    private var hasSeenInstructions = false
+
+    private var needsInstructions: Bool {
+        !hasSeenInstructions && !appState.greetingsRewardClaimed
+    }
+
     // MARK: - ESTADO DEL JUEGO
 
     @State private var joystickDirection: CGVector = .zero
@@ -292,6 +299,7 @@ struct FifthPhraseExerciseView: View {
                         MaicitoJoystick(
                             direction: $joystickDirection
                         )
+                        .disabled(needsInstructions)
 
                         Spacer()
 
@@ -356,6 +364,22 @@ struct FifthPhraseExerciseView: View {
                     }
                     .padding(.horizontal, 22)
                     .padding(.bottom, 20)
+                }
+
+                // MARK: - INSTRUCCIONES (solo la primera vez)
+
+                if needsInstructions {
+                    Color.black.opacity(0.55)
+                        .ignoresSafeArea()
+                        .contentShape(Rectangle())
+                        .onTapGesture { }
+
+                    PhraseGameInstructionsView {
+                        joystickDirection = .zero
+                        lastUpdate = Date()
+                        hasSeenInstructions = true
+                    }
+                    .padding(.horizontal, 22)
                 }
 
                 // MARK: - FINAL
@@ -489,7 +513,7 @@ struct FifthPhraseExerciseView: View {
 
         lastUpdate = date
 
-        guard !gameFinished else {
+        guard !gameFinished, !needsInstructions else {
             return
         }
 
@@ -529,7 +553,7 @@ struct FifthPhraseExerciseView: View {
 
     private func interact() {
 
-        guard !gameFinished else {
+        guard !gameFinished, !needsInstructions else {
             return
         }
 
@@ -717,5 +741,42 @@ struct FifthPhraseExerciseView: View {
             showSuccess = false
             showError = false
         }
+    }
+}
+
+private struct PhraseGameInstructionsView: View {
+    let onConfirm: () -> Void
+
+    private let purple = Color(red: 0.48, green: 0.29, blue: 0.79)
+
+    var body: some View {
+        VStack(spacing: 18) {
+            PetView(size: 110)
+
+            Text("¡Vamos a practicar!")
+                .font(.title2.bold())
+                .foregroundStyle(purple)
+
+            Text("Recoge cada palabra en Yuhmu y llévala a su traducción correcta.")
+                .font(.body)
+                .multilineTextAlignment(.center)
+
+            Text("Mueve a Maicito con el control. Acércate a una palabra y pulsa Interactuar para escucharla y recogerla. Después, llévala a su traducción y pulsa Interactuar otra vez.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+
+            Button(action: onConfirm) {
+                Text("OK")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 54)
+                    .background(purple, in: RoundedRectangle(cornerRadius: 15))
+            }
+        }
+        .padding(25)
+        .frame(maxWidth: 420)
+        .background(.white, in: RoundedRectangle(cornerRadius: 25))
     }
 }

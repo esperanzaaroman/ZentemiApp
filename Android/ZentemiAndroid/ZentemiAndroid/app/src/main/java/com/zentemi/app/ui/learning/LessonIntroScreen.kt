@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zentemi.app.state.AppState
+import com.zentemi.app.data.PathLesson
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -48,30 +49,33 @@ fun LessonIntroScreen(
     onBack: () -> Unit,
     onStartExercise: () -> Unit
 ) {
-    val title = when (lessonNumber) {
-        1 -> "Primeras frases"
-        2 -> "Mi familia"
+    val pathLesson = PathLesson.fromNumber(lessonNumber)
+
+    val title = when {
+        lessonNumber == 1 -> "Primeras frases"
+        pathLesson != null -> pathLesson.introTitle
         else -> "Lección $lessonNumber"
     }
 
-    val description = when (lessonNumber) {
-        1 -> "Aprende a saludar y despedirte en Yuhmu como lo hacen en San Juan Ixtenco."
-        2 -> "Conoce las palabras para referirte a los miembros de tu familia en Yuhmu."
+    val description = when {
+        lessonNumber == 1 -> "Aprende a saludar y despedirte en Yuhmu como lo hacen en San Juan Ixtenco."
+        pathLesson != null -> pathLesson.description
         else -> "Aprende nuevas palabras y frases en Yuhmu."
     }
 
-    val exercises = when (lessonNumber) {
-        1 -> appState.greetingsExerciseCount
+    val exercises = when {
+        lessonNumber == 1 -> appState.greetingsExerciseCount
+        pathLesson != null -> pathLesson.exerciseCount
         else -> 0
     }
 
-    val estimatedMinutes = when (lessonNumber) {
-        1 -> 3
-        2 -> 5
+    val estimatedMinutes = when {
+        lessonNumber == 1 -> 3
+        pathLesson != null -> pathLesson.estimatedMinutes
         else -> 5
     }
 
-    val reward = 700
+    val reward = pathLesson?.coins ?: 700
 
     var selectedInfo by remember { mutableStateOf<LessonInfoType?>(null) }
 

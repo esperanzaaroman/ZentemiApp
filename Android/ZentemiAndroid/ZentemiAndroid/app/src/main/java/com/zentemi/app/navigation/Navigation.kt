@@ -20,6 +20,8 @@ import com.zentemi.app.state.AppState
 import com.zentemi.app.ui.components.ChooseProgressDialog
 import com.zentemi.app.ui.components.SuggestAccountDialog
 import com.zentemi.app.ui.learning.primerasfrases.PrimerasFrasesFlow
+import com.zentemi.app.data.PathLesson
+import com.zentemi.app.ui.learning.lessons.PathLessonFlow
 import com.zentemi.app.ui.learning.LearningPathScreen
 import com.zentemi.app.ui.learning.LessonCompleteScreen
 import com.zentemi.app.ui.learning.LessonIntroScreen
@@ -28,6 +30,11 @@ import com.zentemi.app.ui.games.MaicitoGame
 import com.zentemi.app.ui.games.MaicitoPideGame
 import com.zentemi.app.ui.games.MemoramaGame
 import com.zentemi.app.ui.games.MercadoGame
+import com.zentemi.app.ui.games.levels.LevelGame
+import com.zentemi.app.ui.games.levels.MaicitoGamesScreen
+import com.zentemi.app.ui.games.levels.MazeLevelsFlow
+import com.zentemi.app.ui.games.levels.MemoryLevelsFlow
+import com.zentemi.app.ui.games.levels.WordSearchLevelsFlow
 import com.zentemi.app.ui.main.FeedMaicitoScreen
 import com.zentemi.app.ui.main.MainScreen
 import com.zentemi.app.ui.onboarding.CreateAccountScreen
@@ -47,6 +54,7 @@ object Routes {
     const val LEARNING_PATH = "learning_path"
     const val LESSON_INTRO = "lesson_intro/{lessonNumber}"
     const val GREETING_EXERCISE = "greeting_exercise"
+    const val PATH_LESSON = "path_lesson/{lessonNumber}"
     const val LESSON_COMPLETE = "lesson_complete/{correct}/{total}/{elapsed}"
     const val SETTINGS = "settings"
     const val FEED_MAICITO = "feed_maicito"
@@ -54,11 +62,16 @@ object Routes {
     const val GAME_MAICITO_PIDE = "game_maicito_pide"
     const val GAME_MEMORAMA = "game_memorama"
     const val GAME_MERCADO = "game_mercado"
+    const val LEVEL_GAMES = "level_games"
+    const val GAME_MEMORY_LEVELS = "game_memory_levels"
+    const val GAME_MAZE_LEVELS = "game_maze_levels"
+    const val GAME_WORD_SEARCH_LEVELS = "game_word_search_levels"
 
     /** Pantallas para entrar a una cuenta; al iniciar sesión se regresa solo a la app. */
     val accountRoutes = setOf(CREATE_ACCOUNT, SIGN_IN)
 
     fun lessonIntro(lessonNumber: Int) = "lesson_intro/$lessonNumber"
+    fun pathLesson(lessonNumber: Int) = "path_lesson/$lessonNumber"
     fun lessonComplete(correct: Int, total: Int, elapsed: Int) =
         "lesson_complete/$correct/$total/$elapsed"
 }
@@ -220,9 +233,27 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
                 lessonNumber = lessonNumber,
                 onBack = { navController.popBackStack() },
                 onStartExercise = {
-                    navController.navigate(Routes.GREETING_EXERCISE)
+                    navController.navigate(
+                        if (lessonNumber == 1) Routes.GREETING_EXERCISE else Routes.pathLesson(lessonNumber)
+                    )
                 }
             )
+        }
+
+        // Lecciones 2 a 6 (Familia, Números, Colores, Animales y Alimentos) con sus resultados
+        composable(Routes.PATH_LESSON) { backStackEntry ->
+            val lesson = backStackEntry.arguments?.getString("lessonNumber")?.toIntOrNull()
+                ?.let { PathLesson.fromNumber(it) }
+            if (lesson == null) {
+                LaunchedEffect(Unit) { navController.popBackStack() }
+            } else {
+                PathLessonFlow(
+                    appState = appState,
+                    lesson = lesson,
+                    onExit = { navController.popBackStack() },
+                    onContinue = { navController.popBackStack(Routes.LEARNING_PATH, inclusive = false) }
+                )
+            }
         }
 
         composable(Routes.GREETING_EXERCISE) {
@@ -278,8 +309,38 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
                             MaicitoGame.MERCADO -> Routes.GAME_MERCADO
                         }
                     )
+                },
+                onLevelGames = { navController.navigate(Routes.LEVEL_GAMES) }
+            )
+        }
+
+        // Laberinto, Memorama y Sopa de letras por niveles (MaicitoGamesView.swift)
+        composable(Routes.LEVEL_GAMES) {
+            MaicitoGamesScreen(
+                appState = appState,
+                onBack = { navController.popBackStack() },
+                onGameSelected = { game ->
+                    navController.navigate(
+                        when (game) {
+                            LevelGame.MEMORY -> Routes.GAME_MEMORY_LEVELS
+                            LevelGame.MAZE -> Routes.GAME_MAZE_LEVELS
+                            LevelGame.WORD_SEARCH -> Routes.GAME_WORD_SEARCH_LEVELS
+                        }
+                    )
                 }
             )
+        }
+
+        composable(Routes.GAME_MEMORY_LEVELS) {
+            MemoryLevelsFlow(appState = appState, onBack = { navController.popBackStack() })
+        }
+
+        composable(Routes.GAME_MAZE_LEVELS) {
+            MazeLevelsFlow(appState = appState, onBack = { navController.popBackStack() })
+        }
+
+        composable(Routes.GAME_WORD_SEARCH_LEVELS) {
+            WordSearchLevelsFlow(appState = appState, onBack = { navController.popBackStack() })
         }
 
         composable(Routes.GAME_MAICITO_PIDE) {
@@ -306,11 +367,14 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
 
 private fun musicFor(route: String): MusicTrack? = when {
     route == Routes.MAIN || route == Routes.SETTINGS || route == Routes.FEED_MAICITO ||
-        route == Routes.GAMES -> MusicTrack.LOBBY
+        route == Routes.GAMES || route == Routes.LEVEL_GAMES ||
+        route == Routes.GAME_MEMORY_LEVELS || route == Routes.GAME_MAZE_LEVELS ||
+        route == Routes.GAME_WORD_SEARCH_LEVELS -> MusicTrack.LOBBY
     // En los juegos se escuchan frases en Yuhmu, así que la música se pausa.
     route == Routes.GAME_MAICITO_PIDE || route == Routes.GAME_MEMORAMA ||
         route == Routes.GAME_MERCADO -> null
     route == Routes.LEARNING_PATH || route == Routes.LESSON_INTRO -> MusicTrack.CAMINO
-    route == Routes.GREETING_EXERCISE || route == Routes.LESSON_COMPLETE -> null
+    route == Routes.GREETING_EXERCISE || route == Routes.LESSON_COMPLETE ||
+        route == Routes.PATH_LESSON -> null
     else -> MusicTrack.INICIO
 }

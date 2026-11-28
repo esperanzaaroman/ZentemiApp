@@ -61,7 +61,7 @@ struct LessonIntroView: View {
 
                         Button {
 
-                            if exercises > 0 {
+                            if exercises > 0 && (lessonNumber != 2 || appState.greetingsRewardClaimed) && (lessonNumber != 3 || appState.familyRewardClaimed) && (lessonNumber != 4 || appState.numbersRewardClaimed) && (lessonNumber != 5 || appState.colorsRewardClaimed) && (lessonNumber != 6 || appState.animalsRewardClaimed) {
 
                                 MusicManager.shared.pauseMusic()
 
@@ -156,10 +156,27 @@ struct LessonIntroView: View {
         .fullScreenCover(
             isPresented: $showGreetingExercise
         ) {
-            FirstPhraseSceneView {
-                onLessonCompleted()
+            if lessonNumber == 6 {
+                FoodLessonView(onLessonCompleted: onLessonCompleted)
+                    .environmentObject(appState)
+            } else if lessonNumber == 5 {
+                AnimalsLessonView(onLessonCompleted: onLessonCompleted)
+                    .environmentObject(appState)
+            } else if lessonNumber == 4 {
+                ColorsLessonView(onLessonCompleted: onLessonCompleted)
+                    .environmentObject(appState)
+            } else if lessonNumber == 3 {
+                NumbersLessonView(onLessonCompleted: onLessonCompleted)
+                    .environmentObject(appState)
+            } else if lessonNumber == 2 {
+                FamilyLessonView(onLessonCompleted: onLessonCompleted)
+                    .environmentObject(appState)
+            } else {
+                FirstPhrasesLessonView {
+                    onLessonCompleted()
+                }
+                .environmentObject(appState)
             }
-            .environmentObject(appState)
         }
     }
 

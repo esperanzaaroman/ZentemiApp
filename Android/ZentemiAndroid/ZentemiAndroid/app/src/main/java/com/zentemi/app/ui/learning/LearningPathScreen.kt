@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zentemi.app.state.AppState
+import com.zentemi.app.data.PathLesson
 import androidx.compose.foundation.border
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
@@ -62,6 +63,7 @@ fun LearningPathScreen(
     )
 
     var lockedLessonName by remember { mutableStateOf<String?>(null) }
+    var lockedComingSoon by remember { mutableStateOf(false) }
 
     val bgAnim = rememberInfiniteTransition(label = "bg")
     val circleOffset by bgAnim.animateFloat(
@@ -158,8 +160,13 @@ fun LearningPathScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 lessons.forEachIndexed { index, lesson ->
-                    val isUnlocked = lesson.number <= appState.unlockedPathLesson
-                    val isCompleted = lesson.number <= appState.pathLessonsCompleted
+                    val pathLesson = PathLesson.fromNumber(lesson.number)
+                    val isUnlocked = lesson.number <= appState.unlockedPathLesson ||
+                        (pathLesson != null && appState.isLessonUnlocked(pathLesson))
+                    val isCompleted = lesson.number <= appState.pathLessonsCompleted ||
+                        (pathLesson != null && appState.isLessonCompleted(pathLesson))
+                    // Lecciones con contenido: 1 (Primeras frases) a 6 (Alimentos)
+                    val isAvailable = lesson.number == 1 || pathLesson != null
 
                     // Lesson node
                     Box(
@@ -167,9 +174,10 @@ fun LearningPathScreen(
                             .fillMaxWidth()
                             .offset(x = lesson.xOffset.dp)
                             .pressable(pressedScale = 0.94f) {
-                                if (isUnlocked && (lesson.number == 1 || lesson.number == 2)) {
+                                if (isUnlocked && isAvailable) {
                                     onLessonSelected(lesson.number)
-                                } else if (!isUnlocked) {
+                                } else {
+                                    lockedComingSoon = isUnlocked && !isAvailable
                                     lockedLessonName = lesson.name
                                 }
                             },
@@ -266,6 +274,7 @@ fun LearningPathScreen(
             LockedOverlay(
                 lessonName = name,
                 lessons = lessons.map { it.name },
+                comingSoon = lockedComingSoon,
                 onDismiss = { lockedLessonName = null }
             )
         }
@@ -303,10 +312,13 @@ private fun PathDots(goesRight: Boolean) {
 private fun LockedOverlay(
     lessonName: String,
     lessons: List<String>,
+    comingSoon: Boolean,
     onDismiss: () -> Unit
 ) {
     val index = lessons.indexOf(lessonName)
-    val message = if (index > 0) {
+    val message = if (comingSoon) {
+        "¡Muy pronto! Esta lección llegará en una próxima versión."
+    } else if (index > 0) {
         "Completa ${lessons[index - 1]} para desbloquear esta lección."
     } else {
         "Completa la lección anterior para continuar."

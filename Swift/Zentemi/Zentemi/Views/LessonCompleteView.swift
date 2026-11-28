@@ -8,6 +8,7 @@ struct LessonCompleteView: View {
     let correctAnswers: Int
     let totalAnswers: Int
     let elapsedSeconds: Int
+    var familyResult: FamilyLessonReward? = nil
     let onContinue: () -> Void
 
     @State private var showMascot = false
@@ -24,9 +25,11 @@ struct LessonCompleteView: View {
     @State private var xpBarProgress: Double = 0
 
     @State private var rewardApplied = false
+    @State private var resultSounds = LessonResultSounds()
+    @State private var sequenceID = UUID()
 
-    private let rewardCoins = 700
-    private let rewardXP = 140
+    private var rewardCoins: Int { familyResult?.coins ?? 700 }
+    private var rewardXP: Int { familyResult?.xp ?? 140 }
 
     private let purple = Color(
         red: 0.48,
@@ -344,6 +347,10 @@ struct LessonCompleteView: View {
 
             runSequence()
         }
+        .onDisappear {
+            sequenceID = UUID()
+            resultSounds.stop()
+        }
     }
 
     // MARK: - RESULT CARD
@@ -408,7 +415,9 @@ struct LessonCompleteView: View {
 
     private func runSequence() {
 
-        let startingXP = appState.totalXP
+        let sequenceID = self.sequenceID
+
+        let startingXP = familyResult?.startingXP ?? appState.totalXP
 
         displayedXP = startingXP
         updateDisplayedLevel(for: startingXP)
@@ -433,6 +442,8 @@ struct LessonCompleteView: View {
                     + Double(index) * 0.18
             ) {
 
+            guard self.sequenceID == sequenceID else { return }
+
                 withAnimation(
                     .spring(
                         response: 0.35,
@@ -441,12 +452,17 @@ struct LessonCompleteView: View {
                 ) {
                     visibleStars = index
                 }
+                if index <= starsEarned {
+                    resultSounds.playStar(index, volume: Float(appState.soundVolume))
+                }
             }
         }
 
         DispatchQueue.main.asyncAfter(
             deadline: .now() + 1.35
         ) {
+
+            guard self.sequenceID == sequenceID else { return }
 
             withAnimation(
                 .spring(
@@ -456,11 +472,14 @@ struct LessonCompleteView: View {
             ) {
                 showCorrectCard = true
             }
+            resultSounds.playCard(volume: Float(appState.soundVolume))
         }
 
         DispatchQueue.main.asyncAfter(
             deadline: .now() + 1.60
         ) {
+
+            guard self.sequenceID == sequenceID else { return }
 
             withAnimation(
                 .spring(
@@ -470,11 +489,14 @@ struct LessonCompleteView: View {
             ) {
                 showTimeCard = true
             }
+            resultSounds.playCard(volume: Float(appState.soundVolume))
         }
 
         DispatchQueue.main.asyncAfter(
             deadline: .now() + 1.85
         ) {
+
+            guard self.sequenceID == sequenceID else { return }
 
             withAnimation(
                 .spring(
@@ -484,22 +506,28 @@ struct LessonCompleteView: View {
             ) {
                 showCoinsCard = true
             }
+            resultSounds.playCard(volume: Float(appState.soundVolume))
         }
 
         DispatchQueue.main.asyncAfter(
             deadline: .now() + 2.15
         ) {
 
+            guard self.sequenceID == sequenceID else { return }
+
             withAnimation(
                 .easeOut(duration: 0.45)
             ) {
                 showXPCard = true
             }
+            resultSounds.playCard(volume: Float(appState.soundVolume))
         }
 
         DispatchQueue.main.asyncAfter(
             deadline: .now() + 2.65
         ) {
+
+            guard self.sequenceID == sequenceID else { return }
 
             applyRewardAndAnimateXP(
                 startingXP: startingXP
@@ -509,6 +537,8 @@ struct LessonCompleteView: View {
         DispatchQueue.main.asyncAfter(
             deadline: .now() + 4.35
         ) {
+
+            guard self.sequenceID == sequenceID else { return }
 
             withAnimation(
                 .easeOut(duration: 0.40)
@@ -529,6 +559,16 @@ struct LessonCompleteView: View {
         }
 
         rewardApplied = true
+
+        if let familyResult {
+            if familyResult.xp > 0 {
+                animateXP(from: familyResult.startingXP, amount: familyResult.xp)
+            } else {
+                displayedXP = appState.totalXP
+                updateDisplayedLevel(for: appState.totalXP)
+            }
+            return
+        }
 
         let wasAlreadyClaimed =
             appState.greetingsRewardClaimed
@@ -558,6 +598,8 @@ struct LessonCompleteView: View {
         amount: Int
     ) {
 
+        let sequenceID = self.sequenceID
+        resultSounds.playExperienceFill(volume: Float(appState.soundVolume))
         let steps = 70
 
         for step in 0...steps {
@@ -567,6 +609,8 @@ struct LessonCompleteView: View {
                     .now()
                     + Double(step) * 0.02
             ) {
+
+            guard self.sequenceID == sequenceID else { return }
 
                 let animatedAmount =
                     Int(
@@ -589,6 +633,8 @@ struct LessonCompleteView: View {
         DispatchQueue.main.asyncAfter(
             deadline: .now() + 1.5
         ) {
+
+            guard self.sequenceID == sequenceID else { return }
 
             displayedXP =
                 appState.totalXP

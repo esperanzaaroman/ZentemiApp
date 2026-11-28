@@ -166,7 +166,7 @@ struct FourthPhraseExerciseView: View {
                             Label(
                                 verifiedAnswer
                                     ? "¡Correcto! Has aprendido a pedir ayuda."
-                                    : "Respuesta incorrecta. Inténtalo de nuevo.",
+                                    : "La respuesta correcta es «Ayúdame por favor».",
                                 systemImage:
                                     verifiedAnswer
                                     ? "checkmark.circle.fill"
@@ -236,8 +236,8 @@ struct FourthPhraseExerciseView: View {
                 } label: {
 
                     Text(
-                        verifiedAnswer == true
-                            ? "Continuar"
+                        verifiedAnswer != nil
+                            ? "Siguiente"
                             : "Verificar"
                     )
                     .font(
@@ -282,7 +282,7 @@ struct FourthPhraseExerciseView: View {
                 exerciseNumber: 5,
                 totalExercises: totalExercises,
                 previousCorrectAnswers:
-                    previousCorrectAnswers + 1,
+                    previousCorrectAnswers + (verifiedAnswer == true ? 1 : 0),
                 lessonStartDate: lessonStartDate
             ) { correctAnswers in
 
@@ -371,7 +371,7 @@ struct FourthPhraseExerciseView: View {
 
         Button {
 
-            guard verifiedAnswer != true else {
+            guard verifiedAnswer == nil else {
                 return
             }
 
@@ -457,19 +457,17 @@ struct FourthPhraseExerciseView: View {
                 )
             }
         }
-        .disabled(verifiedAnswer == true)
+        .disabled(verifiedAnswer != nil)
     }
 
     // MARK: - VERIFICACIÓN
 
     private func verifyOrContinue() {
 
-        if verifiedAnswer == true {
+        if verifiedAnswer != nil {
 
             audioPlayer?.stop()
 
-            // Antes terminaba el ejercicio 4.
-            // Ahora abre el repaso final.
             showFifthExercise = true
 
             return

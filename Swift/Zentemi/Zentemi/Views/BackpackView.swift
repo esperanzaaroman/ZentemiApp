@@ -7,6 +7,7 @@ struct BackpackView: View {
     // MARK: - Animación mascota
     
     @State private var mascotScaleY: CGFloat = 1.0
+    @State private var selectedCategory: ItemCategory = .all
     
     private let purple = Color(
         red: 0.48,
@@ -29,32 +30,18 @@ struct BackpackView: View {
     
     // MARK: - Cantidades
     
-    private var totalItems: Int {
-        
-        3
-        + (appState.sunglassesPurchased ? 1 : 0)
-        + (appState.pinkHairPurchased ? 1 : 0)
-        + (appState.swordPurchased ? 1 : 0)
-        + (appState.suitPurchased ? 1 : 0)
+    private var ownedItems: [ShopItem] {
+        ShopCatalog.items.filter { appState.isOwned($0) }
     }
-    
-    
-    private var equippedItems: Int {
-        
-        [
-            appState.glassesEquipped,
-            appState.hairEquipped,
-            appState.scarfEquipped,
-            appState.sunglassesEquipped,
-            appState.pinkHairEquipped,
-            appState.swordEquipped,
-            appState.suitEquipped
-        ]
-        .filter { $0 }
-        .count
+
+    private var categoryItems: [ShopItem] {
+        ownedItems.filter { selectedCategory.contains($0) }
     }
-    
-    
+
+    private var totalItems: Int { ownedItems.count }
+    private var equippedItems: Int { ownedItems.filter { appState.isEquipped($0) }.count }
+    private var categoryIsEmpty: Bool { categoryItems.isEmpty }
+
     var body: some View {
         
         ZStack {
@@ -73,6 +60,10 @@ struct BackpackView: View {
                 // MARK: - MASCOTA FIJA
                 
                 petPreview
+
+                ItemCategoryBar(selection: selectedCategory) { category in
+                    selectedCategory = category
+                }
                 
                 
                 // MARK: - INVENTARIO
@@ -81,6 +72,22 @@ struct BackpackView: View {
                     showsIndicators: false
                 ) {
                     
+                    if categoryIsEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: selectedCategory.icon)
+                                .font(.largeTitle)
+                                .foregroundStyle(purple)
+                            Text("Aún no tienes objetos de esta categoría")
+                                .font(.headline)
+                                .multilineTextAlignment(.center)
+                            Text("Encuéntralos en la tienda.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(24)
+                    }
+
                     LazyVGrid(
                         columns: [
                             
@@ -97,140 +104,23 @@ struct BackpackView: View {
                         spacing: 12
                     ) {
                         
-                        // MARK: Objetos iniciales
-                        
-                        itemCard(
-                            image: "lentes",
-                            name: "Lentes",
-                            isEquipped:
-                                appState.glassesEquipped
-                        ) {
-                            
-                            withAnimation(
-                                .easeInOut(
-                                    duration: 0.2
-                                )
-                            ) {
-                                appState.toggleGlasses()
-                            }
-                        }
-                        
-                        
-                        itemCard(
-                            image: "cabello",
-                            name: "Cabello",
-                            isEquipped:
-                                appState.hairEquipped
-                        ) {
-                            
-                            withAnimation(
-                                .easeInOut(
-                                    duration: 0.2
-                                )
-                            ) {
-                                appState.toggleHair()
-                            }
-                        }
-                        
-                        
-                        itemCard(
-                            image: "bufanda",
-                            name: "Bufanda",
-                            isEquipped:
-                                appState.scarfEquipped
-                        ) {
-                            
-                            withAnimation(
-                                .easeInOut(
-                                    duration: 0.2
-                                )
-                            ) {
-                                appState.toggleScarf()
-                            }
-                        }
-                        
-                        
-                        // MARK: Objetos comprados
-                        
-                        if appState.sunglassesPurchased {
-                            
+                        ForEach(categoryItems) { item in
                             itemCard(
-                                image: "lentesdesol",
-                                name: "Lentes de sol",
-                                isEquipped:
-                                    appState.sunglassesEquipped
+                                image: item.image ?? "",
+                                name: item.name,
+                                isEquipped: appState.isEquipped(item),
+                                isBackground: item.slot == .background,
+                                backdrop: item.backdrop
                             ) {
-                                
-                                withAnimation(
-                                    .easeInOut(
-                                        duration: 0.2
-                                    )
-                                ) {
-                                    appState.toggleSunglasses()
-                                }
-                            }
-                        }
-                        
-                        
-                        if appState.pinkHairPurchased {
-                            
-                            itemCard(
-                                image: "cabellorosa",
-                                name: "Cabello rosa",
-                                isEquipped:
-                                    appState.pinkHairEquipped
-                            ) {
-                                
-                                withAnimation(
-                                    .easeInOut(
-                                        duration: 0.2
-                                    )
-                                ) {
-                                    appState.togglePinkHair()
-                                }
-                            }
-                        }
-                        
-                        
-                        if appState.swordPurchased {
-                            
-                            itemCard(
-                                image: "espada",
-                                name: "Espada real",
-                                isEquipped:
-                                    appState.swordEquipped
-                            ) {
-                                
-                                withAnimation(
-                                    .easeInOut(
-                                        duration: 0.2
-                                    )
-                                ) {
-                                    appState.toggleSword()
-                                }
-                            }
-                        }
-                        
-                        if appState.suitPurchased {
-                            itemCard(
-                                image: "traje1k",
-                                name: "Traje elegante",
-                                isEquipped:
-                                    appState.suitEquipped
-                            ) {
-                                withAnimation(
-                                    .easeInOut(
-                                        duration: 0.2
-                                    )
-                                ) {
-                                    appState.toggleSuit()
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    appState.toggleEquip(item)
                                 }
                             }
                         }
                     }
                     .padding(.horizontal, 18)
                     .padding(.top, 12)
-                    .padding(.bottom, 30)
+                    .padding(.bottom, 110)
                 }
             }
         }
@@ -392,6 +282,8 @@ struct BackpackView: View {
         image: String,
         name: String,
         isEquipped: Bool,
+        isBackground: Bool = false,
+        backdrop: Backdrop? = nil,
         action: @escaping () -> Void
     ) -> some View {
         
@@ -442,6 +334,11 @@ struct BackpackView: View {
                 .frame(height: 85)
                 
                 
+                if let backdrop {
+                    MaicitoBackdropView(backdrop: backdrop)
+                        .frame(width: 78, height: 70)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                } else {
                 Image(image)
                     .resizable()
                     .scaledToFit()
@@ -449,6 +346,7 @@ struct BackpackView: View {
                         width: 78,
                         height: 70
                     )
+                }
             }
             
             
@@ -487,8 +385,8 @@ struct BackpackView: View {
                 
                 Text(
                     isEquipped
-                    ? "Quitar"
-                    : "Equipar"
+                    ? (isBackground ? "Quitar fondo" : "Quitar")
+                    : (isBackground ? "Equipar fondo" : "Equipar")
                 )
                 .font(
                     .system(

@@ -1,6 +1,5 @@
 
 import SwiftUI
-import AVFoundation
 
 struct SecondPhraseSceneView: View {
 
@@ -11,7 +10,7 @@ struct SecondPhraseSceneView: View {
 
     @State private var breathing = false
     @State private var dialogueStep = 0
-    @State private var player: AVAudioPlayer?
+    @State private var sceneAudio = PhraseSceneAudioPlayer()
 
     private let purple = Color(
         red: 0.48,
@@ -22,12 +21,16 @@ struct SecondPhraseSceneView: View {
     // MARK: - DIÁLOGOS
 
     private let dialogues = [
-        "¡Hola! Quiero conocerte mejor.",
+        "Quiero conocerte mejor.",
         "¡Claro!",
-        "¿Cómo puedo preguntarte tu nombre en Yuhmu?",
-        "¡Se dice «¿Cómo te llamas?» en Yuhmu!",
+        "¿Cómo se dice «cómo te llamas»?",
+        "Claro, te enseño. Se escucha así…",
         "¡Gracias! Ahora voy a practicar."
     ]
+
+    private var requiresListening: Bool {
+        dialogueStep == 3 && !sceneAudio.hasFinished
+    }
 
     private var isMaicitoSpeaking: Bool {
         dialogueStep % 2 == 0
@@ -58,7 +61,7 @@ struct SecondPhraseSceneView: View {
                     HStack {
 
                         Button {
-                            player?.stop()
+                            sceneAudio.stop()
                             dismiss()
                         } label: {
 
@@ -245,11 +248,23 @@ struct SecondPhraseSceneView: View {
                         }
                     }
 
+                    if dialogueStep == 3 {
+                        Text(sceneAudio.errorMessage ?? (sceneAudio.hasFinished
+                            ? "¡Listo! Puedes continuar."
+                            : "Escucha el audio completo para continuar."))
+                            .font(.footnote)
+                            .foregroundStyle(.white)
+                            .multilineTextAlignment(.center)
+                            .padding(8)
+                            .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 10))
+                    }
+
                     // MARK: - SIGUIENTE / CONTINUAR
 
                     Button {
 
-                        player?.stop()
+                        guard !requiresListening else { return }
+                        sceneAudio.stop()
 
                         if dialogueStep < dialogues.count - 1 {
 
@@ -287,6 +302,8 @@ struct SecondPhraseSceneView: View {
                             )
                         )
                     }
+                    .disabled(requiresListening)
+                    .opacity(requiresListening ? 0.45 : 1)
                 }
                 .padding(.horizontal, 22)
                 .padding(.top, 12)
@@ -303,36 +320,13 @@ struct SecondPhraseSceneView: View {
             }
         }
         .onDisappear {
-            player?.stop()
+            sceneAudio.stop()
         }
     }
 
     // MARK: - AUDIO
 
     private func playAudio() {
-
-        guard let url = Bundle.main.url(
-            forResource: "comoTeLlamas",
-            withExtension: "m4a"
-        ) else {
-            print("No se encontró comoTeLlamas.m4a")
-            return
-        }
-
-        do {
-
-            player?.stop()
-
-            player = try AVAudioPlayer(
-                contentsOf: url
-            )
-
-            player?.volume = Float(appState.soundVolume)
-            player?.prepareToPlay()
-            player?.play()
-
-        } catch {
-            print("Error al reproducir audio: \(error)")
-        }
+        sceneAudio.play(named: "comoTeLlamas", volume: Float(appState.soundVolume))
     }
 }

@@ -3,12 +3,25 @@ import SwiftUI
 struct ProfileView: View {
 
     @EnvironmentObject var appState: AppState
+    @ObservedObject private var authService = AuthService.shared
 
     @State private var showAvatarEditor = false
     @State private var showSettings = false
     @State private var showLevels = false
     @State private var selectedInfo: ProfileInfo?
     @State private var editedUserName = ""
+
+    // Gestión de cuenta (Modo Invitado / Nube)
+    @State private var showCreateAccount = false
+    @State private var showSignIn = false
+    @State private var showEmailVerification = false
+    @State private var showLogoutConfirmation = false
+
+    private let purple = Color(
+        red: 0.48,
+        green: 0.29,
+        blue: 0.79
+    )
 
     private let turquoise = Color(
         red: 0.28,
@@ -43,6 +56,8 @@ struct ProfileView: View {
 
                     VStack(spacing: 14) {
 
+                        accountSection
+
                         statsSection
 
                         progressSection
@@ -50,10 +65,17 @@ struct ProfileView: View {
                         achievementsSection
 
                         Spacer()
-                            .frame(height: 25)
+                            .frame(height: 95)
                     }
                     .padding(.horizontal, 18)
                     .padding(.top, 14)
+                }
+            }
+        }
+        .onAppear {
+            if authService.isAuthenticated && !authService.isEmailVerified {
+                Task {
+                    _ = try? await authService.reloadAndCheckVerification()
                 }
             }
         }
@@ -80,6 +102,34 @@ struct ProfileView: View {
             }
         }
 
+        // MARK: - Crear Cuenta / Iniciar Sesión / Verificar Correo
+
+        .sheet(isPresented: $showCreateAccount) {
+            NavigationStack {
+                CreateAccountView()
+                    .environmentObject(appState)
+            }
+        }
+        .sheet(isPresented: $showSignIn) {
+            NavigationStack {
+                SignInView()
+                    .environmentObject(appState)
+            }
+        }
+        .sheet(isPresented: $showEmailVerification) {
+            NavigationStack {
+                EmailVerificationView()
+            }
+        }
+        .alert("¿Cerrar sesión?", isPresented: $showLogoutConfirmation) {
+            Button("Cancelar", role: .cancel) { }
+            Button("Cerrar sesión", role: .destructive) {
+                try? authService.signOut()
+            }
+        } message: {
+            Text("Tu progreso se queda en este teléfono y puedes seguir jugando. Para volver a guardarlo en la nube, inicia sesión otra vez.")
+        }
+
         // MARK: - Información estadísticas
 
         .sheet(
@@ -88,6 +138,149 @@ struct ProfileView: View {
 
             infoSheet(info)
         }
+    }
+
+    // MARK: - CUENTA (MODO INVITADO / NUBE)
+
+    @ViewBuilder
+    private var accountSection: some View {
+        if appState.isGuest || appState.accountEmail == nil {
+            saveProgressCard
+        } else if let email = appState.accountEmail {
+            accountCard(email: email)
+        }
+    }
+
+    private var saveProgressCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Image(systemName: "icloud.and.arrow.up.fill")
+                    .font(.system(size: 22))
+                    .foregroundStyle(purple)
+
+                Text("Guardar mi progreso")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(.primary)
+            }
+
+            Text("Ahora tu progreso está guardado solo en este teléfono. Pídele a un adulto que cree una cuenta para guardarlo en la nube.")
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 10) {
+                Button {
+                    showCreateAccount = true
+                } label: {
+                    Text("Crear cuenta")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                        .background(purple)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                }
+
+                Button {
+                    showSignIn = true
+                } label: {
+                    Text("Iniciar sesión")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(purple)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                        .background(Color.clear)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(purple.opacity(0.6), lineWidth: 1.5)
+                        }
+                }
+            }
+            .padding(.top, 2)
+        }
+        .padding(16)
+        .background(.white)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .shadow(color: Color.black.opacity(0.03), radius: 6, y: 2)
+    }
+
+    private func accountCard(email: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Image(systemName: "checkmark.icloud.fill")
+                    .font(.system(size: 24))
+                    .foregroundStyle(turquoise)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Progreso guardado en la nube")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(.primary)
+
+                    Text(email)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+            }
+
+            if authService.isEmailVerified {
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 15))
+                        .foregroundStyle(.green)
+
+                    Text("Correo verificado")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                Button {
+                    showEmailVerification = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "envelope.badge.fill")
+                            .font(.system(size: 17))
+                            .foregroundStyle(.orange)
+
+                        Text("Falta confirmar el correo del adulto. Toca aquí para verificarlo.")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.primary)
+                            .multilineTextAlignment(.leading)
+
+                        Spacer()
+                    }
+                    .padding(11)
+                    .background(Color.yellow.opacity(0.18))
+                    .clipShape(RoundedRectangle(cornerRadius: 13))
+                }
+                .buttonStyle(.plain)
+            }
+
+            Button {
+                showLogoutConfirmation = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .font(.system(size: 14, weight: .semibold))
+                    Text("Cerrar sesión")
+                        .font(.system(size: 14, weight: .bold))
+                }
+                .foregroundStyle(.red)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.red.opacity(0.45), lineWidth: 1.2)
+                }
+            }
+            .padding(.top, 2)
+        }
+        .padding(16)
+        .background(.white)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .shadow(color: Color.black.opacity(0.03), radius: 6, y: 2)
     }
 
     // MARK: - HEADER
@@ -223,26 +416,33 @@ struct ProfileView: View {
 
                     // Avatar
 
-                    ZStack {
+                    Button {
+                        showAvatarEditor = true
+                    } label: {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    Color(
+                                        hue: appState.avatarBackgroundHue,
+                                        saturation: 0.22,
+                                        brightness: 1
+                                    )
+                                )
 
-                        RoundedRectangle(
-                            cornerRadius: 16
-                        )
-                        .fill(
-                            Color(
-                                hue: appState.avatarBackgroundHue,
-                                saturation: 0.22,
-                                brightness: 1
-                            )
-                        )
-                        .frame(
-                            width: 82,
-                            height: 82
-                        )
+                            if let backdrop = appState.equippedBackdrop?.backdrop {
+                                MaicitoBackdropView(backdrop: backdrop)
+                            }
 
-                        // CAMBIO: mascota + accesorios
-                        PetView(size: 67)
+                            PetView(size: 78)
+                        }
+                        .frame(width: 100, height: 100)
+                        .clipShape(Circle())
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.75), lineWidth: 3)
+                        )
                     }
+                    .buttonStyle(.plain)
 
                     // Nombre
 
@@ -469,36 +669,28 @@ struct ProfileView: View {
     // MARK: - ESTADÍSTICAS
 
     private var statsSection: some View {
-
-        HStack(spacing: 9) {
-
+        HStack(spacing: 10) {
             statCard(
-                icon: "flame.fill",
+                icon: "ic_racha",
                 value: "\(appState.streak)",
-                title: "Racha",
-                color: .red
+                title: "Racha"
             ) {
-
                 selectedInfo = .streak
             }
 
             statCard(
-                icon: "checkmark",
+                icon: "ic_primera_leccion",
                 value: "\(appState.lessonsCompleted)",
-                title: "Lecciones",
-                color: turquoise
+                title: "Lecciones"
             ) {
-
                 selectedInfo = .lessons
             }
 
             statCard(
-                icon: "dollarsign.circle.fill",
+                icon: "ic_moneda",
                 value: "\(appState.coins)",
-                title: "Monedas",
-                color: .yellow
+                title: "Monedas"
             ) {
-
                 selectedInfo = .coins
             }
         }
@@ -508,57 +700,27 @@ struct ProfileView: View {
         icon: String,
         value: String,
         title: String,
-        color: Color,
         action: @escaping () -> Void
     ) -> some View {
-
-        Button {
-
-            action()
-
-        } label: {
-
-            VStack(spacing: 5) {
-
-                Image(systemName: icon)
-                    .font(
-                        .system(
-                            size: 16,
-                            weight: .semibold
-                        )
-                    )
-                    .foregroundStyle(color)
+        Button(action: action) {
+            VStack(spacing: 4) {
+                ZentemiIconView(name: icon, size: 30)
 
                 Text(value)
-                    .font(
-                        .system(
-                            size: 16,
-                            weight: .bold
-                        )
-                    )
+                    .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(.primary)
 
                 Text(title)
-                    .font(
-                        .system(size: 10)
-                    )
+                    .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 82)
+            .padding(.vertical, 12)
             .background(.white)
-            .clipShape(
-                RoundedRectangle(
-                    cornerRadius: 15
-                )
-            )
-            .shadow(
-                color: .black.opacity(0.03),
-                radius: 5,
-                x: 0,
-                y: 2
-            )
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .shadow(color: .black.opacity(0.03), radius: 5, y: 2)
         }
+        .buttonStyle(.plain)
     }
 
     // MARK: - PROGRESO
@@ -585,21 +747,21 @@ struct ProfileView: View {
                 Spacer()
 
                 Text(
-                    "\(Int(appState.levelProgress * 100))%"
+                    "\(appState.currentLevelXP) / \(appState.xpRequiredPerLevel) XP"
                 )
                 .font(
                     .system(
-                        size: 13,
-                        weight: .bold
+                        size: 12,
+                        weight: .semibold
                     )
                 )
-                .foregroundStyle(turquoise)
+                .foregroundStyle(.secondary)
             }
 
             ProgressView(
                 value: appState.levelProgress
             )
-            .tint(turquoise)
+            .tint(purple)
             .scaleEffect(
                 x: 1,
                 y: 1.6,
@@ -607,7 +769,7 @@ struct ProfileView: View {
             )
 
             Text(
-                "\(appState.xpRemaining) XP para el Nivel \(appState.currentLevel + 1)"
+                "Faltan \(appState.xpRemaining) XP para el siguiente nivel"
             )
             .font(
                 .system(size: 11)
@@ -616,11 +778,11 @@ struct ProfileView: View {
                 .secondary
             )
         }
-        .padding(14)
+        .padding(16)
         .background(.white)
         .clipShape(
             RoundedRectangle(
-                cornerRadius: 15
+                cornerRadius: 20
             )
         )
         .shadow(
@@ -634,136 +796,7 @@ struct ProfileView: View {
     // MARK: - LOGROS
 
     private var achievementsSection: some View {
-
-        VStack(
-            alignment: .leading,
-            spacing: 10
-        ) {
-
-            Text("Logros")
-                .font(
-                    .system(
-                        size: 15,
-                        weight: .bold
-                    )
-                )
-
-            ScrollView(
-                .horizontal,
-                showsIndicators: false
-            ) {
-
-                HStack(spacing: 10) {
-
-                    achievementCard(
-                        icon: "star.fill",
-                        title: "Primeros pasos",
-                        color: .yellow,
-                        completed: true
-                    )
-
-                    achievementCard(
-                        icon: "flame.fill",
-                        title: "5 días seguidos",
-                        color: .red,
-                        completed: true
-                    )
-
-                    achievementCard(
-                        icon: "lock.fill",
-                        title: "Por descubrir",
-                        color: .gray,
-                        completed: false
-                    )
-
-                    achievementCard(
-                        icon: "flame.fill",
-                        title: "10 días seguidos",
-                        color: .orange,
-                        completed: false
-                    )
-
-                    achievementCard(
-                        icon: "book.fill",
-                        title: "10 lecciones",
-                        color: .purple,
-                        completed: false
-                    )
-
-                    achievementCard(
-                        icon: "trophy.fill",
-                        title: "Todas las lecciones",
-                        color: .yellow,
-                        completed: false
-                    )
-                }
-            }
-        }
-    }
-
-    private func achievementCard(
-        icon: String,
-        title: String,
-        color: Color,
-        completed: Bool
-    ) -> some View {
-
-        VStack(spacing: 7) {
-
-            ZStack {
-
-                Circle()
-                    .fill(
-                        completed
-                        ? color.opacity(0.13)
-                        : Color.gray.opacity(0.08)
-                    )
-                    .frame(
-                        width: 45,
-                        height: 45
-                    )
-
-                Image(systemName: icon)
-                    .font(
-                        .system(size: 17)
-                    )
-                    .foregroundStyle(
-                        completed
-                        ? color
-                        : Color.gray.opacity(0.45)
-                    )
-            }
-
-            Text(title)
-                .font(
-                    .system(
-                        size: 9,
-                        weight: .medium
-                    )
-                )
-                .foregroundStyle(
-                    completed
-                    ? Color.primary
-                    : Color.secondary
-                )
-                .multilineTextAlignment(
-                    .center
-                )
-                .lineLimit(2)
-        }
-        .frame(
-            width: 94,
-            height: 85
-        )
-        .background(.white)
-        .clipShape(
-            RoundedRectangle(
-                cornerRadius: 15
-            )
-        )
-        .opacity(
-            completed ? 1 : 0.65
-        )
+        ProfileAchievementsSection(achievements: appState.profileAchievements)
     }
 
     // MARK: - NIVELES
@@ -775,7 +808,7 @@ struct ProfileView: View {
             appState.currentLevel <= levelNames.count
         else {
 
-            return "Explorador"
+            return "Semilla"
         }
 
         return levelNames[
@@ -784,16 +817,15 @@ struct ProfileView: View {
     }
 
     private let levelNames = [
-
         "Semilla",
         "Brote",
-        "Explorador",
-        "Guardián de Palabras",
-        "Caminante Yuhmu",
-        "Voz del Maíz",
-        "Tejedor de Historias",
-        "Sabio de Ixtenco",
-        "Guardián Yuhmu",
+        "Raíz",
+        "Tallo",
+        "Hoja",
+        "Flor",
+        "Fruto",
+        "Árbol",
+        "Guardián del Yuhmu",
         "Maestro Zentemi"
     ]
 
@@ -865,25 +897,27 @@ struct ProfileView: View {
                         VStack(spacing: 10) {
 
                             ZStack {
-
-                                RoundedRectangle(
-                                    cornerRadius: 16
-                                )
-                                .fill(
-                                    Color(
-                                        hue: appState.avatarBackgroundHue,
-                                        saturation: 0.22,
-                                        brightness: 1
+                                Circle()
+                                    .fill(
+                                        Color(
+                                            hue: appState.avatarBackgroundHue,
+                                            saturation: 0.22,
+                                            brightness: 1
+                                        )
                                     )
-                                )
-                                .frame(
-                                    width: 95,
-                                    height: 95
-                                )
 
-                                // CAMBIO: mascota + accesorios
-                                PetView(size: 78)
+                                if let backdrop = appState.equippedBackdrop?.backdrop {
+                                    MaicitoBackdropView(backdrop: backdrop)
+                                }
+
+                                PetView(size: 74)
                             }
+                            .frame(width: 96, height: 96)
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.75), lineWidth: 3)
+                            )
 
                             Text(appState.userName)
                                 .font(
@@ -997,6 +1031,12 @@ struct ProfileView: View {
                                 $appState.mascotHue,
                             in: 0...1
                         )
+
+                        if appState.equippedBackdrop != nil {
+                            Text("Tienes un fondo de la tienda puesto: se ve encima del color de fondo de la mascota.")
+                                .font(.system(size: 12))
+                                .foregroundStyle(.secondary)
+                        }
                     }
 
                     // MARK: - Nombre mascota

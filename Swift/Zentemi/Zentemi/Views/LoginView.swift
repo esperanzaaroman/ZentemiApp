@@ -57,7 +57,7 @@ struct LoginView: View {
                 
                 // Crear cuenta
                 
-                NavigationLink(destination: NameView()) {
+                NavigationLink(destination: CreateAccountView()) {
                     
                     Text("Crear cuenta")
                         .font(.system(size: 18, weight: .bold))

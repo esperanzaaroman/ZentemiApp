@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var selectedLanguage = "Español"
     @State private var showLanguageSelector = false
     @State private var showAboutZentemi = false
+    @State private var showBackendDiagnostic = false
     
     @State private var showLogoutConfirmation = false
     @State private var goToLogin = false
@@ -210,6 +211,30 @@ struct SettingsView: View {
                                     trailingText: nil
                                 )
                             }
+
+                            Divider()
+                                .padding(.leading, 55)
+
+                            // Diagnóstico de Seguridad y Backend
+
+                            Button {
+
+                                showBackendDiagnostic = true
+
+                            } label: {
+
+                                settingNavigationRow(
+                                    icon:
+                                        "checkmark.shield.fill",
+                                    iconColor:
+                                        purple,
+                                    iconBackground:
+                                        purple.opacity(0.12),
+                                    title:
+                                        "Diagnóstico de Seguridad",
+                                    trailingText: nil
+                                )
+                            }
                         }
                         .background(.white)
                         .clipShape(
@@ -319,32 +344,35 @@ struct SettingsView: View {
                 
                 VStack(spacing: 9) {
                     
-                    Button {
-                        
-                        showLogoutConfirmation = true
-                        
-                    } label: {
-                        
-                        Text("Cerrar sesión")
-                            .font(
-                                .system(
-                                    size: 13,
-                                    weight: .semibold
+                    // En modo invitado no hay sesión que cerrar
+                    if !appState.isGuest {
+                        Button {
+
+                            showLogoutConfirmation = true
+
+                        } label: {
+
+                            Text("Cerrar sesión")
+                                .font(
+                                    .system(
+                                        size: 13,
+                                        weight: .semibold
+                                    )
                                 )
-                            )
-                            .foregroundStyle(.white)
-                            .padding(
-                                .horizontal,
-                                22
-                            )
-                            .padding(
-                                .vertical,
-                                11
-                            )
-                            .background(
-                                Color.red.opacity(0.65)
-                            )
-                            .clipShape(Capsule())
+                                .foregroundStyle(.white)
+                                .padding(
+                                    .horizontal,
+                                    22
+                                )
+                                .padding(
+                                    .vertical,
+                                    11
+                                )
+                                .background(
+                                    Color.red.opacity(0.65)
+                                )
+                                .clipShape(Capsule())
+                        }
                     }
                     
                     #if DEBUG
@@ -412,6 +440,15 @@ struct SettingsView: View {
             AboutZentemiView()
         }
         
+        // MARK: - Diagnóstico de Backend & Auditoría
+
+        .sheet(
+            isPresented: $showBackendDiagnostic
+        ) {
+
+            BackendDiagnosticView()
+        }
+
         
         // MARK: - Confirmación cerrar sesión
         
@@ -431,22 +468,13 @@ struct SettingsView: View {
                 "Cerrar sesión",
                 role: .destructive
             ) {
-
-                if appState.musicVolume > 0 {
-
-                    MusicManager.shared.playMusic(
-                        named: "musicaInicio",
-                        volume: Float(appState.musicVolume)
-                    )
-                }
-
-                goToLogin = true
+                try? AuthService.shared.signOut()
             }
             
         } message: {
             
             Text(
-                "Tendrás que ingresar nuevamente tu nombre de usuario y PIN para entrar a tu cuenta."
+                "Tu progreso se queda en este teléfono y puedes seguir jugando. Para volver a guardarlo en la nube, inicia sesión otra vez."
             )
         }
         
