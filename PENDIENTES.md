@@ -1,6 +1,6 @@
 # Pendientes de Zentemi
 
-Notas para revisar con Sambe. Actualizado: 27 de noviembre de 2026.
+Notas para revisar con Sambe. Actualizado: 28 de noviembre de 2026.
 
 ## 1. Igualar iOS con Android en "Jugar con Maicito"
 
@@ -21,6 +21,10 @@ En iOS sigue la versión anterior, con **dos memoramas**:
       palabra en Yuhmu. En iOS no suena. Las 11 palabras con grabación son agua,
       casa, flor, luna, abeja, caballo, asno, borrego, calabaza, atole y llave
       (audios en `Android/.../res/raw/voc_*.m4a`).
+- [ ] Memorama por niveles: en `MemoryGameView.swift` el botón "Ver
+      resultados"/"Siguiente" está dentro del `ScrollView` y hay que deslizar
+      para verlo. En Android ahora sube desde abajo y se queda fijo al
+      terminar (en SwiftUI: `.safeAreaInset(edge: .bottom)`).
 
 Referencia en Android: `ui/games/levels/LevelGameKit.kt` (`MaicitoGamesScreen`)
 y `navigation/Navigation.kt` (ruta `GAMES`).
