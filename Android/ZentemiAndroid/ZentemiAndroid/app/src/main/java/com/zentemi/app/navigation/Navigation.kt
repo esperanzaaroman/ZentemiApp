@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.zentemi.app.audio.MusicManager
@@ -88,6 +89,18 @@ fun ZentemiNavigation(appState: AppState = viewModel()) {
     // Al volver a la app se revisa la racha diaria.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         appState.updateDailyStreak()
+    }
+
+    // Mientras la app está abierta, la felicidad de Maicito baja con el
+    // tiempo; se revisa al volver y cada 30 segundos (como iOS).
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                appState.updateHappinessDecay()
+                kotlinx.coroutines.delay(30_000)
+            }
+        }
     }
 
     // ── Modo invitado ──

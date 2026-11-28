@@ -82,6 +82,39 @@ class AppState @JvmOverloads constructor(
         if (petName.length > PET_NAME_MAX) petName = petName.take(PET_NAME_MAX).trim()
     }
 
+    // ── La felicidad baja con el tiempo (updateHappinessDecay de iOS) ──
+    private var happinessDecayOrigin by saved(prefs.persistedLong("happinessDecayOrigin", null))
+    private var happinessDecayLastUpdate by saved(prefs.persistedLong("happinessDecayLastUpdate", null))
+
+    /**
+     * Un punto cada dos horas, hasta diez en cada período de 24 horas.
+     * El origen fijo conserva las fracciones de tiempo entre aperturas.
+     * La primera vez solo empieza a contar (no descuenta tiempo anterior).
+     */
+    fun updateHappinessDecay() {
+        val now = clock.millis()
+        val origin = happinessDecayOrigin
+        val previous = happinessDecayLastUpdate
+        if (origin == null || previous == null) {
+            happinessDecayOrigin = now
+            happinessDecayLastUpdate = now
+            return
+        }
+        // Si se atrasa el reloj, se espera hasta alcanzar la última fecha registrada.
+        if (now < previous || previous < origin) return
+        fun scheduledLoss(at: Long): Long {
+            val elapsed = maxOf(0L, at - origin)
+            val days = elapsed / DAY_MS
+            return days * HAPPINESS_LOSS_PER_DAY +
+                minOf(HAPPINESS_LOSS_PER_DAY, (elapsed % DAY_MS) / HAPPINESS_LOSS_INTERVAL_MS)
+        }
+        val due = maxOf(0L, scheduledLoss(now) - scheduledLoss(previous))
+        if (due > 0) happiness = maxOf(0, minOf(100, happiness) - minOf(100L, due).toInt())
+        // También se consumen los intervalos con felicidad en cero, para que
+        // después no se descuente lo que gane al comer.
+        happinessDecayLastUpdate = now
+    }
+
     // ── Profile ──
     var coins by saved(prefs.persistedInt("coins", 1500))
     var streak by saved(prefs.persistedInt("streak", 0))
@@ -592,6 +625,7 @@ class AppState @JvmOverloads constructor(
 
     init {
         MusicManager.init(application, musicVolume)
+        updateHappinessDecay()
         updateDailyStreak()
     }
 
@@ -1170,6 +1204,9 @@ class AppState @JvmOverloads constructor(
     }
 
     private companion object {
+        private const val DAY_MS = 24L * 60 * 60 * 1000
+        private const val HAPPINESS_LOSS_INTERVAL_MS = 2L * 60 * 60 * 1000
+        private const val HAPPINESS_LOSS_PER_DAY = 10L
         const val TAG = "AppState"
 
         /** Artículos originales que se guardan con sus propios valores (compatibles con iOS). */

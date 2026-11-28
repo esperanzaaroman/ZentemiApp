@@ -157,6 +157,7 @@ fun FeedMaicitoScreen(
     }
 
     fun feedMaicito(food: Food) {
+        appState.updateHappinessDecay()
         if (isFeeding || happiness >= 100 || availableMeals <= 0 || appState.coins < food.price) {
             snapFoodBack()
             return
