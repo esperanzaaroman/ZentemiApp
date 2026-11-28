@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import com.zentemi.app.R
 import com.zentemi.app.audio.SoundManager
 import com.zentemi.app.audio.rememberPhrasePlayer
+import com.zentemi.app.data.YuhmuTheme
 import com.zentemi.app.data.YuhmuVocabulary
 import com.zentemi.app.data.YuhmuWord
 import com.zentemi.app.state.AppState
@@ -68,10 +69,22 @@ fun MemoramaGame(
     val context = LocalContext.current
     val phrasePlayer = rememberPhrasePlayer()
     val scope = rememberCoroutineScope()
-    val words = remember { YuhmuVocabulary.unlocked(appState.pathLessonsCompleted.coerceAtLeast(1)) }
+    // Las frases de las lecciones terminadas son un tema más, junto con el
+    // vocabulario del socio formador (animales, comida, números…).
+    val themes = remember {
+        val lessonWords = YuhmuVocabulary.unlocked(appState.pathLessonsCompleted.coerceAtLeast(1))
+        listOf(YuhmuTheme("frases", "Primeras frases", R.drawable.ic_frases_basicas, lessonWords)) +
+            YuhmuVocabulary.themes
+    }
 
     var gameId by remember { mutableIntStateOf(0) }
-    val deck = remember(gameId) { buildDeck(words) }
+    var previousThemeId by remember { mutableStateOf<String?>(null) }
+    // Cada partida es de un tema distinto al de la anterior.
+    val theme = remember(gameId) {
+        themes.filter { it.id != previousThemeId && it.words.size >= 2 }.random()
+            .also { previousThemeId = it.id }
+    }
+    val deck = remember(gameId) { buildDeck(theme.words) }
     var faceUp by remember(gameId) { mutableStateOf(listOf<Int>()) }
     var matched by remember(gameId) { mutableStateOf(setOf<String>()) }
     var attempts by remember(gameId) { mutableIntStateOf(0) }
@@ -135,15 +148,21 @@ fun MemoramaGame(
                 onClose = onExit
             )
 
-            Text(
-                text = "Intentos: $attempts",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Purple,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(bottom = 6.dp)
-            )
+            ) {
+                ZentemiIcon(theme.icon, size = 20.dp)
+                Text(
+                    text = "${theme.title} · Intentos: $attempts",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Purple
+                )
+            }
 
             // Tablero 2 x 4
             Column(
