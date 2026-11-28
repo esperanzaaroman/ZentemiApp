@@ -73,14 +73,14 @@ object YuhmuVocabulary {
         all.filter { it.lesson <= lessonsCompleted }
 
     /**
-     * Temas de vocabulario para el memorama, sacados del material del socio
+     * Temas de vocabulario para "Maicito pide", sacados del material del socio
      * formador: la escritura viene de "Vocabulario.xlsx" y el audio de la
      * carpeta "audios" (mismos nombres de tema). Solo se incluyen palabras
      * que tienen las dos cosas.
      *
-     * No pertenecen a ninguna lección (lesson = 0), así que no aparecen en
-     * "Maicito pide" ni en el mercado; solo en el memorama, donde siempre se
-     * ve el significado en español junto al audio.
+     * No pertenecen a ninguna lección (lesson = 0), así que [unlocked] no las
+     * incluye y el mercado no las usa. En Maicito pide cada partida es de un
+     * tema y las opciones siempre se ven en español.
      */
     val themes: List<YuhmuTheme> = listOf(
         theme("animales", "Animales", R.drawable.ic_animales,

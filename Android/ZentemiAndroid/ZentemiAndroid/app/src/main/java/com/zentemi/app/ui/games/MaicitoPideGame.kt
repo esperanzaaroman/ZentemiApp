@@ -37,6 +37,7 @@ import com.zentemi.app.R
 import com.zentemi.app.audio.SoundManager
 import com.zentemi.app.audio.rememberPhrasePlayer
 import com.zentemi.app.data.YuhmuVocabulary
+import com.zentemi.app.data.YuhmuTheme
 import com.zentemi.app.data.YuhmuWord
 import com.zentemi.app.state.AppState
 import com.zentemi.app.ui.learning.primerasfrases.ConfettiOverlay
@@ -79,10 +80,23 @@ fun MaicitoPideGame(
     val phrasePlayer = rememberPhrasePlayer()
     val shake = rememberShakeState()
     val scope = rememberCoroutineScope()
-    val words = remember { YuhmuVocabulary.unlocked(appState.pathLessonsCompleted.coerceAtLeast(1)) }
+    // Las frases de la lección son un tema más, junto con el vocabulario del
+    // socio formador (animales, comida, números…). Las opciones de cada ronda
+    // son del mismo tema.
+    val themes = remember {
+        val lessonWords = YuhmuVocabulary.unlocked(appState.pathLessonsCompleted.coerceAtLeast(1))
+        listOf(YuhmuTheme("frases", "Primeras frases", R.drawable.ic_frases_basicas, lessonWords)) +
+            YuhmuVocabulary.themes
+    }
 
     var gameId by remember { mutableIntStateOf(0) }
-    val rounds = remember(gameId) { buildRounds(words) }
+    var previousThemeId by remember { mutableStateOf<String?>(null) }
+    // Cada partida es de un tema distinto al de la anterior.
+    val theme = remember(gameId) {
+        themes.filter { it.id != previousThemeId && it.words.size >= OPTIONS_PER_ROUND }.random()
+            .also { previousThemeId = it.id }
+    }
+    val rounds = remember(gameId) { buildRounds(theme.words) }
     var roundIndex by remember(gameId) { mutableIntStateOf(0) }
     var firstTryCorrect by remember(gameId) { mutableIntStateOf(0) }
     var wrongPicks by remember(gameId, roundIndex) { mutableStateOf(setOf<String>()) }
@@ -186,6 +200,17 @@ fun MaicitoPideGame(
                     color = DarkText,
                     textAlign = TextAlign.Center
                 )
+                // Al acertar se muestra cómo se escribe en Yuhmu.
+                val written = round.target.yuhmu
+                if (solved && written != null) {
+                    Text(
+                        text = "«$written» · ${round.target.spanish}",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Purple,
+                        textAlign = TextAlign.Center
+                    )
+                }
                 ListenButton(
                     isPlaying = phrasePlayer.isPlaying,
                     onClick = { phrasePlayer.play(round.target.audio, appState.soundVolume) }
@@ -230,12 +255,18 @@ fun MaicitoPideGame(
                     .padding(top = 18.dp, bottom = 22.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    "Elige lo que significa",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DarkText
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "Elige lo que significa",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DarkText,
+                        modifier = Modifier.weight(1f)
+                    )
+                    ZentemiIcon(theme.icon, size = 18.dp)
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(theme.title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Purple)
+                }
                 round.options.forEach { option ->
                     val isWrong = option.id in wrongPicks
                     val isRight = solved && option == round.target

@@ -41,12 +41,14 @@ Prompts (en `prompts-imagenes-juegos.md`).
 ## 3. Vocabulario del socio formador (86 palabras)
 
 En Android están las 86 palabras con audio y escritura (`YuhmuVocabulary.themes`
-y `res/raw/voc_*.m4a`), en 9 temas. Se usaban en el memorama de audio, que se
-quitó, así que **hoy no aparecen en ningún juego**.
+y `res/raw/voc_*.m4a`), en 9 temas. Se usan en **Maicito pide**: cada partida
+es de un tema distinto (Animales, Comida, Números… o las Primeras frases), las
+opciones son del mismo tema y al acertar se muestra cómo se escribe en Yuhmu.
 
-- [ ] Idea: agregarlas como niveles nuevos del memorama de Leo cuando haya
-      ilustraciones de cada palabra, o usarlas en Maicito pide.
-- [ ] iOS todavía no tiene estas palabras.
+- [ ] iOS todavía no tiene estas palabras: copiar los audios y los temas a
+      `MaicitoPideGameView.swift`.
+- [ ] Idea: también agregarlas como niveles nuevos del memorama de Leo cuando
+      haya ilustraciones de cada palabra.
 
 ## 4. Preguntas para el socio formador
 
