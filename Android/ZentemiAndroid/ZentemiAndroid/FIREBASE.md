@@ -26,3 +26,22 @@ Sin ese archivo la compilación falla en la tarea `processDebugGoogleServices`.
 
 Código: `app/src/main/java/com/zentemi/app/data/` (`AuthService`, `FirestoreService`,
 `FirestoreModels`) y la sincronización en `state/AppState.kt`.
+
+## Campos del perfil del menor que agrega Android
+
+Todos son opcionales: si el documento no los trae (perfil viejo o creado desde
+iOS), Android se queda con lo que ya hay en el teléfono. Las claves son las
+mismas que se guardan en el teléfono (y en UserDefaults de iOS).
+
+| Campo | Tipo | Contenido |
+|---|---|---|
+| `pathLessonsCompleted`, `unlockedPathLesson` | número | Avance del camino |
+| `greetingsRewardClaimed` | booleano | «Primeras frases» terminada |
+| `ownedItems`, `equippedItems` | lista de ids | Tienda |
+| `claimedLessonRewards` | lista | Lecciones 2 a 6 terminadas (`family`, `numbers`…) |
+| `lessonBestCorrectAnswers`, `lessonBestSeconds` | mapa clave → número | Mejor puntaje y tiempo por lección |
+| `completedGameLevels` | lista | `memoryLevelOne`, `wordSearchLevelTwo`, `mazeLevelThree`… |
+| `gameBestSeconds` | mapa clave → número | Mejor tiempo por nivel de juego |
+| `mazeClaimedCoinMasks` | mapa clave → número | Monedas cobradas por laberinto (un bit por moneda) |
+| `gamePoints` | número | Puntos de juego (meta 10,000) |
+| `totalFeedings`, `bestAchievementStreak`, `lifetimeEarnedCoins` | número | Logros |

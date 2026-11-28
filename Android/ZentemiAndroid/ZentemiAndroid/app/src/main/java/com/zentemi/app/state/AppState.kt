@@ -1,5 +1,6 @@
 package com.zentemi.app.state
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -959,7 +960,8 @@ class AppState @JvmOverloads constructor(
         }
     }
 
-    private fun applyChildProfile(child: ChildProfile) {
+    @VisibleForTesting
+    internal fun applyChildProfile(child: ChildProfile) {
         userName = child.userName
         lastUserNameChange = child.lastUserNameChange?.toDate()?.time
         petName = child.petName
@@ -985,6 +987,7 @@ class AppState @JvmOverloads constructor(
         child.greetingsRewardClaimed?.let { greetingsRewardClaimed = it }
         child.ownedItems?.let { applyOwnedItems(it.toSet()) }
         child.equippedItems?.let { applyEquippedItems(it.toSet()) }
+        applyLessonsAndGames(child)
 
         childCreatedAt = child.createdAt
         // Lo que acabamos de recibir no hace falta volver a subirlo
@@ -1042,7 +1045,8 @@ class AppState @JvmOverloads constructor(
         return buildChildProfile(childId)
     }
 
-    private fun buildChildProfile(id: String?): ChildProfile {
+    @VisibleForTesting
+    internal fun buildChildProfile(id: String?): ChildProfile {
         return ChildProfile(
             id = id,
             userName = userName,
@@ -1069,8 +1073,76 @@ class AppState @JvmOverloads constructor(
             unlockedPathLesson = unlockedPathLesson,
             greetingsRewardClaimed = greetingsRewardClaimed,
             ownedItems = ownedItemIds(),
-            equippedItems = equippedItemIds()
+            equippedItems = equippedItemIds(),
+            claimedLessonRewards = PathLesson.entries
+                .filter { lessonRewardClaimed.getValue(it).value }.map { it.key },
+            lessonBestCorrectAnswers = PathLesson.entries
+                .filter { lessonBestCorrect.getValue(it).value > 0 }
+                .associate { it.key to lessonBestCorrect.getValue(it).value },
+            lessonBestSeconds = PathLesson.entries
+                .filter { lessonBestSeconds.getValue(it).value > 0f }
+                .associate { it.key to lessonBestSeconds.getValue(it).value.toDouble() },
+            completedGameLevels = gameLevelCompletedStates()
+                .filter { it.value.value }.keys.toList(),
+            gameBestSeconds = gameLevelBestStates()
+                .filter { it.value.value > 0f }
+                .mapValues { it.value.value.toDouble() },
+            mazeClaimedCoinMasks = mazeCoinMaskStates()
+                .filter { it.value.value != 0 }
+                .mapValues { it.value.value },
+            gamePoints = gamePoints,
+            totalFeedings = totalFeedings,
+            bestAchievementStreak = bestAchievementStreak,
+            lifetimeEarnedCoins = lifetimeEarnedCoins
         )
+    }
+
+    // Claves de los niveles de juego, iguales a las del teléfono y de iOS.
+    private fun mazeKey(level: Int) = "mazeLevel${LEVEL_NAMES[level - 1]}"
+
+    private fun gameLevelCompletedStates(): Map<String, PersistedState<Boolean>> =
+        MemoryLevel.entries.associate { it.key to memoryCompletedState.getValue(it) } +
+            WordSearchLevel.entries.associate { it.key to wordSearchCompletedState.getValue(it) } +
+            (1..5).associate { mazeKey(it) to mazeCompletedState[it - 1] }
+
+    private fun gameLevelBestStates(): Map<String, PersistedState<Float>> =
+        MemoryLevel.entries.associate { it.key to memoryBestState.getValue(it) } +
+            WordSearchLevel.entries.associate { it.key to wordSearchBestState.getValue(it) } +
+            (1..5).associate { mazeKey(it) to mazeBestState[it - 1] }
+
+    private fun mazeCoinMaskStates(): Map<String, PersistedState<Int>> =
+        (2..5).associate { mazeKey(it) to mazeCoinMaskState[it - 1] }
+
+    /**
+     * Lecciones 2 a 6, juegos y logros que vienen de la nube. Igual que los
+     * demás campos nuevos: si el documento no los trae (perfil viejo o de
+     * iOS), se queda lo que ya había en el teléfono.
+     */
+    private fun applyLessonsAndGames(child: ChildProfile) {
+        child.claimedLessonRewards?.let { keys ->
+            PathLesson.entries.forEach { lessonRewardClaimed.getValue(it).value = it.key in keys }
+        }
+        child.lessonBestCorrectAnswers?.let { best ->
+            PathLesson.entries.forEach { lessonBestCorrect.getValue(it).value = best[it.key] ?: 0 }
+        }
+        child.lessonBestSeconds?.let { best ->
+            PathLesson.entries.forEach {
+                lessonBestSeconds.getValue(it).value = best[it.key]?.toFloat() ?: 0f
+            }
+        }
+        child.completedGameLevels?.let { keys ->
+            gameLevelCompletedStates().forEach { (key, state) -> state.value = key in keys }
+        }
+        child.gameBestSeconds?.let { best ->
+            gameLevelBestStates().forEach { (key, state) -> state.value = best[key]?.toFloat() ?: 0f }
+        }
+        child.mazeClaimedCoinMasks?.let { masks ->
+            mazeCoinMaskStates().forEach { (key, state) -> state.value = masks[key] ?: 0 }
+        }
+        child.gamePoints?.let { gamePoints = it }
+        child.totalFeedings?.let { totalFeedings = it }
+        child.bestAchievementStreak?.let { bestAchievementStreak = maxOf(it, streak) }
+        child.lifetimeEarnedCoins?.let { lifetimeEarnedCoins = it }
     }
 
     fun recordInventoryItem(itemId: String, purchased: Boolean, equipped: Boolean) {

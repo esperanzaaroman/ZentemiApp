@@ -64,7 +64,27 @@ opciones son del mismo tema y al acertar se muestra cómo se escribe en Yuhmu.
       audios de la carpeta "Famila"?
 - [ ] «Corazón»: en el Excel viene como `Mu̱ ̀ i` (con un espacio raro).
 
-## 5. Otros
+## 5. Base de datos (Firestore): progreso que iOS no sube
+
+**Android ya lo sube** (27 nov): lecciones 2 a 6 (terminadas, mejor puntaje y
+tiempo), niveles de Memorama, Sopa de letras y Laberinto (terminados, mejores
+tiempos, monedas cobradas), puntos de juego y logros (comidas, mejor racha,
+monedas ganadas). Los campos están en la tabla de
+`Android/ZentemiAndroid/ZentemiAndroid/FIREBASE.md`.
+
+En iOS todo eso sigue **solo en el teléfono**:
+
+- [ ] Agregar los mismos campos a `ChildProfile` en `FirestoreModels.swift`
+      (opcionales, mismos nombres) y llenarlos en `buildChildProfile` /
+      `applyChildProfile` de `AppState.swift`. Si falta un campo en el
+      documento, dejar lo que hay en el teléfono.
+- [ ] iOS no guarda en `progress/` las lecciones 2 a 6 (solo «Primeras
+      frases»), y para abrir la siguiente lección revisa lo guardado en el
+      teléfono, no el camino de la nube. Lo que se termine en Android podría
+      verse bloqueado en iOS.
+- Las reglas de `firestore.rules` no necesitan cambios.
+
+## 6. Otros
 
 - [ ] La música del lobby sigue sonando dentro del memorama por niveles; revisar
       que se escuche bien el audio de las palabras encima de la música.

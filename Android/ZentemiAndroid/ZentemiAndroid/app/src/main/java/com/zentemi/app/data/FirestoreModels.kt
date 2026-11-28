@@ -53,7 +53,26 @@ data class ChildProfile(
     /** Ids de los artículos comprados en la tienda (incluye los 7 originales). */
     var ownedItems: List<String>? = null,
     /** Ids de los artículos que Maicito trae puestos. */
-    var equippedItems: List<String>? = null
+    var equippedItems: List<String>? = null,
+
+    // ── Lecciones 2 a 6, juegos por niveles y logros ──
+    // Las claves son las mismas que se guardan en el teléfono (y en
+    // UserDefaults de iOS): "familyLesson", "memoryLevelOne", "mazeLevelTwo"...
+    /** Lecciones 2 a 6 cuyo premio ya se entregó (claves de PathLesson). */
+    var claimedLessonRewards: List<String>? = null,
+    var lessonBestCorrectAnswers: Map<String, Int>? = null,
+    var lessonBestSeconds: Map<String, Double>? = null,
+    /** Niveles terminados de Memorama, Sopa de letras y Laberinto. */
+    var completedGameLevels: List<String>? = null,
+    /** Mejor tiempo por nivel (solo los que se han jugado). */
+    var gameBestSeconds: Map<String, Double>? = null,
+    /** Monedas ya cobradas de cada laberinto, un bit por moneda. */
+    var mazeClaimedCoinMasks: Map<String, Int>? = null,
+    var gamePoints: Int? = null,
+    var totalFeedings: Int? = null,
+    var bestAchievementStreak: Int? = null,
+    /** Monedas ganadas en total (gastarlas no resta). */
+    var lifetimeEarnedCoins: Int? = null
 )
 
 // ── Configuraciones de Avatar ──
