@@ -1,6 +1,7 @@
 package com.zentemi.app.ui.games.levels
 
 import androidx.activity.compose.BackHandler
+import com.zentemi.app.audio.rememberPhrasePlayer
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -76,6 +77,9 @@ private enum class MemoryPhase { PLAYING, CELEBRATION, RESULTS }
 @Composable
 internal fun MemoryGame(appState: AppState, level: MemoryLevel, onExit: () -> Unit) {
     val sounds = rememberLessonSounds(appState)
+    val phrasePlayer = rememberPhrasePlayer()
+    // Última pareja encontrada: se escucha cómo se dice en Yuhmu.
+    var lastMatch by remember { mutableStateOf<MemoryWord?>(null) }
     val active = rememberAppActive()
     val cards = remember(level) {
         level.words.flatMap { listOf(MemoryCard(it, true), MemoryCard(it, false)) }.shuffled()
@@ -91,6 +95,12 @@ internal fun MemoryGame(appState: AppState, level: MemoryLevel, onExit: () -> Un
 
     BackHandler {
         if (phase == MemoryPhase.PLAYING) onExit() else onExit()
+    }
+
+    LaunchedEffect(lastMatch) {
+        val audio = lastMatch?.audio ?: return@LaunchedEffect
+        delay(500)
+        phrasePlayer.play(audio, appState.soundVolume)
     }
 
     LaunchedEffect(resolving, active) {
@@ -113,6 +123,7 @@ internal fun MemoryGame(appState: AppState, level: MemoryLevel, onExit: () -> Un
         if (first.word.id == card.word.id) {
             matched = matched + card.word.id
             selected = emptyList()
+            lastMatch = card.word
             if (matched.size == level.words.size) {
                 feedback = "¡Encontraste los ${level.words.size} pares!"
                 rewardGiven = appState.completeMemory(level, clock.doubleValue)

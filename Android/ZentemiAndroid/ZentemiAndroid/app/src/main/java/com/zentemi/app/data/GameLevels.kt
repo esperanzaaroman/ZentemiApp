@@ -1,6 +1,7 @@
 package com.zentemi.app.data
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.RawRes
 import com.zentemi.app.R
 import java.text.BreakIterator
 import java.util.Locale
@@ -13,7 +14,9 @@ data class MemoryWord(
     val id: String,
     val yuhmu: String,
     val spanish: String,
-    @DrawableRes val image: Int
+    @DrawableRes val image: Int,
+    /** Grabación del socio formador, si la tenemos (carpeta "audios"). */
+    @RawRes val audio: Int? = null
 )
 
 /**
@@ -38,31 +41,31 @@ enum class MemoryLevel(val number: Int, val coins: Int, val points: Int, val the
 
     companion object {
         val levelOneWords = listOf(
-            MemoryWord("water", "Déhe", "Agua", R.drawable.memory_water),
-            MemoryWord("house", "Ngǚ", "Casa", R.drawable.memory_house),
-            MemoryWord("flower", "Dò̱ni", "Flor", R.drawable.memory_flower),
-            MemoryWord("moon", "Zä̀nä", "Luna", R.drawable.memory_moon),
+            MemoryWord("water", "Déhe", "Agua", R.drawable.memory_water, audio = R.raw.voc_agua),
+            MemoryWord("house", "Ngǚ", "Casa", R.drawable.memory_house, audio = R.raw.voc_casa),
+            MemoryWord("flower", "Dò̱ni", "Flor", R.drawable.memory_flower, audio = R.raw.voc_flor),
+            MemoryWord("moon", "Zä̀nä", "Luna", R.drawable.memory_moon, audio = R.raw.voc_luna),
             MemoryWord("tree", "Zä̌", "Árbol", R.drawable.memory_tree)
         )
         val animalWords = listOf(
-            MemoryWord("bee", "Gáne", "Abeja", R.drawable.memory_bee),
+            MemoryWord("bee", "Gáne", "Abeja", R.drawable.memory_bee, audio = R.raw.voc_abeja),
             MemoryWord("spider", "Méxe", "Araña", R.drawable.memory_spider),
             MemoryWord("eagle", "Nxù̱ni", "Águila", R.drawable.memory_eagle),
             MemoryWord("hare", "Dé", "Liebre", R.drawable.memory_hare),
-            MemoryWord("horse", "Tó̱ge", "Caballo", R.drawable.memory_horse),
-            MemoryWord("donkey", "’Ǎxnu", "Asno", R.drawable.memory_donkey),
-            MemoryWord("sheep", "Dé̱ti", "Borrego", R.drawable.memory_sheep)
+            MemoryWord("horse", "Tó̱ge", "Caballo", R.drawable.memory_horse, audio = R.raw.voc_caballo),
+            MemoryWord("donkey", "’Ǎxnu", "Asno", R.drawable.memory_donkey, audio = R.raw.voc_burro),
+            MemoryWord("sheep", "Dé̱ti", "Borrego", R.drawable.memory_sheep, audio = R.raw.voc_borrego)
         )
         val everydayWords = listOf(
             MemoryWord("pillow", "Nhǚni", "Almohada", R.drawable.memory_pillow),
             MemoryWord("ring", "Mphòxo", "Anillo", R.drawable.memory_ring),
             MemoryWord("earring", "Ts’ú̱ngü", "Arete", R.drawable.memory_earring),
-            MemoryWord("pumpkin", "Mǚ", "Calabaza", R.drawable.memory_pumpkin),
+            MemoryWord("pumpkin", "Mǚ", "Calabaza", R.drawable.memory_pumpkin, audio = R.raw.voc_calabaza),
             MemoryWord("sweetPotato", "Bó̱’kw’ä", "Camote", R.drawable.memory_sweet_potato),
-            MemoryWord("atole", "T’èi", "Atole", R.drawable.memory_atole),
+            MemoryWord("atole", "T’èi", "Atole", R.drawable.memory_atole, audio = R.raw.voc_atole),
             MemoryWord("star", "Rà tsó̱", "La estrella", R.drawable.memory_star),
             MemoryWord("broom", "Rà ’màxi", "La escoba", R.drawable.memory_broom),
-            MemoryWord("key", "Ntshóki", "Llave", R.drawable.memory_key),
+            MemoryWord("key", "Ntshóki", "Llave", R.drawable.memory_key, audio = R.raw.voc_llave),
             MemoryWord("rainbow", "’Mè̱khu̱ni", "Arcoíris", R.drawable.memory_rainbow)
         )
     }
